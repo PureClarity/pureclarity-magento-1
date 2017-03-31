@@ -1,0 +1,15 @@
+@media only screen and (min-width: 600px){
+    div.pureclarity_magento_mobile{
+        display:none!important;
+    }
+}
+
+@media only screen and (max-width: 599px){
+    div.pureclarity_magento_desktop{
+        display:none!important;
+    }
+}
+
+div.pureclarity_magento_media_conflict{
+    display:none!important;
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style type="text/css">
+            p{
+                margin:0;
+            }
+            progress{
+                width: 100%;
+            }
+            label.disabled{
+                color:grey;
+            }
+            img.pureclarity_magento_loading_image{
+                float:right;
+            }
+            img.pureclarity_magento_loading_image_hidden{
+                display:none;
+            }
+        </style>
+        <script type="text/javascript">
+
+            var selectedFeeds = [];
+            var completedFeeds = [];
+            var isComplete = false;
+
+            function uiStartLoading(){
+                // Disable UI elements and show loading image
+                document.getElementById("pureclarity_magento_loading_image").className = "pureclarity_magento_loading_image";
+                document.getElementById("pureclarity_magento_run_now").disabled = true;
+                document.getElementById("pureclarity-magento-product-feed").disabled = true;
+                document.getElementById("pureclarity-magento-category-feed").disabled = true;
+                document.getElementById("pureclarity-magento-brand-feed").disabled = true;
+            }
+
+            function uiEndLoading(){
+                // Enable UI elements and hide loading image
+                document.getElementById("pureclarity_magento_loading_image").className = "pureclarity_magento_loading_image pureclarity_magento_loading_image_hidden";
+                document.getElementById("pureclarity_magento_run_now").disabled = false;
+                document.getElementById("pureclarity-magento-product-feed").disabled = false;
+                document.getElementById("pureclarity-magento-category-feed").disabled = false;
+                <?php if (Mage::helper('pureclarity_core')->isBrandFeedEnabled()) : ?>
+                document.getElementById("pureclarity-magento-brand-feed").disabled = false;
+                <?php endif ?>
+            }
+
+            function setProgress(feedtype, done, max){
+                // Set progress bar value for the given feed type
+                eid = "pureclarity-magento-feed-progress-" + feedtype;
+                progBar = document.getElementById(eid);
+                if(progBar){
+                    progBar.setAttribute("max", max);
+                    progBar.setAttribute("value", done);
+                }
+            }
+
+            function feedComplete(request){
+                // Called when a feed AJAX returns
+                for (var i = 0; i<= selectedFeeds.length-1; i++){
+                    if (request.responseURL.endsWith(selectedFeeds[i])){
+                        // Set the feed to complete and the progress to 100%
+                        completedFeeds.push(selectedFeeds[i]);
+                        setProgress(selectedFeeds[i], 1, 1);
+                    }
+                }
+                if (completedFeeds.length == selectedFeeds.length){
+                    // If all done, re-enable UI
+                    isComplete = true;
+                    uiEndLoading();
+                }
+            }
+
+            var lastPollComplete = true;
+            function pollProgress(){
+                if (lastPollComplete) {
+                    lastPollComplete = false;
+                    // Called every five seconds to update progress bars
+                    progressUrl = "<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/getprogress'); ?>";
+                    for (var i = 0; i <= selectedFeeds.length - 1; i++) {
+                        // Get progress for each feed selected
+                        var feedProgress = new XMLHttpRequest();
+                        feedProgress.onreadystatechange = function () {
+                            if (this.readyState == 4 && this.status == 200) {
+                                progress = JSON.parse(this.responseText);
+                                // Update progress bar
+                                setProgress(progress.name, progress.cur, progress.max);
+                                if (progress.isComplete){
+                                    feedComplete(this);
+                                }
+                            }
+                            if (this.readyState == 4) {
+                                lastPollComplete = true;
+                            }
+                        };
+                        now = encodeURIComponent(new Date()); // Append time to force a cache miss
+                        thisFeedUrl = progressUrl + "?time=" + now + "&feedtype=" + selectedFeeds[i];
+                        feedProgress.open("GET", thisFeedUrl, true);
+                        feedProgress.send();
+                    }
+                }
+                if (!isComplete) {
+                    // Keep going if we are not complete yet
+                    setTimeout(pollProgress, 2000);
+                }
+            }
+
+            function runFeeds(){
+                // Get list of selected feeds
+                selectedFeeds = [];
+                doProducts = document.getElementById('pureclarity-magento-product-feed').checked;
+                doCategories = document.getElementById('pureclarity-magento-category-feed').checked;
+                doBrands = document.getElementById('pureclarity-magento-brand-feed').checked;
+                if (doProducts){selectedFeeds.push('product')}
+                if (doCategories){selectedFeeds.push('category')}
+                if (doBrands){selectedFeeds.push('brand')}
+
+                if (selectedFeeds.length < 1){
+                    alert("No feeds are selected. Please select at least one feed.");
+                    return;
+                }
+
+                // Init loading
+                completedFeeds = [];
+                isComplete = false;
+                uiStartLoading();
+
+                // Base feed URL, append ?feedtype=foo before requesting
+                feedUrl = "<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/runselected'); ?>";
+
+                for (var i = 0; i<= selectedFeeds.length-1; i++){
+                    // Start each selected feed
+                    // 0% progress at start
+                    setProgress(selectedFeeds[i], 0, 1);
+                    var startfeed = new XMLHttpRequest();
+                    startfeed.onreadystatechange = function() {
+                        if (this.readyState == 4 && this.status == 200) { feedComplete(this); }
+                        if (this.readyState == 4 && this.status != 200) {
+                            feedtype = /feedtype=([^&]*)/.exec(this.responseURL)[1];
+                            if (this.status == 409) {
+                                alert("The '" + feedtype + "' feed is already running, please wait for it to finish before running it again.");
+                            }
+                            else {
+                                alert("The '" + feedtype + "' feed did not complete correctly. You may need to rerun this feed.");
+                                feedComplete(this);
+                            }
+                        }
+                    };
+                    now = encodeURIComponent(new Date()); // Append time to force a cache miss
+                    thisFeedUrl = feedUrl + "?time=" + now + "&feedtype=" + selectedFeeds[i];
+                    startfeed.open("GET", thisFeedUrl, true);
+                    startfeed.send();
+                }
+                // Start polling for progress updates.
+                lastPollComplete = true;
+                setTimeout(pollProgress, 1000);
+            }
+        </script>
+    </head>
+    <body>
+        <h2>Select the feeds you would like to run</h2>
+        <p><input type="checkbox" id="pureclarity-magento-product-feed"/><label for="pureclarity-magento-product-feed">Products</label></p>
+        <progress id="pureclarity-magento-feed-progress-product" max="100" value="0"></progress>
+        <p><input type="checkbox" id="pureclarity-magento-category-feed"/><label for="pureclarity-magento-category-feed">Categories</label></p>
+        <progress id="pureclarity-magento-feed-progress-category" max="100" value="0"></progress>
+        <?php if (Mage::helper('pureclarity_core')->isBrandFeedEnabled()) : ?>
+            <p><input type="checkbox" id="pureclarity-magento-brand-feed"/><label for="pureclarity-magento-brand-feed">Brands</label></p>
+            <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
+        <?php else: ?>
+            <p><input type="checkbox" id="pureclarity-magento-brand-feed" disabled/><label for="pureclarity-magento-brand-feed" class="disabled">Brands (Disabled)</label></p>
+            <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
+        <?php endif ?>
+        <p>&nbsp;</p>
+        <p>
+            <button id="pureclarity_magento_run_now" onclick="runFeeds()">Run selected feeds now</button>
+            <img id="pureclarity_magento_loading_image" class="pureclarity_magento_loading_image pureclarity_magento_loading_image_hidden" src="<?php echo $this->getSkinUrl('images/ajax-loader-tr.gif') ?>">
+        </p>
+    </body>
+</html>

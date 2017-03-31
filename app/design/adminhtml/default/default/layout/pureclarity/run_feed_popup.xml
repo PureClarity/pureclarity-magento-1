@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<layout>
+    <adminhtml_adminhtml_runfeedbox_runfeed>
+
+    </adminhtml_adminhtml_runfeedbox_runfeed>
+    <adminhtml_system_config_edit>
+        <reference name="head">
+            <action method="addItem"><type>js</type><name>prototype/window.js</name></action>
+            <action method="addItem"><type>js_css</type><name>prototype/windows/themes/default.css</name></action>
+            <action method="addCss"><name>lib/prototype/windows/themes/magento.css</name></action>
+        </reference>
+    </adminhtml_system_config_edit>
+</layout>

@@ -1,0 +1,8 @@
+<?php $_productInformation = Mage::getModel('core/session')->getPCProductToShoppingCart() ?>
+<?php if ($_productInformation): ?>
+<script type="text/javascript">
+    _pc('product_add', { sku: "<?php echo $_productInformation->getSku();?>", quantity: "<?php echo $_productInformation->getQty();?>" });
+</script>
+<?php Mage::getModel('core/session')->unsProductToShoppingCart(); ?>
+<?php
+endif;

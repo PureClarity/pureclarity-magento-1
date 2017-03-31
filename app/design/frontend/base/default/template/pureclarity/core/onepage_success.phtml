@@ -1,0 +1,29 @@
+<?php
+    try {
+        $order = Mage::helper('pureclarity_core')->getOrder();
+        $orderItems = Mage::helper('pureclarity_core')->getOrderItems();
+    }
+    catch (Exception $e){
+        exit;
+    }
+?><script type="text/javascript">
+    _pc('order:addTrans', {
+        orderid:    "<?php echo $order['orderId'] ?>",
+        firstname:  "<?php echo $order['firstName'] ?>",
+        lastname:   "<?php echo $order['lastName'] ?>",
+        postcode:   "<?php echo $order['postCode'] ?>",
+        email:      "<?php echo $order['email'] ?>",
+        ordertotal: "<?php echo $order['orderTotal'] ?>"
+    });
+    <?php
+        foreach ($orderItems as $orderItem):
+    ?>_pc('order:addItem', {
+        orderid:    "<?php echo $orderItem['orderId'];?>",
+        sku:        "<?php echo $orderItem['sku'];?>",
+        qty:        "<?php echo $orderItem['qty'];?>",
+        unitprice:  "<?php echo $orderItem['unitPrice'];?>"
+    });
+    <?php
+        endforeach;
+    ?>_pc('order:track');
+</script>

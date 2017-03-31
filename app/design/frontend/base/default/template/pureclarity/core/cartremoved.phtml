@@ -1,0 +1,7 @@
+<?php $_productInformation = Mage::getModel('core/session')->getPCProductRemovedShoppingCart() ?>
+<?php if ($_productInformation): ?>
+<script type="text/javascript">
+    _pc('product_remove', { sku: "<?php echo $_productInformation->getSku();?>" });
+</script>
+<?php Mage::getModel('core/session')->unsProductRemovedShoppingCart(); ?>
+<?php endif;

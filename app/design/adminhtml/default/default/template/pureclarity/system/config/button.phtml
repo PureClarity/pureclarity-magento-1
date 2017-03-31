@@ -1,0 +1,17 @@
+<script type="text/javascript">
+    //<![CDATA[
+    function pureclarity_magento_install_bmz() {
+        new Ajax.Request('<?php echo $this->getAjaxCheckUrl() ?>', {
+            method:     'get',
+            onSuccess: function(transport){
+                alert(transport.responseText);
+            },
+            onFailure: function(transport){
+                alert('Error when installing default BMZ blocks.');
+            }
+        });
+    }
+    //]]>
+</script>
+
+<?php echo $this->getButtonHtml() ?>

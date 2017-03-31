@@ -1,0 +1,7 @@
+<?php $_customerInformation = Mage::getModel('core/session')->getPCCustomerLogout();?>
+<?php if ($_customerInformation): ?>
+    <script type="text/javascript">
+        _pc('customer_logout');
+    </script>
+    <?php Mage::getModel('core/session')->unsPCCustomerLogout(); ?>
+<?php endif;

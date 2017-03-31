@@ -1,0 +1,14 @@
+<?php $_customerInformation = Mage::getModel('core/session')->getPCCustomerLogin();?>
+
+<?php if ($_customerInformation): ?>
+    <script type="text/javascript">
+        _pc('customer_details', {
+            userid:     "<?php echo $_customerInformation->getUserid();?>",
+            email:      "<?php echo $_customerInformation->getEmail();?>",
+            firstname:  "<?php echo $_customerInformation->getFirstName();?>",
+            lastname:   "<?php echo $_customerInformation->getLastname();?>",
+            salutation: "<?php echo $_customerInformation->getSalutation();?>"
+        });
+    </script>
+    <?php Mage::getModel('core/session')->unsPCCustomerLogin(); ?>
+<?php endif;
