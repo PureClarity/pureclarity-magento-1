@@ -100,6 +100,15 @@
                 </observers>
             </customer_logout>
         </events>
+        <routers>
+            <pureclarity_core>
+                <use>standard</use>
+                <args>
+                    <module>Pureclarity_Core</module>
+                    <frontName>pureclarity</frontName>
+                </args>
+            </pureclarity_core>
+        </routers>
     </frontend>
     <admin>
         <routers>

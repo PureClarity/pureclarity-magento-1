@@ -56,7 +56,7 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
                     break;
             }
             if ($progressFileName != null){
-                echo file_get_contents($progressFileName);
+                $this->getResponse()->setBody(file_get_contents($progressFileName));
             }
         }
     }

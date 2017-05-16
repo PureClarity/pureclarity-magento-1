@@ -1,13 +1,30 @@
 <?php
+/*****************************************************************************************
+ * Magento
+ * NOTICE OF LICENSE
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *  
+ * DISCLAIMER
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *  
+ * @category  PureClarity
+ * @package   PureClarity_Core
+ * @author    PureClarity Technologies Ltd (www.pureclarity.com)
+ * @copyright Copyright (c) 2017 PureClarity Technologies Ltd
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *****************************************************************************************/
+
 /**
- * PureClarity Cron tasks
- *
- * @title       Pureclarity_Core_Model_Cron
- * @category    Pureclarity
- * @package     Pureclarity_Core
- * @author      Douglas Radburn <douglas.radburn@purenet.co.uk>
- * @copyright   Copyright (c) 2016 Purenet http://www.purenet.co.uk
- */
+* PureClarity Cron Model
+*/
 class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 {
     const DELTA_LOG               = 'pureclarity_delta.log';
@@ -33,10 +50,11 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
      */
     public function deltaFeed()
     {
-
+        Mage::log('PureClarity: Processing Delta Feeds');
         if(!Mage::helper('pureclarity_core')->isActive()) {
             return;
         }
+        Mage::log('PureClarity: Processing Delta Feeds');
 
         $deleteProducts = $feedProducts = array();
 
@@ -161,6 +179,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
         $body = Mage::helper('pureclarity_core')->formatFeed($request, 'json');
         $response = $this->_soapHelper->makeRequest($body, self::PRODUCT_DELTA);
+        Mage::log($response);
         $response = json_decode($response);
 
         if(is_object($response)) {
@@ -289,14 +308,15 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         // Get the feed data for the specified feed type
         switch($feedtype){
             case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:  
-                $productExportModel = Mage::getModel('pureclarity_core/productexport', $storeId);
+                $productExportModel = Mage::getModel('pureclarity_core/productexport');
+                $productExportModel->init($storeId);
                 $feedData = $productExportModel->processFeed($progressFileName);
                 break;
             case Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY: 
-                $feedData = $feedModel->getFullCatFeed($progressFileName);     
+                $feedData = $feedModel->getFullCatFeed($progressFileName);
                 break;
             case Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND:    
-                $feedData = $feedModel->getFullBrandFeed($progressFileName);   
+                $feedData = $feedModel->getFullBrandFeed($progressFileName);
                 break;
             default:
                 throw new \Exception("Pureclarity feed type not recognised: $feedtype");
@@ -320,7 +340,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
         // notify PC about the feed being available (url builds the feed)
         $notificationUrl = $this->getNotificationUrl($filename, $feedtype);
-        echo $notificationUrl;
+        //echo $notificationUrl;
         //$this->_soapHelper->makeGetRequest($notificationUrl);
     }
 

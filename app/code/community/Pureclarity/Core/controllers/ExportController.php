@@ -10,7 +10,8 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
         $pageSize = (int)$this->getRequest()->getParam('size', 100000);
         $currentPage = (int)$this->getRequest()->getParam('page', 1);
 
-        $model = Mage::getModel('pureclarity_core/productexport',  array('option1' => Mage::app()->getStore()->getId()));
+        $model = Mage::getModel('pureclarity_core/productexport');
+        $model->init(Mage::app()->getStore()->getId());
         $result = $model->getFullProductFeed($pageSize, $currentPage);
         $formatType = 'json';
         $contentType = 'application/octet-stream';
@@ -19,7 +20,7 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
             $contentType = 'text/html';
         }
         $json = Mage::helper('pureclarity_core')->formatFeed($result, $formatType);
-        $this->getResponse()->setHeader('Content-type', $contentType);
+        //$this->getResponse()->setHeader('Content-type', $contentType);
         $this->getResponse()->setBody($json);
     }
 }

@@ -44,9 +44,7 @@
                 document.getElementById("pureclarity_magento_run_now").disabled = false;
                 document.getElementById("pureclarity-magento-product-feed").disabled = false;
                 document.getElementById("pureclarity-magento-category-feed").disabled = false;
-                <?php if (Mage::helper('pureclarity_core')->isBrandFeedEnabled()) : ?>
                 document.getElementById("pureclarity-magento-brand-feed").disabled = false;
-                <?php endif ?>
             }
 
             function setProgress(feedtype, done, max){
@@ -105,7 +103,7 @@
                 }
                 if (!isComplete) {
                     // Keep going if we are not complete yet
-                    setTimeout(pollProgress, 2000);
+                    setTimeout(pollProgress, 1000);
                 }
             }
 
@@ -186,13 +184,8 @@
         <progress id="pureclarity-magento-feed-progress-product" max="100" value="0"></progress>
         <p><input type="checkbox" id="pureclarity-magento-category-feed"/><label for="pureclarity-magento-category-feed">Categories</label></p>
         <progress id="pureclarity-magento-feed-progress-category" max="100" value="0"></progress>
-        <?php if (Mage::helper('pureclarity_core')->isBrandFeedEnabled()) : ?>
-            <p><input type="checkbox" id="pureclarity-magento-brand-feed"/><label for="pureclarity-magento-brand-feed">Brands</label></p>
-            <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
-        <?php else: ?>
-            <p><input type="checkbox" id="pureclarity-magento-brand-feed" disabled/><label for="pureclarity-magento-brand-feed" class="disabled">Brands (Disabled)</label></p>
-            <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
-        <?php endif ?>
+        <p><input type="checkbox" id="pureclarity-magento-brand-feed"/><label for="pureclarity-magento-brand-feed">Brands</label></p>
+        <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
         <p>&nbsp;</p>
         <p>
             <button id="pureclarity_magento_run_now" onclick="runFeeds()">Run selected feeds now</button>

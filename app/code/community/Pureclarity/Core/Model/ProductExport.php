@@ -34,17 +34,18 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     public $currenciesToProcess = array();
     public $attributesToInclude = array();
     public $seenProductIds = array();
+    public $currentStore = null;
     
     // Initialise the model ready to call the product data for the give store.
-    public function _construct($storeId)
-    {    
-        echo $storeId;
+    public function init($storeId)
+    {
         // Use this store, if not passed in.
         $this->storeId = $storeId;
         if (is_null($this->storeId)) {
-            echo "setting store!";
             $this->storeId = Mage::app()->getStore()->getId();
         }
+        
+        $this->currentStore = Mage::getModel('core/store')->load($this->storeId);
 
         // Set Currency list
         $currencyModel = Mage::getModel('directory/currency'); 
@@ -63,8 +64,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $brandCode = '';
         $brandLookup = [];
         // If brand feed is enabled, get the brands
-        if(Mage::helper('pureclarity_core')->isBrandFeedEnabled()) {
-            $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode();
+        if(Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
+            $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($this->storeId);
             // Send progress updates to /dev/null, as this is just part of the product feed.
             // This is to avoid conflicting if both brand and product feeds are run simultaneously
             $nullFile = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'? "nul" : "/dev/null";
@@ -78,7 +79,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->getItems();
         $attributesToExclude = array("prices", "price");
         // Brand code is included separately, so add to exclude attributes list
-        if(Mage::helper('pureclarity_core')->isBrandFeedEnabled()) {
+        if(Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
             $attributesToExclude[] = strtolower($brandCode);
         }
 
@@ -97,6 +98,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $currentPage = 1;
         $pages = 0;
         $feedProducts = array();
+        $this->updateProgressFile($progressFileName, 0, 1, "false");
         do {
             $result = $this->getFullProductFeed(20, $currentPage);
             $pages = $result["Pages"];
@@ -125,20 +127,20 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     {
         // Get product collection
         $products = Mage::getModel('pureclarity_core/product')->getCollection()
-            ->addStoreFilter($this->storeId)
+            ->setStoreId($this->storeId)
             ->addUrlRewrite()
             ->addAttributeToSelect('*')
             ->addAttributeToFilter("status", array("eq" => Mage_Catalog_Model_Product_Status::STATUS_ENABLED))
             ->addFieldToFilter('visibility', Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH)
             ->setPageSize($pageSize)
             ->setCurPage($currentPage);
-        
+            
         // Get pages
         $pages = $products->getLastPageNumber();
         if ($currentPage > $pages) {
             $products = array();
         }
-
+        
         // Loop through products
         $feedProducts = array();
         foreach($products as $product) {
@@ -215,10 +217,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 }
                 // Set child products if we have any
                 $this->childProducts($childProducts, $data);
-
                 // Set prices
                 $this->setProductPrices($product, $data, $childProducts);
-                
                 // Add to feed array
                 $feedProducts[] = $data;
                 // Add to hash to make sure we don't get dupes
@@ -226,7 +226,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             }
 
         }
-
+        
         $products->clear;
         return  array(
             "Pages" => $pages,
@@ -250,17 +250,15 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     }
 
     protected function addValueToDataArray(&$data, $key, $value){
-        if ($value !== null && !in_array($value, $data[$key])){
+        if ($value !== null && (!is_array($data[$key]) || !in_array($value, $data[$key]))){
             $data[$key][] = $value;
         }
     }
 
     protected function setProductPrices($product, &$data, &$childProducts = null)
     {
-
         // TODO - Get Customer Group Prices
         $groupPrices = $product->getData('group_price');
-        print_r($groupPrices);
 
         $basePrices = $this->getProductPrice($product, false, true, $childProducts);
         $baseFinalPrices = $this->getProductPrice($product, true, true, $childProducts);
@@ -289,7 +287,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         return Mage::helper('directory')->currencyConvert($price, $this->baseCurrencyCode, $to);
     }
 
-     protected function getProductPrice(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true, &$childProducts) {
+     protected function getProductPrice(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true, &$childProducts = null) {
         $minPrice = 0;
         $maxPrice = 0;
         switch ($product->getTypeId()) {
@@ -329,7 +327,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     $lowestPrice = false;
                     $highestPrice = false;
                     foreach ($associatedProducts as $associatedProduct) {
-                        $productModel = Mage::getModel('pureclarity_core/product')->load($associatedProduct->getId());
+                        $productModel = Mage::getModel('catalog/product')->load($associatedProduct->getId());
                         $variationPrices = $this->getProductPrice($productModel, $getFinalPrice, true);
                         
                         if (!$lowestPrice || $variationPrices['min'] < $lowestPrice) {
@@ -352,8 +350,13 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                         if (is_array($attributePrices)) {
                             foreach($attributePrices as $attributePrice){
                                 if (isset($attributePrice['pricing_value']) && isset($attributePrice['is_percent'])){
-                                    $helper = Mage::helper('catalog/product_type_composite');
-                                    $priceValue = $helper->preparePrice($product, $attributePrice['pricing_value'], $attributePrice['is_percent']);
+                                    if ($attributePrice['is_percent']) {
+                                        $priceValue = $price * $attributePrice['pricing_value'] / 100;
+                                    }
+                                    else {
+                                        $priceValue = $attributePrice['pricing_value'];
+                                    }
+                                    $priceValue = $this->convertPrice($priceValue, true);
                                     if ($priceValue > $maxOptionPrice)
                                         $maxOptionPrice = $priceValue;
                                 }
@@ -403,7 +406,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 }
             }
             $productBrand = null;
-            if (Mage::helper('pureclarity_core')->isBrandFeedEnabled()) {
+            if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
                 $brandID = $product->getData($brandCode);
                 $productBrand = $brandLookup[$brandID];
                 if ($productBrand !== null) {
@@ -411,6 +414,20 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 }
             }
         }
+    }
+
+    protected function convertPrice($price, $round = false)
+    {
+        if (empty($price)) {
+            return 0;
+        }
+
+        $price = $this->currentStore->convertPrice($price);
+        if ($round) {
+            $price = $this->currentStore->roundPrice($price);
+        }
+
+        return $price;
     }
 
 
