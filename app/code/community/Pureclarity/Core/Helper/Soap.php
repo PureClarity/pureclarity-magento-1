@@ -1,68 +1,53 @@
 <?php
-/**
- * PureClarity SOAP Helper for API Calls
- *
- * @title       Pureclarity_Core_Helper
- * @category    Pureclarity
- * @package     Pureclarity_Core
- * @author      Douglas Radburn <douglas.radburn@purenet.co.uk>
- * @copyright   Copyright (c) 2016 Purenet http://www.purenet.co.uk
- */
+/*****************************************************************************************
+ * Magento
+ * NOTICE OF LICENSE
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *  
+ * DISCLAIMER
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *  
+ * @category  PureClarity
+ * @package   PureClarity_Core
+ * @author    PureClarity Technologies Ltd (www.pureclarity.com)
+ * @copyright Copyright (c) 2017 PureClarity Technologies Ltd
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *****************************************************************************************/
+
 class Pureclarity_Core_Helper_Soap
 {
-
-    const PRODUCTION_VALUE      = 1;
-    const STAGING_VALUE         = 0;
-
-    const FEED_URL_PRODUCTION   = 'https://api.pureclarity.net';
-    const FEED_URL_UAT          = 'http://staging01-api.pureclarity.net';  
-
-    const MOTO_URL              = '/api/track/appid={access_key}&evt=moto_order_track';
-
-    const LOG_FILE              = "pureclarity_soap.log";
     
-    protected $feedUrl          = '';
-    protected $motoUrl          = '';
+    const LOG_FILE = "pureclarity_soap.log";
+    
 
-    /**
-     * Pureclarity_Core_Helper_Soap constructor.
-     */
-    public function __construct()
+    public function request($url, $useSSL, $payload = null)
     {
-        if(Mage::getStoreConfig("pureclarity_core/environment/mode") == self::PRODUCTION_VALUE) {
-            $this->feedUrl = self::FEED_URL_PRODUCTION;
-        } else {
-            $this->feedUrl = self::FEED_URL_UAT;
-        }
-        $this->motoUrl = str_replace('{access_key}', Mage::helper('pureclarity_core')->getAccessKey() , self::MOTO_URL);
-    }
-
-    /**
-     * @param null $payload
-     * @param $additional
-     * @return mixed
-     */
-    public function makeRequest($payload = null, $additional)
-    {
-
-        if ($payload == null) {
-            Mage::log("Payload has not been set.", null, self::LOG_FILE);
-        }
 
         $soap_do = curl_init();
-        curl_setopt($soap_do, CURLOPT_URL, $this->feedUrl . $additional);
-        curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 3000);
-        curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 3000);
+        curl_setopt($soap_do, CURLOPT_URL, $this->url);
+        curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 5000);
+        curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 10000);
         curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($soap_do, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($soap_do, CURLOPT_POST, true);
-        curl_setopt($soap_do, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($soap_do, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($payload))
-        );
+        curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, $useSSL);
+        curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, $useSSL);
+
+        if ($payload != null){
+            curl_setopt($soap_do, CURLOPT_POST, true);
+            curl_setopt($soap_do, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($soap_do, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Content-Length: ' . strlen($payload)));
+        }
+        else {
+            curl_setopt($soap_do, CURLOPT_POST, false);
+        }
 
         curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
         curl_setopt($soap_do, CURLOPT_VERBOSE, true);
@@ -73,54 +58,18 @@ class Pureclarity_Core_Helper_Soap
 
         curl_close($soap_do);
 
-        Mage::log("------------------ BEGIN SOAP TRANSACTION ------------------", null, self::LOG_FILE);
         Mage::log("------------------ REQUEST ------------------", null, self::LOG_FILE);
-        Mage::log(print_r($this->feedUrl . $additional, true), null, self::LOG_FILE);
-        Mage::log(print_r($payload, true), null, self::LOG_FILE);
+        Mage::log(print_r($this->url, true), null, self::LOG_FILE);
+        if ($payload != null)
+            Mage::log(print_r($payload, true), null, self::LOG_FILE);
         Mage::log("------------------ RESPONSE ------------------", null, self::LOG_FILE);
         Mage::log(print_r($result, true), null, self::LOG_FILE);
-        Mage::log("------------------ END SOAP TRANSACTION ------------------", null, self::LOG_FILE);
-
-        return $result;
-
-    }
-
-    /**
-     * Makes a GET request to PureClarity for Feed Notification
-     *
-     * @param $additional
-     * @return mixed
-     */
-    public function makeGetRequest($additional)
-    {
-        $soap_do = curl_init();
-        curl_setopt($soap_do, CURLOPT_URL, $this->feedUrl . $additional);
-        curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 3000);
-        curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 3000);
-        curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($soap_do, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($soap_do, CURLOPT_POST, false);
-
-        curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
-        curl_setopt($soap_do, CURLOPT_VERBOSE, true);
-
-        if (!$result = curl_exec($soap_do)) {
-            Mage::log(curl_errno($soap_do) . curl_error($soap_do));
-        }
-
-        curl_close($soap_do);
-
-        Mage::log("------------------ BEGIN SOAP TRANSACTION " . __METHOD__ . " ------------------", null, self::LOG_FILE);
-        Mage::log("------------------ REQUEST ------------------", null, self::LOG_FILE);
-        Mage::log(var_export($this->feedUrl . $additional, true), null, self::LOG_FILE);
-        Mage::log("------------------ RESPONSE ------------------", null, self::LOG_FILE);
-        Mage::log(print_r($result, true), null, self::LOG_FILE);
-        Mage::log("------------------ END SOAP TRANSACTION ------------------", null, self::LOG_FILE);
+        Mage::log("------------------ END PRODUCT DELTA ------------------", null, self::LOG_FILE);
 
         return $result;
     }
+
+
 
     /**
      * Makes a GET request to PureClarity for MOTO Orders
@@ -129,7 +78,7 @@ class Pureclarity_Core_Helper_Soap
      * @param null $orderItems
      * @return mixed
      */
-    public function makeMotoGetRequest($order = null, $orderItems = null)
+    public function motoOrderGetRequest($order = null, $orderItems = null)
     {
 
         $additional = '';
@@ -157,8 +106,11 @@ class Pureclarity_Core_Helper_Soap
             $i++;
         }
 
+        $url = Mage::helper('pureclarity_core')->getMotoEndpoint($storeId);
+        $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
+
         $soap_do = curl_init();
-        curl_setopt($soap_do, CURLOPT_URL, $this->feedUrl . $this->motoUrl . $additional);
+        curl_setopt($soap_do, CURLOPT_URL, $this->url . $this->motoUrl . $additional);
         curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 3000);
         curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 3000);
         curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);

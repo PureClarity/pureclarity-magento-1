@@ -27,112 +27,178 @@
 */
 class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
-    // TODO For development, use the amazon link, otherwise use the pcs.pureclarity.net link
-    protected $_apiAccessUrl = '//pcs.pureclarity.net';
-    //protected $_apiAccessUrl = '//pc-tc.s3-eu-west-1.amazonaws.com';
 
-    const PRODUCTION_VALUE  = 1;
-    const STAGING_VALUE     = 0;
-
-    const PRODUCTION_SCRIPT = 'cs';
-    const STAGING_SCRIPT    = 'test-cs';
+    // ENDPOINTS
+    protected $apiAccessUrl = '//pcs.pureclarity.net';
+    protected $regions = array(1 => 'api.pureclarity.net/',         
+                               2 => 'api-us-e.pureclarity.net/',
+                               3 => 'api-us-w.pureclarity.net/',
+                               4 => 'api-ap-s.pureclarity.net/',
+                               5 => 'api-ap-ne.pureclarity.net/',
+                               6 => 'api-ap-se.pureclarity.net/',
+                               7 => 'api-ap-se2.pureclarity.net/',
+                               8 => 'api-ap-ne2.pureclarity.net/',
+                               9 => 'api-eu-c.pureclarity.net/',
+                               10 => 'api-eu-w.pureclarity.net/');
 
     const FEED_TYPE_PRODUCT  = 'product';
     const FEED_TYPE_CATEGORY = 'category';
     const FEED_TYPE_BRAND    = 'brand';
-
     const PROGRESS_FILE_BASE_NAME = 'pureclarity_feed_progress';
+    const PURECLARITY_EXPORT_URL = 'pureclarity/exports?storeId={storeid}&type={type}';
 
-    public function isActive()
+
+    // Environment Variables
+    public function isActive($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/environment/active");
+        return Mage::getStoreConfig("pureclarity_core/environment/active", $storeId);
     }
 
-    public function isBMZDebugActive()
+    public function getAdminUrl()
     {
-        return Mage::getStoreConfig("pureclarity_core/advanced/bmz_debug");
+        return "https://admin.pureclarity.net";
     }
 
-    public function isSearchActive()
+    // Credentials
+    public function getAccessKey($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/environment/search_active");
+        return Mage::getStoreConfig("pureclarity_core/credentials/access_key", $storeId);
+    }
+
+    public function getSecretKey($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/credentials/secret_key", $storeId);
+    }
+
+    public function getRegion($storeId)
+    {
+        $region = Mage::getStoreConfig("pureclarity_core/credentials/region", $storeId);
+        if ($region == null)
+            $region = 1;
+        return $region;
+    }
+
+    
+    // General Config 
+    public function isSearchActive($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $storeId);
     }
 
     public function isFeedNotificationActive($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/environment/notify_feed", $storeId);
-    }
-
-    public function getAccessKey($storeId = null)
-    {
-        if (is_null(storeId)) {
-            $storeId = Mage::app()->getStore()->getId();
+        if ($this->isActive($storeId)){
+            return Mage::getStoreConfig("pureclarity_core/general_config/notify_feed", $storeId);
         }
-        return Mage::getStoreConfig("pureclarity_core/credentials/access_key", $storeId);
+        return false;
     }
 
-    public function getBrandAttributeCode($storeId)
+    public function isDeltaNotificationActive($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/brand_feed/attribute_code", $storeId);
+        if ($this->isActive($storeId)){
+            return Mage::getStoreConfig("pureclarity_core/general_config/delta_feed", $storeId);
+        }
+        return false;
     }
 
     public function isBrandFeedEnabled($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/brand_feed/enabled", $storeId);
+        if ($this->isActive($storeId)){
+            return Mage::getStoreConfig("pureclarity_core/general_config/brand_feed_enabled", $storeId);
+        }
+        return false;
     }
 
+    public function getBrandAttributeCode($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/general_config/brand_attribute_code", $storeId);
+    }
+
+
+    // Placeholders
+    public function getProductPlaceholderUrl($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_product", $storeId);
+    }
+
+    public function getCategoryPlaceholderUrl($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_category", $storeId);
+    }
+
+    public function getSecondaryCategoryPlaceholderUrl($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_category_secondary", $storeId);
+    }
+
+    public function getBrandPlaceholderUrl($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_brand", $storeId);
+    }
+
+
+    // ADVANCED
+    public function isBMZDebugActive($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/advanced/bmz_debug", $storeId);
+    }
+
+
+
+    // END POINTS
+    public function getHost($storeId){
+        $pureclarityHostEnv = getenv('PURECLARITY_MAGENTO_HOST');
+        if ($pureclarityHostEnv != null && $pureclarityHostEnv != '')
+            return $pureclarityHostEnv;
+        $region = $this->getRegion($storeId);
+        return $this->regions[$region];
+    }
+
+    public function useSSL($storeId){
+        $pureclarityHostEnv = getenv('PURECLARITY_MAGENTO_USESSL');
+        if ($pureclarityHostEnv != null && strtolower($pureclarityHostEnv) == 'false')
+            return false;
+        return true;
+    }
+
+    public function getDeltaEndpoint($storeid){
+        return $this->getHost($storeId) . 'api/productdelta';
+    }
+
+    public function getMotoEndpoint($storeid){
+        return $this->getHost($storeId) . 'api/track/appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
+    }
+
+    public function getFeedNotificationEndpoint($storeId, $websiteDomain, $feedType){
+        $returnUrl = $websiteDomain . '/' . self::PURECLARITY_EXPORT_URL;
+        $returnUrl = str_replace('{storeid}', $storeId, $returnUrl);
+        $returnUrl = str_replace('{type}', $feedType, $returnUrl);
+        return $this->getHost($storeId) . 'api/productfeed?appkey=' . $this->getAccessKey($storeId) . '&url='. urlencode($returnUrl) . '&feedtype=magentoplugin1.0.0';
+    }
+
+    public function getFeedBody($storeId){
+        return array("AccessKey" => $this->getAccessKey($storeId), "SecretKey" => $this->getSecretKey($storeId));
+    }
+
+
+
+    // MISC/HELPER METHODS
     public function getApiAccessUrl()
     {
-        return $this->_apiAccessUrl;
+        return $this->apiAccessUrl;
     }
 
-    public function getFullFeedProdUrl()
+    public function getApiStartUrl()
     {
-        return Mage::getStoreConfig("pureclarity_core/override_urls/full_feed_prod_url");
+        return $this->apiAccessUrl . '/' . $this->getAccessKey($this->getStoreId()) . '/cs.js';
     }
 
-    public function getFullFeedCatUrl()
+    protected function getStoreId($storeId = null)
     {
-        return Mage::getStoreConfig("pureclarity_core/override_urls/full_feed_cat_url");
-    }
-
-    public function getFullFeedBrandUrl()
-    {
-        return Mage::getStoreConfig("pureclarity_core/override_urls/full_feed_brand_url");
-    }
-
-    public function getProductPlaceholderUrl()
-    {
-        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_product");
-    }
-
-    public function getCategoryPlaceholderUrl()
-    {
-        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_category");
-    }
-
-    public function getSecondaryCategoryPlaceholderUrl()
-    {
-        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_category_secondary");
-    }
-
-    public function getBrandPlaceholderUrl()
-    {
-        return Mage::getStoreConfig("pureclarity_core/placeholders/placeholder_brand");
-    }
-
-    public function getScriptFile()
-    {
-        if(Mage::getStoreConfig("pureclarity_core/environment/mode") == self::PRODUCTION_VALUE) {
-            return self::PRODUCTION_SCRIPT;
-        } else {
-            return self::STAGING_SCRIPT;
+        if (is_null(storeId)) {
+            $storeId = Mage::app()->getStore()->getId();
         }
-    }
-
-    public function isProduction()
-    {
-        return Mage::getStoreConfig("pureclarity_core/environment/mode") == self::PRODUCTION_VALUE;
+        return $storeId;
     }
 
     public function getOrderObject()
@@ -152,14 +218,18 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
                 throw new \Exception("Pureclarity feed type not recognised: $feedtype");
         }
     }
-
-    public static function progressFileName($feedtype){
-        // Get the path to the file that stores the progress for the specified feed.
-        $varDir = Mage::getBaseDir('var');
-        $feedName = self::feedName($feedtype);
-        $fullPath = $varDir . DS . self::PROGRESS_FILE_BASE_NAME . $feedName;
-        return $fullPath;
+    
+    public static function getPureClarityBaseDir(){
+        $varDir = Mage::getBaseDir('var') . DS . 'pureclarity';
+        $fileIo = new Varien_Io_File();
+        $fileIo->mkdir($varDir);
+        return $varDir;
     }
+
+    public static function getProgressFileName($feedtype){
+        return self::getPureClarityBaseDir() . DS . self::PROGRESS_FILE_BASE_NAME . self::feedName($feedtype);
+    }
+
 
     public function getOrder()
     {

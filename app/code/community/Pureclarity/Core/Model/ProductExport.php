@@ -92,46 +92,21 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         }
     }
 
-    // Process the product feed and update the progress file.
-    public function processFeed($progressFileName)
-    {
-        $currentPage = 1;
-        $pages = 0;
-        $feedProducts = array();
-        $this->updateProgressFile($progressFileName, 0, 1, "false");
-        do {
-            $result = $this->getFullProductFeed(20, $currentPage);
-            $pages = $result["Pages"];
-            $feedProducts = array_merge($feedProducts,$result["Products"]);
-            $this->updateProgressFile($progressFileName, $currentPage, $pages, "false");
-            $currentPage++;
-        } while ($currentPage <= $pages);
-        $this->updateProgressFile($progressFileName, $currentPage, $pages, "true");
-        return  array(
-            "Products" => $feedProducts,
-            "Pages" => $pages
-        );
-    }
-
-    // Helper function to update the progress file
-    protected function updateProgressFile($progressFileName, $currentPage, $pages, $isComplete)
-    {
-        $progressFile = fopen($progressFileName, "w");
-        fwrite($progressFile, "{\"name\":\"product\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete}" );
-        fclose($progressFile);
-    }
 
     
     // Get the full product feed for the given page and size
     public function getFullProductFeed($pageSize = 1000000, $currentPage = 1)
     {
         // Get product collection
+        $validVisiblity = array('in' => array(Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH, 
+                                              Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG, 
+                                              Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH));
         $products = Mage::getModel('pureclarity_core/product')->getCollection()
             ->setStoreId($this->storeId)
             ->addUrlRewrite()
             ->addAttributeToSelect('*')
             ->addAttributeToFilter("status", array("eq" => Mage_Catalog_Model_Product_Status::STATUS_ENABLED))
-            ->addFieldToFilter('visibility', Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH)
+            ->addFieldToFilter('visibility', $validVisiblity)
             ->setPageSize($pageSize)
             ->setCurPage($currentPage);
             
@@ -144,87 +119,9 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         // Loop through products
         $feedProducts = array();
         foreach($products as $product) {
-
-            // Check hash that we've not already seen this product
-            if($this->seenProductIds[$product->getId()]===null) {
-
-                // Set Category Ids for product
-                $categories = $product->getCategoryIds();
-                $categoryCollection = Mage::getModel('catalog/category')->getCollection()
-                    ->addAttributeToSelect('name')
-                    ->addAttributeToFilter('entity_id', array('in' => $categories))
-                    ->addFieldToFilter('is_active', array("in" => array('1')));
-                
-                // Get a list of the category names
-                $categoryList = array();
-                foreach ($categoryCollection as $category) {
-                    $categoryList[] = $category->getName();
-                }
-
-                // Get Product Link URL
-                $productUrl = str_replace(Mage::getBaseUrl(), '', $product->getUrlPath());
-                $productUrl = str_replace(Mage::getUrl('', array('_secure' => true)), '', $productUrl);
-                if (substr($productUrl, 0, 1) != '/') {
-                    $productUrl = '/' . $productUrl;
-                }
-
-                // Get Product Image URL
-                $productImageUrl = '';
-                if($product->getImage() && $product->getImage() != 'no_selection'){
-                    $productImageUrl = Mage::helper('catalog/image')->init($product, 'image')->resize(250)->__toString();
-                }
-                else{
-                    $productImageUrl = Mage::helper('pureclarity_core')->getProductPlaceholderUrl();
-                    if (!$productImageUrl) {
-                        $productImageUrl = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
-                        if (!$productImageUrl) {
-                            $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
-                        }
-                    }
-                }
-                
-                // Set standard data
-                $data = array("_index" => count($feedProducts)+1);
-                $this->setProductData($product, $data);
-
-                // Set Other data
-                $data["Link"] = $productUrl;
-                $data["Image"] = $productImageUrl;
-                $data["Categories"] = $categories;
-                $data["MagentoCategories"] = array_values(array_unique($categoryList, SORT_STRING));
-                $data["MagentoProductId"] = $product->getId();
-                $data["MagentoProductType"] = $product->getTypeId();
-                $data["InStock"] = (Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getIsInStock() == 1) ? true : false;
-
-                // Add attributes
-                $this->setAttributes($product, $data);
-
-                // Look for child products in Configurable, Grouped or Bundled products
-                $childProducts = array();
-                switch ($product->getTypeId()) {
-                    case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
-                        $childIds = Mage::getModel('catalog/product_type_configurable')->getChildrenIds($product->getId());
-                        $childProducts = Mage::getModel('pureclarity_core/product')->getCollection()
-                                ->addAttributeToSelect('*')
-                                ->addFieldToFilter('entity_id', array('in'=> $childIds));
-                        break;
-                    case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
-                        $childProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
-                        break;
-                    case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
-                        $childProducts = $product->getTypeInstance(true)->getSelectionsCollection($product->getTypeInstance(true)->getOptionsIds($product), $product);
-                        break;
-                }
-                // Set child products if we have any
-                $this->childProducts($childProducts, $data);
-                // Set prices
-                $this->setProductPrices($product, $data, $childProducts);
-                // Add to feed array
+            $data = $this->processProduct($product);
+            if ($data != null)
                 $feedProducts[] = $data;
-                // Add to hash to make sure we don't get dupes
-                $this->seenProductIds[$product->getId()] = true;
-            }
-
         }
         
         $products->clear;
@@ -232,6 +129,93 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             "Pages" => $pages,
             "Products" => $feedProducts
         );
+    }
+
+    // Gets the data for a product.
+    public function processProduct(&$product)
+    {
+        // Check hash that we've not already seen this product
+        if($this->seenProductIds[$product->getId()]===null) {
+
+            // Set Category Ids for product
+            $categories = $product->getCategoryIds();
+            $categoryCollection = Mage::getModel('catalog/category')->getCollection()
+                ->addAttributeToSelect('name')
+                ->addAttributeToFilter('entity_id', array('in' => $categories))
+                ->addFieldToFilter('is_active', array("in" => array('1')));
+            
+            // Get a list of the category names
+            $categoryList = array();
+            foreach ($categoryCollection as $category) {
+                $categoryList[] = $category->getName();
+            }
+
+            // Get Product Link URL
+            $productUrl = str_replace(Mage::getBaseUrl(), '', $product->getUrlPath());
+            $productUrl = str_replace(Mage::getUrl('', array('_secure' => true)), '', $productUrl);
+            if (substr($productUrl, 0, 1) != '/') {
+                $productUrl = '/' . $productUrl;
+            }
+
+            // Get Product Image URL
+            $productImageUrl = '';
+            if($product->getImage() && $product->getImage() != 'no_selection'){
+                $productImageUrl = Mage::helper('catalog/image')->init($product, 'image')->resize(250)->__toString();
+            }
+            else{
+                $productImageUrl = Mage::helper('pureclarity_core')->getProductPlaceholderUrl($this->storeId);
+                if (!$productImageUrl) {
+                    $productImageUrl = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
+                    if (!$productImageUrl) {
+                        $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
+                    }
+                }
+            }
+            
+            // Set standard data
+            $data = array("_index" => count($feedProducts)+1);
+            $this->setProductData($product, $data);
+
+            // Set Other data
+            $data["Link"] = $productUrl;
+            $data["Image"] = $productImageUrl;
+            $data["Categories"] = $categories;
+            $data["MagentoCategories"] = array_values(array_unique($categoryList, SORT_STRING));
+            $data["MagentoProductId"] = $product->getId();
+            $data["MagentoProductType"] = $product->getTypeId();
+            $data["InStock"] = (Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getIsInStock() == 1) ? true : false;
+            $data["Visibility"] = $product->getVisibility();
+
+            // Add attributes
+            $this->setAttributes($product, $data);
+
+            // Look for child products in Configurable, Grouped or Bundled products
+            $childProducts = array();
+            switch ($product->getTypeId()) {
+                case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
+                    $childIds = Mage::getModel('catalog/product_type_configurable')->getChildrenIds($product->getId());
+                    $childProducts = Mage::getModel('pureclarity_core/product')->getCollection()
+                            ->addAttributeToSelect('*')
+                            ->addFieldToFilter('entity_id', array('in'=> $childIds));
+                    break;
+                case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
+                    $childProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
+                    break;
+                case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
+                    $childProducts = $product->getTypeInstance(true)->getSelectionsCollection($product->getTypeInstance(true)->getOptionsIds($product), $product);
+                    break;
+            }
+            // Set child products if we have any
+            $this->childProducts($childProducts, $data);
+            // Set prices
+            $this->setProductPrices($product, $data, $childProducts);
+            // Add to hash to make sure we don't get dupes
+            $this->seenProductIds[$product->getId()] = true;
+
+            // Add to feed array
+            return $data;
+        }
+        return null;
     }
 
     protected function childProducts($products, &$data){

@@ -2,14 +2,17 @@
 <config>
     <default>
         <pureclarity_core>
-            <brand_feed>
-                <attribute_code>brand</attribute_code>
-            </brand_feed>
+            <general_config>
+                <brand_attribute_code>brand</brand_attribute_code>
+            </general_config>
+            <credentials>
+                <region>1</region>
+            </credentials>
         </pureclarity_core>
     </default>
     <modules>
         <Pureclarity_Core>
-            <version>0.5.0</version>
+            <version>1.0.0</version>
         </Pureclarity_Core>
     </modules>
     <global>

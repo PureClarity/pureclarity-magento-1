@@ -1,12 +1,12 @@
 <?php
-if(Mage::helper('pureclarity_core')->isActive()):
+if(Mage::helper('pureclarity_core')->isActive(Mage::helper('pureclarity_core')->getStoreId())):
 ?>
 <script type="text/javascript">
     (function(w, d, s, u, f) {
         w['PureClarityObject'] = f;w[f] = w[f] || function() {(w[f].q = w[f].q || []).push(arguments)}
         var p = d.createElement(s), h = d.getElementsByTagName(s)[0];
         p.src = u;p.async=1;h.parentNode.insertBefore(p, h);
-    })(window, document, 'script', '<?php echo Mage::helper('pureclarity_core')->getApiAccessUrl();?>/<?php echo Mage::helper('pureclarity_core')->getAccessKey();?>/<?php echo Mage::helper('pureclarity_core')->getScriptFile();?>.js', '_pc');
+    })(window, document, 'script', '<?php echo Mage::helper('pureclarity_core')->getApiStartUrl();?>', '_pc');
     _pc('page_view');
 </script>
 <?php

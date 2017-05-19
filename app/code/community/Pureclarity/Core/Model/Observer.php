@@ -171,8 +171,8 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
 
     public function beforeDeltaSave(Varien_Event_Observer $observer)
     {
-
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        $product = $observer->getEvent()->getProduct();
+        if(!Mage::helper('pureclarity_core')->isActive($product->getStoreId())) {
             return;
         }
 
@@ -184,82 +184,22 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
     public function saveDelta(Varien_Event_Observer $observer)
     {
 
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        $product = $observer->getEvent()->getProduct();
+        
+        if(!Mage::helper('pureclarity_core')->isActive($product->getStoreId())) {
             return;
         }
 
-        $product = $observer->getEvent()->getProduct();
-
-        $deltaRecord = false;
-        $deleted = false;
-
-        if($product->getData('thumbnail') != $product->getOrigData('thumbnail')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('small_image') != $product->getOrigData('small_image')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('image') != $product->getOrigData('image')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('swatch_image') != $product->getOrigData('swatch_image')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('media_gallery') != $product->getOrigData('media_gallery')) {
-            $deltaRecord = true;
-        }
-
-        // process rules
-        if($product->getData('sku') != $product->getOrigData('sku')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('name') != $product->getOrigData('name')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('description') != $product->getOrigData('description')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('url_key') != $product->getOrigData('url_key')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getCategoryIds() != Mage::registry('product_categories')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('price') != $product->getOrigData('price')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('special_price') != $product->getOrigData('special_price')) {
-            $deltaRecord = true;
-        }
-
-        if($product->getData('status') == Mage_Catalog_Model_Product_Status::STATUS_DISABLED) {
-            $deleted = true;
-        }
-
-        if($deltaRecord == true || $deleted == true) {
-            $deltaProduct = Mage::getModel('pureclarity_core/productFeed');
-            $deltaProduct->setData(
-                array(
-                    'product_id'    => $product->getId(),
-                    'deleted'       => ($deleted == true) ? 1 : 0,
-                    'token'         => '',
-                    'status_id'     => 0
-                )
-            );
-
-            $deltaProduct->save();
-        }
-
+        $deltaProduct = Mage::getModel('pureclarity_core/productFeed');
+        $deltaProduct->setData(
+            array(
+                'product_id'    => $product->getId(),
+                'token'         => '',
+                'status_id'     => 0,
+                'store_id'      => $product->getStoreId()
+            )
+        );
+        $deltaProduct->save();
     }
 
     public function motoOrder(Varien_Event_Observer $observer)
@@ -279,8 +219,6 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             'ordertotal'    => $order->getGrandTotal(),
             'productcount'  => count($order->getAllItems())
         );
-
-        Mage::log($information);
 
         Mage::helper('pureclarity_core/soap')->makeMotoGetRequest($information, $order->getAllItems());
 

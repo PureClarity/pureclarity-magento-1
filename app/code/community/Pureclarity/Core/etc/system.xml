@@ -34,31 +34,47 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </active>
-                        <notify_feed translate="label">
-                            <label>Daily Feed Active</label>
-                            <frontend_type>select</frontend_type>
-                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                    </fields>
+                </environment>
+                <credentials>
+                    <label>Credentials</label>
+                    <sort_order>2</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <comment><![CDATA[<strong>The Access Key is website and store specific. If you have a different access key for each store view, for example to integrate to PureClarity in different languages, you must set a separate key for each store.</strong>]]></comment>
+                    <fields>
+                        <access_key>
+                            <label>Access Key</label>
+                            <frontend_type>text</frontend_type>
                             <sort_order>1</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </notify_feed>
-                        <mode>
-                            <label>Mode</label>
-                            <frontend_type>select</frontend_type>
-                            <source_model>pureclarity_core/system_config_source_mode</source_model>
+                        </access_key>
+                        <secret_key>
+                            <label>Secret Key</label>
+                            <frontend_type>text</frontend_type>
                             <sort_order>2</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>Select which environment to run in</strong>]]></comment>
-                        </mode>
+                        </secret_key>
+                        <region>
+                            <label>Region</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>pureclarity_core/system_config_source_region</source_model>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </region>
                     </fields>
-                </environment>
+                </credentials>
                 <general_config>
                     <label>General configuration</label>
                     <frontend_type>text</frontend_type>
-                    <sort_order>2</sort_order>
+                    <sort_order>4</sort_order>
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
@@ -71,59 +87,92 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>Select if PureClarity Search should be enabled</strong>]]></comment>
                         </search_active>
-                    </fields>
-                </general_config>
-                <credentials>
-                    <label>Credentials</label>
-                    <sort_order>3</sort_order>
-                    <show_in_default>1</show_in_default>
-                    <show_in_website>1</show_in_website>
-                    <show_in_store>1</show_in_store>
-                    <comment><![CDATA[<strong>The Access Key is Website and Store Specific. If you have a different access key for each store view, for example to integrate to PureClarity in different languages, you must set a separate key for each store.</strong>]]></comment>
-                    <fields>
-                        <access_key>
-                            <label>Access Key</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>1</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                        </access_key>
-                    </fields>
-                </credentials>
-                <brand_feed>
-                    <label>Brand Feed</label>
-                    <frontend_type>text</frontend_type>
-                    <sort_order>4</sort_order>
-                    <show_in_default>1</show_in_default>
-                    <show_in_website>1</show_in_website>
-                    <show_in_store>1</show_in_store>
-                    <fields>
-                        <enabled translate="label">
-                            <label>Enable brand feed</label>
+                        <notify_feed translate="label">
+                            <label>Daily Feed Active</label>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
-                            <sort_order>1</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                        </enabled>
-                        <attribute_code>
-                            <label>Brand attribute code</label>
-                            <frontend_type>text</frontend_type>
                             <sort_order>2</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>Choose if a full data set should be pushed to PureClarity in the early hours each day</strong>]]></comment>
+                        </notify_feed>
+                        <delta_feed translate="label">
+                            <label>Delta Feed Active</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>Choose if changes to products are automatically pushed to PureClarity</strong>]]></comment>
+                        </delta_feed>
+                        <brand_feed_enabled translate="label">
+                            <label>Enable brand feed</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>4</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>If this is enabled the attribute name that has the brand values should be set below.</strong>]]></comment>
+                        </brand_feed_enabled>
+                        <brand_attribute_code>
+                            <label>Brand attribute code</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>5</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
                             <comment><![CDATA[<strong>This must match the 'Attribute Code' of your brand attribute</strong>]]></comment>
-                        </attribute_code>
+                        </brand_attribute_code>
                     </fields>
-                </brand_feed>
+                </general_config>
+                <actions>
+                    <label>Actions</label>
+                    <frontend_type>text</frontend_type>
+                    <sort_order>5</sort_order>
+                    <show_in_default>1</show_in_default>
+                    <show_in_website>1</show_in_website>
+                    <show_in_store>1</show_in_store>
+                    <fields>
+                        <go_admin_button translate="label">
+                            <label>Go to pureclarity admin site</label>
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>pureclarity_core/adminhtml_system_config_pcadminbutton</frontend_model>
+                            <sort_order>1</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </go_admin_button>
+                        <install_bmz_button translate="label">
+                            <label>Install default BMZ blocks</label>
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>pureclarity_core/adminhtml_system_config_bmzinstallbutton</frontend_model>
+                            <sort_order>2</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>If you want the default BMZ static block, click this button. You should only need to do this once, but if you deleted the default BMZ you can click this button again to reinstall it.</strong>]]></comment>
+                        </install_bmz_button>
+                        <run_feed_button translate="label">
+                            <label>Run a feed now</label>
+                            <frontend_type>button</frontend_type>
+                            <frontend_model>pureclarity_core/adminhtml_system_config_runfeedbutton</frontend_model>
+                            <sort_order>3</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>Under normal conditions; you don't need to run feeds manually, this is done automatically every day.</strong>]]></comment>
+                        </run_feed_button>
+                    </fields>
+                </actions>
                 <placeholders>
                     <label>Placeholder images</label>
                     <frontend_type>text</frontend_type>
-                    <sort_order>5</sort_order>
+                    <sort_order>6</sort_order>
                     <show_in_default>1</show_in_default>
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
@@ -166,45 +215,6 @@
                         </placeholder_brand>
                     </fields>
                 </placeholders>
-                <actions>
-                    <label>Actions</label>
-                    <frontend_type>text</frontend_type>
-                    <sort_order>6</sort_order>
-                    <show_in_default>1</show_in_default>
-                    <show_in_website>1</show_in_website>
-                    <show_in_store>1</show_in_store>
-                    <fields>
-                        <go_admin_button translate="label">
-                            <label>Go to pureclarity admin site</label>
-                            <frontend_type>button</frontend_type>
-                            <frontend_model>pureclarity_core/adminhtml_system_config_pcadminbutton</frontend_model>
-                            <sort_order>1</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                        </go_admin_button>
-                        <install_bmz_button translate="label">
-                            <label>Install default BMZ blocks</label>
-                            <frontend_type>button</frontend_type>
-                            <frontend_model>pureclarity_core/adminhtml_system_config_bmzinstallbutton</frontend_model>
-                            <sort_order>2</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>If you want the default BMZ static block, click this button. You should only need to do this once, but if you deleted the default BMZ you can click this button again to reinstall it.</strong>]]></comment>
-                        </install_bmz_button>
-                        <run_feed_button translate="label">
-                            <label>Run a feed now</label>
-                            <frontend_type>button</frontend_type>
-                            <frontend_model>pureclarity_core/adminhtml_system_config_runfeedbutton</frontend_model>
-                            <sort_order>3</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>Under normal conditions; you don't need to run feeds manually, this is done automatically every day.</strong>]]></comment>
-                        </run_feed_button>
-                    </fields>
-                </actions>
                 <advanced>
                     <label>Advanced options</label>
                     <frontend_type>text</frontend_type>
@@ -225,48 +235,7 @@
                         </bmz_debug>
                     </fields>
                 </advanced>
-                <override_urls>
-                    <label>Override URLs (Advanced)</label>
-                    <frontend_type>text</frontend_type>
-                    <sort_order>8</sort_order>
-                    <comment><![CDATA[<strong>These settings can be used to make pureclarity request data from your site via a proxy.</strong>]]></comment>
-                    <show_in_default>1</show_in_default>
-                    <show_in_website>1</show_in_website>
-                    <show_in_store>1</show_in_store>
-                    <fields>
-                        <full_feed_prod_url>
-                            <label>Override URL for full product feed</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>1</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>Leave this blank for automatic configuration</strong>]]></comment>
-                        </full_feed_prod_url>
-                        <full_feed_cat_url>
-                            <label>Override URL for full category feed</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>2</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>Leave this blank for automatic configuration</strong>]]></comment>
-                        </full_feed_cat_url>
-                        <full_feed_brand_url>
-                            <label>Override URL for full brand feed</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>3</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>Leave this blank for automatic configuration</strong>]]></comment>
-                        </full_feed_brand_url>
-                    </fields>
-                </override_urls>
             </groups>
         </pureclarity_core>
     </sections>
-
-
-
 </config>

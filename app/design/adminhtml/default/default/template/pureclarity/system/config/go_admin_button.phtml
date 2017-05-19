@@ -1,12 +1,7 @@
 <script type="text/javascript">
     //<![CDATA[
-    <?php if (Mage::helper('pureclarity_core')->isProduction()): ?>
-    const target = "http://admin.pureclarity.net";
-    <?php else: ?>
-    const target = "http://staging01.pureclarity.net";
-    <?php endif?>
     function pureclarity_magento_go_to_admin() {
-        window.location.href = target;
+        window.location.href = '<?php echo Mage::helper('pureclarity_core')->getAdminUrl(); ?>';
     }
     //]]>
 </script>

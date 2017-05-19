@@ -5,8 +5,6 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
 {
     public function productsAction()
     {
-        //echo Mage::app()->getStore()->getCode();
-
         $pageSize = (int)$this->getRequest()->getParam('size', 100000);
         $currentPage = (int)$this->getRequest()->getParam('page', 1);
 
@@ -21,6 +19,20 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
         }
         $json = Mage::helper('pureclarity_core')->formatFeed($result, $formatType);
         //$this->getResponse()->setHeader('Content-type', $contentType);
+        $this->getResponse()->setBody($json);
+    }
+
+    public function deltasAction()
+    {
+        $model = Mage::getModel('pureclarity_core/cron');
+        $requests = $model->deltaFeed(true);
+        $formatType = 'json';
+        $contentType = 'application/octet-stream';
+        if ((strnatcmp(phpversion(),'5.4.0') >= 0) && $this->getRequest()->getParam('pretty', 'false') === 'true'){
+            $formatType = 'jsonpretty';
+            $contentType = 'text/html';
+        }
+        $json = Mage::helper('pureclarity_core')->formatFeed($requests, $formatType);
         $this->getResponse()->setBody($json);
     }
 }
