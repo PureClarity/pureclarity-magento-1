@@ -180,6 +180,15 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return array("AccessKey" => $this->getAccessKey($storeId), "SecretKey" => $this->getSecretKey($storeId));
     }
 
+    public static function getFileNameForFeed($feedtype, $storeCode){
+        switch($feedtype){
+            case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:  return $storeCode . '-product.json';
+            case Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY: return $storeCode . '-category.json';
+            case Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND:    return $storeCode . '-brand.json';
+        }
+        return null;
+    }
+
 
 
     // MISC/HELPER METHODS

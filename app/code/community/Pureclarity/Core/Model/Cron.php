@@ -152,7 +152,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $store = Mage::getModel('core/store')->load($storeId);
 
         $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($feedtype);
-        $feedFilePath = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . $this->getFileNameForFeed($feedtype, $store->getCode());
+        $feedFilePath = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . Pureclarity_Core_Helper_Data::getFileNameForFeed($feedtype, $store->getCode());
 
         $feedFile = @fopen($feedFilePath, "w+");
         if ((!$feedFile) || !flock($feedFile, LOCK_EX | LOCK_NB)){
@@ -268,12 +268,5 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         return $storeUrl;
     }
 
-    private function getFileNameForFeed($feedtype, $storeCode){
-        switch($feedtype){
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:  return $storeCode . '-product.json';
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY: return $storeCode . '-category.json';
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND:    return $storeCode . '-brand.json';
-        }
-        return "UNKNOWN_FEED";
-    }
+    
 }
