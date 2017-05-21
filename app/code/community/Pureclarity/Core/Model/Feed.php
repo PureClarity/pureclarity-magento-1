@@ -25,98 +25,30 @@
 class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 {
 
-    // TODO - Review - Should this be a config item?
-    const STORE_ID = 1;
-
-    protected $notificationUrlTemplate = '{api-access-url}/appid={access_key}&url={website_root_url}%2Fpureclarity-product-feed%2F&feedtype=pureclarity_json';
-    protected $notificationUrl = null;
-
-    /**
-     * set up notification URL
-     */
-    public function _construct()
-    {
-        $this->notificationUrl = str_replace(
-            '{api-access-url}',
-            Mage::helper('pureclarity_core')->getApiAccessUrl(),
-            $this->notificationUrlTemplate
-        );
-    }
-
-    private function sanitizeCategoryName($name){
-        // TODO This is a temporary workaround
-        // Category names cannot have pipe characters in them at the moment
-        // Work ongoing to fix this.
-        return str_replace("|", "/", $name);
-    }
-
-
-
-    /**
-     *
-     * getFullCatFeed
-     *
-     * Load in ALL active categories
-     *
-     * @return array
-     */
-    function getFullCatFeed($progressFileName) {
+    function getFullCatFeed($progressFileName, $storeId) {
 
         $feedCategories = array("Categories" => array());
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
-            ->addAttributeToSelect('name')
-            ->addAttributeToSelect('image')
-            ->addAttributeToSelect('description')
-            ->addAttributeToSelect('custom_category_image')
-            ->addAttributeToSelect('category_short_description')
-            ->addAttributeToSelect('pureclarity_secondary_image')
-            ->addAttributeToSelect('pureclarity_hide_from_feed')
-            ->addAttributeToFilter('entity_id', array('nin' => array(Mage::app()->getStore(self::STORE_ID)->getRootCategoryId(), self::STORE_ID)))
-            ->addFieldToFilter('is_active',array("in"=>array('1')))
+            ->setStoreId($storeId)
+            ->addAttributeToSelect('*')
+            ->addFieldToFilter('is_active',array("eq"=> true))
             ->addUrlRewriteToResult();
+        
 
         $maxProgress = count($categoryCollection);
         $currentProgress = 0;
-        /** @var Mage_Catalog_Model_Category $categoryItem */
-        foreach ($categoryCollection as $categoryItem) {
-            $hideFromfeed = $categoryItem->getData('pureclarity_hide_from_feed');
-            if ($hideFromfeed == '1') {
+        foreach ($categoryCollection as $category) {
+
+            // Check if to ignore this category
+            if ($category->getData('pureclarity_hide_from_feed') == '1')
                 continue;
-            }
-
-            $categoryList = array();
-            $category = Mage::getModel('catalog/category')->getCollection()
-                ->addAttributeToSelect('name')
-                ->addAttributeToFilter('entity_id', array('eq' => $categoryItem->getId()))->getFirstItem();
-
-            $parentTree = array();
-            $categoryString = "";
-
-            foreach ($category->getParentCategories() as $parent) {
-                if($parent->getId() != $category->getId() && $parent->getId() != Mage::app()->getStore(self::STORE_ID)->getRootCategoryId()) {
-                    $parentTree[] = $parent->getName();
-                }
-            }
-
-            if(!empty($parentTree)) {
-                $categoryString = implode(' > ', $parentTree) . ' > ' . $category->getName();
-            } else {
-                $categoryString = $category->getName();
-            }
-
-            $categoryList[] = $category->getName();
-
-            // Finding the right image is tricky.
-            // Images are tried in this order:
-            //  1. the category's image
-            //  2. the category placeholder image as defined in the config.
-            //  3. the default peculiarity placeholder image
-            //  4. the default magento placeholder image
-            $firstImage = $categoryItem->getImageUrl();
+            
+            // Get image
+            $firstImage = $category->getImageUrl();
             if($firstImage != "") {
                 $imageURL = $firstImage;
             } else {
-                $imageURL = Mage::helper('pureclarity_core')->getCategoryPlaceholderUrl();
+                $imageURL = Mage::helper('pureclarity_core')->getCategoryPlaceholderUrl($storeId);
                 if (!$imageURL) {
                     $imageURL = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
                     if (!$imageURL) {
@@ -125,33 +57,27 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 }
             }
             $imageURL = str_replace(array("https:", "http:"), "", $imageURL);
-
-            // This image selection process is mostly the same as the above
-            // TODO - deduplicate this code.
+            
+            // Get Second Image
             $imageURL2 = null;
-            $secondImage = $categoryItem->getData('pureclarity_secondary_image');
+            $secondImage = $category->getData('pureclarity_secondary_image');
             if ($secondImage != "") {
                 $imageURL2 = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $secondImage);
             } else {
-                $imageURL2 = Mage::helper('pureclarity_core')->getSecondaryCategoryPlaceholderUrl();
+                $imageURL2 = Mage::helper('pureclarity_core')->getSecondaryCategoryPlaceholderUrl($storeId);
                 if (!$imageURL2) {
                     $imageURL2 = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
-                    if (!$imageURL2) {
-                        $imageURL2 = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
-                    }
                 }
             }
             $imageURL2 = str_replace(array("https:", "http:"), "", $imageURL2);
-
-            $catDescription = strip_tags($categoryItem->getData('description'));
-
+            
+            // Build Data
             $categoryData = array(
-
-                "Category" => sprintf("%s", $categoryString),
+                "Id" => $category->getId(),
+                "DisplayName" => $category->getName(),
+                "ParentIds" => array($category->getParentCategory()->getId()),
                 "Image" => $imageURL,
-                "Link" => sprintf("%s", str_replace(Mage::getUrl('',array('_secure'=>true)), '', $categoryItem->getUrl($categoryItem))),
-                "Description" => sprintf("%s", $catDescription)
-
+                "Link" => sprintf("/%s", str_replace(Mage::getUrl('',array('_secure'=>true)), '', $category->getUrl($category)))
             );
 
             if ($imageURL2 != null){
@@ -159,22 +85,18 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             }
 
             $feedCategories['Categories'][] = $categoryData;
-
             $currentProgress += 1;
             $progressFile = fopen($progressFileName, "w");
             fwrite($progressFile, "{\"name\":\"category\",\"cur\":$currentProgress,\"max\":$maxProgress,\"isComplete\":false}");
             fclose($progressFile);
         }
-
         return $feedCategories;
-
     }
 
 
+
+
     function getFullBrandFeed($progressFileName){
-
-                              
-
         $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode();
         try {
             $attribute = Mage::getSingleton('eav/config')
