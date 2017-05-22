@@ -34,6 +34,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     public $attributesToInclude = array();
     public $seenProductIds = array();
     public $currentStore = null;
+    public $brandCode = '';
+    public $brandLookup = array();
     
     // Initialise the model ready to call the product data for the give store.
     public function init($storeId)
@@ -59,18 +61,16 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         }
 
 
-        // TODO - SORT BRAND CODE OUT
-        $brandCode = '';
-        $brandLookup = [];
+        // Manage Brand
+        $this->brandCode = null;
+        $this->brandLookup = [];
         // If brand feed is enabled, get the brands
         if(Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
-            $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($this->storeId);
-            // Send progress updates to /dev/null, as this is just part of the product feed.
-            // This is to avoid conflicting if both brand and product feeds are run simultaneously
-            $nullFile = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN'? "nul" : "/dev/null";
-            $brands = $this->getFullBrandFeed($nullFile)["Brands"];
+            $this->brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($this->storeId);
+            $feedModel = Mage::getModel('pureclarity_core/feed');
+            $brands = $feedModel->getFullBrandFeed(null, $this->storeId)["Brands"];
             foreach ($brands as $brand){
-                $brandLookup[$brand["MagentoID"]] = $brand["Brand"];
+                $this->brandLookup[$brand["Id"]] = $brand["DisplayName"];
             }
         }
 
@@ -78,8 +78,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->getItems();
         $attributesToExclude = array("prices", "price");
         // Brand code is included separately, so add to exclude attributes list
-        if(Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
-            $attributesToExclude[] = strtolower($brandCode);
+        if($this->brandCode != null) {
+            $attributesToExclude[] = strtolower($this->brandCode);
         }
 
         // Get list of attributes to include
@@ -388,13 +388,12 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     $this->addValueToDataArray($data, $name, $attrValue);
                 }
             }
-            $productBrand = null;
-            if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
-                $brandID = $product->getData($brandCode);
-                $productBrand = $brandLookup[$brandID];
-                if ($productBrand !== null) {
-                    $data["Brand"][] = $productBrand;
-                }
+        }
+        if ($this->brandCode != null) {   
+            $brandID = $product->getData($this->brandCode);
+            $productBrand = $this->brandLookup[$brandID];
+            if ($productBrand !== null) {
+                $this->addValueToDataArray($data, 'Brand', $productBrand);
             }
         }
     }

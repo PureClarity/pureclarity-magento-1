@@ -59,16 +59,17 @@
 
             function feedComplete(request){
                 // Called when a feed AJAX returns
+                isComplete = true;
                 for (var i = 0; i<= selectedFeeds.length-1; i++){
-                    if (request.responseURL.endsWith(selectedFeeds[i])){
+                    if (request.responseURL.indexOf('feedtype=' + selectedFeeds[i]) >= 0){
                         // Set the feed to complete and the progress to 100%
                         completedFeeds.push(selectedFeeds[i]);
                         setProgress(selectedFeeds[i], 1, 1);
                     }
+                    if (completedFeeds.indexOf(selectedFeeds[i]) < 0)
+                        isComplete = false;
                 }
-                if (completedFeeds.length == selectedFeeds.length){
-                    // If all done, re-enable UI
-                    isComplete = true;
+                if (isComplete == true){
                     uiEndLoading();
                 }
             }
@@ -84,11 +85,13 @@
                         var feedProgress = new XMLHttpRequest();
                         feedProgress.onreadystatechange = function () {
                             if (this.readyState == 4 && this.status == 200) {
-                                progress = JSON.parse(this.responseText);
-                                // Update progress bar
-                                setProgress(progress.name, progress.cur, progress.max);
-                                if (progress.isComplete){
-                                    feedComplete(this);
+                                if (this.responseText != ""){
+                                    progress = JSON.parse(this.responseText);
+                                    // Update progress bar
+                                    setProgress(progress.name, progress.cur, progress.max);
+                                    if (progress.isComplete){
+                                        feedComplete(this);
+                                    }
                                 }
                             }
                             if (this.readyState == 4) {
@@ -142,12 +145,16 @@
                     startfeed.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) { feedComplete(this); }
                         if (this.readyState == 4 && this.status != 200) {
+                            console.log(this);
                             feedtype = /feedtype=([^&]*)/.exec(this.responseURL)[1];
                             if (this.status == 409) {
                                 alert("The '" + feedtype + "' feed is already running, please wait for it to finish before running it again.");
                             }
                             else {
-                                alert("The '" + feedtype + "' feed did not complete correctly. You may need to rerun this feed.");
+                                if (this.responseText != "")
+                                    alert(this.responseText);
+                                else
+                                    alert("The '" + feedtype + "' feed did not complete correctly. You may need to rerun this feed.");
                                 feedComplete(this);
                             }
                         }
@@ -164,7 +171,7 @@
         </script>
     </head>
     <body>
-        <h3>Select the store and feeds you would like to run:</h2>
+        <h4>Select the store and feeds you would like to generate:</h4>
         <p>
             Select Store:
         </p>

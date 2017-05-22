@@ -47,7 +47,14 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
                         $model->fullCategoryFeed($storeId);
                         break;
                     case "brand":
-                        $model->fullBrandFeed($storeId);
+                        if (!Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)){
+                            $this->getResponse()
+                                ->clearHeaders()->setHeader('HTTP/1.0', 405, true)
+                                ->setHeader('Content-Type', 'text/html')
+                                ->setBody('The brand feed for the selected store is disabled. Please enable it before running.');
+                        }
+                        else 
+                            $model->fullBrandFeed($storeId);
                         break;
                 }
             }
@@ -56,7 +63,7 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
             $this->getResponse()
                 ->clearHeaders()
                 ->setHeader('HTTP/1.0', 409, true)
-                ->setHeader('Content-Type', 'text/html') // can be changed to json, xml...
+                ->setHeader('Content-Type', 'text/html')
                 ->setBody('Conflict');
         }
     }
@@ -78,7 +85,10 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
                     break;
             }
             if ($progressFileName != null){
-                $this->getResponse()->setBody(file_get_contents($progressFileName));
+                $contents = '';
+                if (file_exists($progressFileName))
+                    $contents = file_get_contents($progressFileName);
+                $this->getResponse()->setBody($contents);
             }
         }
     }

@@ -96,23 +96,22 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
 
 
-    function getFullBrandFeed($progressFileName){
-        $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode();
+    function getFullBrandFeed($progressFileName, $storeId){
+        
+        $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($storeId);
         try {
             $attribute = Mage::getSingleton('eav/config')
                 ->getAttribute(Mage_Catalog_Model_Product::ENTITY, $brandCode);
         }
         catch (\Exception $e){
-            Mage::log("Unable to get brand attribute for brand feed: '$brandCode'. Does this attribute exist?", Zend_Log::ERR);
             return;
         }
 
         $feedBrands = array("Brands" => array());
-        $storeId = Mage::app()->getStore()->getId();
         $options = $attribute->setStoreId($storeId)->getSource()->getAllOptions(false);
+
         // Find the SOLWIN image helper, if installed.
         $solwinImageHelper = null;
-
         $modules = Mage::getConfig()->getNode('modules')->children();
         $modulesArray = (array)$modules;
 
@@ -126,10 +125,9 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             $imageURL = null;
             if ($solwinImageHelper != null) {
                 $id = $opt['value'];
-                // TODO - this image selection procuedure is also similar to the category code. Deduplicate.
                 $imageURL = $solwinImageHelper->getAttributeImage($id);
                 if (!$imageURL){
-                    $imageURL = Mage::helper('pureclarity_core')->getBrandPlaceholderUrl();
+                    $imageURL = Mage::helper('pureclarity_core')->getBrandPlaceholderUrl($storeId);
                     if (!$imageURL) {
                         $imageURL = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
                         if (!$imageURL) {
@@ -140,9 +138,8 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             }                                        
 
             $thisBrand = array(
-                "MagentoID" => sprintf("%s", $opt['value']),
-                "Brand" => sprintf("%s", $opt['label']),
-                //"Description" => sprintf("%s", $catDescription) // TODO Get the description for this option
+                "Id" => sprintf("%s", $opt['value']),
+                "DisplayName" => sprintf("%s", $opt['label'])
             );
             if ($imageURL != null){
                 $thisBrand['Image'] = $imageURL;
@@ -150,11 +147,12 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
             $feedBrands['Brands'][] = $thisBrand;
                               
-
             $currentProgress += 1;
-            $progressFile = fopen($progressFileName, "w");
-            fwrite($progressFile, "{\"name\":\"brand\",\"cur\":$currentProgress,\"max\":$maxProgress,\"isComplete\":false}");
-            fclose($progressFile);
+            if ($progressFile != null){
+                $progressFile = fopen($progressFileName, "w");
+                fwrite($progressFile, "{\"name\":\"brand\",\"cur\":$currentProgress,\"max\":$maxProgress,\"isComplete\":false}");
+                fclose($progressFile);
+            }
         }
         return $feedBrands;
     }

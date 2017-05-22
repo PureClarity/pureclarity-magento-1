@@ -142,13 +142,8 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     // Produce a feed and notify PureClarity so that it can fetch it.
     public function doFeed($feedtype, $storeId){
 
-        // Brand feed can be disabled separately
-        if ($feedtype == Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND && !Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId))
-            return;
-
-        $store = Mage::getModel('core/store')->load($storeId);
-
         $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($feedtype);
+        $store = Mage::getModel('core/store')->load($storeId);
         $feedFilePath = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . Pureclarity_Core_Helper_Data::getFileNameForFeed($feedtype, $store->getCode());
 
         $feedFile = @fopen($feedFilePath, "w+");
@@ -172,7 +167,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                 break;
             case Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND:
                 $feedModel = Mage::getModel('pureclarity_core/feed');
-                $feedData = $feedModel->getFullBrandFeed($progressFileName);
+                $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
                 $feedName = 'brand';
                 break;
             default:
@@ -185,9 +180,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         fclose($feedFile);
 
         // Ensure progress file is set to complete
-        $progressFile = fopen($progressFileName, "w");
-        fwrite($progressFile, "{\"name\":\"$feedName\",\"cur\":\"1\",\"max\":\"1\",\"isComplete\":true}");
-        fclose($progressFile);
+        $this->updateProgressFile($progressFileName, $feedName, 1, 1, 'true');
 
         // Notify PC about the feed being available
         $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
@@ -202,15 +195,15 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $currentPage = 1;
         $pages = 0;
         $feedProducts = array();
-        $this->updateProgressFile($progressFileName, 0, 1, "false");
+        $this->updateProgressFile($progressFileName, 'product', 0, 1, "false");
         do {
             $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
             $pages = $result["Pages"];
             $feedProducts = array_merge($feedProducts,$result["Products"]);
-            $this->updateProgressFile($progressFileName, $currentPage, $pages, "false");
+            $this->updateProgressFile($progressFileName, 'product', $currentPage, $pages, "false");
             $currentPage++;
         } while ($currentPage <= $pages);
-        $this->updateProgressFile($progressFileName, $currentPage, $pages, "true");
+        $this->updateProgressFile($progressFileName, 'product', $currentPage, $pages, "true");
         return  array(
             "Products" => $feedProducts,
             "Pages" => $pages
@@ -218,10 +211,10 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     }
 
     // Helper function to update the progress file
-    protected function updateProgressFile($progressFileName, $currentPage, $pages, $isComplete)
+    protected function updateProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete)
     {
         $progressFile = fopen($progressFileName, "w");
-        fwrite($progressFile, "{\"name\":\"product\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete}" );
+        fwrite($progressFile, "{\"name\":\"$feedName\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete}" );
         fclose($progressFile);
     }
     
