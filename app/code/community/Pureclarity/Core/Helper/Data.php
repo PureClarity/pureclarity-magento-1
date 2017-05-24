@@ -80,9 +80,14 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
     
     // General Config 
-    public function isSearchActive($storeId)
+    public function isSearchActive($storeId = null)
     {
-        return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $storeId);
+        return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $this->getStoreId($storeId));
+    }
+
+    public function isMerchActive($storeId = null)
+    {
+        return Mage::getStoreConfig("pureclarity_core/general_config/merch_active", $this->getStoreId($storeId));
     }
 
     public function isFeedNotificationActive($storeId)
@@ -138,9 +143,9 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
 
     // ADVANCED
-    public function isBMZDebugActive($storeId)
+    public function isBMZDebugActive($storeId = null)
     {
-        return Mage::getStoreConfig("pureclarity_core/advanced/bmz_debug", $storeId);
+        return Mage::getStoreConfig("pureclarity_core/advanced/bmz_debug", $this->getStoreId($storeId));
     }
 
 
@@ -202,7 +207,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $this->apiAccessUrl . '/' . $this->getAccessKey($this->getStoreId()) . '/cs.js';
     }
 
-    protected function getStoreId($storeId = null)
+    public function getStoreId($storeId = null)
     {
         if (is_null(storeId)) {
             $storeId = Mage::app()->getStore()->getId();

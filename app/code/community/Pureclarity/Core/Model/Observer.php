@@ -27,6 +27,27 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
 
     const PURECLARITY_FEED_MOTO_ENDPOINT = '/api/track?appid={access_key}&evt=moto_order_track';
 
+    public function insertBmz(Varien_Event_Observer $observer){
+        $name = $observer->getEvent()->getBlock()->getNameInLayout();
+        $block = $observer->getBlock();
+        
+        $type = $block->getType();
+        if ($name == 'content'){
+            Mage::log(get_class($block) . ' - ' . $type);
+            $block = $observer->getEvent()
+                ->getBlock()
+                ->getLayout()
+                ->createBlock('adminhtml/template')
+                ->setTemplate('pureclarity/BMZ/bmz.phtml');
+            $observer->getEvent()
+                ->getBlock()
+                ->append($block);
+        }
+    }
+
+
+    
+
     /**
      * Set data for frontend JS call when an item is added to the basket
      *

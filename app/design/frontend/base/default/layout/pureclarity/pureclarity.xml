@@ -1,32 +1,45 @@
 <?xml version="1.0"?>
-<!--
-/**
- * PureClarity Core Extension
- *
- * @category    design
- * @package     base_default
- * @copyright   Copyright (c) 2015 Purenet (http://www.purenet.co.uk)
- */
--->
-<layout version="0.1.0">
+
+<layout version="1.0.0">
+
+
+    <!-- HOME PAGE - BMZs -->
+    <cms_index_index>
+        <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp01" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>HP01</value>
+                </action>
+            </block>
+        </reference>
+    </cms_index_index>
+    
+
 
     <default>
+
         <reference name="before_body_end">
+            
             <block type="core/template" name="pureclarity.core.allpages" template="pureclarity/core/all_pages.phtml"/>
+
             <block type="core/template" name="pureclarity.core.cart_added" template="pureclarity/core/cartadded.phtml"/>
-            <block type="core/template" name="pureclarity.core.cart_removed"
-                   template="pureclarity/core/cartremoved.phtml"/>
-            <block type="core/template" name="pureclarity.core.cart_changequantity"
-                   template="pureclarity/core/cartchangequantity.phtml"/>
+
+            <block type="core/template" name="pureclarity.core.cart_removed" template="pureclarity/core/cartremoved.phtml"/>
+
+            <block type="core/template" name="pureclarity.core.cart_changequantity" template="pureclarity/core/cartchangequantity.phtml"/>
+
             <block type="core/template" name="pureclarity.core.userlogin" template="pureclarity/core/userlogin.phtml"/>
-            <block type="core/template" name="pureclarity.core.userlogout"
-                   template="pureclarity/core/userlogout.phtml"/>
+
+            <block type="core/template" name="pureclarity.core.userlogout" template="pureclarity/core/userlogout.phtml"/>
         </reference>
 
         <reference name="top.search">
+
             <action method="setTemplate" ifconfig="pureclarity_core/general_config/search_active">
                 <template>pureclarity/search/search.phtml</template>
             </action>
+
         </reference>
 
         <reference name="head">
@@ -47,8 +60,7 @@
                 <template>pureclarity/search/search_results_filters.phtml</template>
             </action>
             -->
-            <block type="pureclarity_core/search_filters" name="pureclarity.search.filters"
-                   template="pureclarity/search/search_results_filters.phtml"/>
+            <block type="pureclarity_core/search_filters" name="pureclarity.search.filters" template="pureclarity/search/search_results_filters.phtml"/>
         </reference>
     </catalogsearch_result_index>
 

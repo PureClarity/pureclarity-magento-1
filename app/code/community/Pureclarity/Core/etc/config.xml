@@ -1,5 +1,10 @@
 <?xml version="1.0"?>
 <config>
+    <modules>
+        <Pureclarity_Core>
+            <version>1.0.0</version>
+        </Pureclarity_Core>
+    </modules>
     <default>
         <pureclarity_core>
             <general_config>
@@ -10,11 +15,6 @@
             </credentials>
         </pureclarity_core>
     </default>
-    <modules>
-        <Pureclarity_Core>
-            <version>1.0.0</version>
-        </Pureclarity_Core>
-    </modules>
     <global>
         <models>
             <pureclarity_core>
@@ -58,6 +58,7 @@
             </updates>
         </layout>
         <events>
+        
             <controller_action_predispatch_checkout_cart_add>
                 <observers>
                     <pureclarity_core_cart_add>

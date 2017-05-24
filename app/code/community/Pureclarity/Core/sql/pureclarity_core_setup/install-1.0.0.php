@@ -1,4 +1,26 @@
 <?php
+/*****************************************************************************************
+ * Magento
+ * NOTICE OF LICENSE
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *  
+ * DISCLAIMER
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *  
+ * @category  PureClarity
+ * @package   PureClarity_Core
+ * @author    PureClarity Technologies Ltd (www.pureclarity.com)
+ * @copyright Copyright (c) 2017 PureClarity Technologies Ltd
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ *****************************************************************************************/
 
 
 $installer = $this;
@@ -41,35 +63,12 @@ $ddlTable->addColumn('id', Varien_Db_Ddl_Table::TYPE_INTEGER, null, array(
 $installer->getConnection()->createTable($ddlTable);
 
 
-// CREATE DEFAULT PLUGIN VALUES
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/environment/active', '1');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/environment/mode', '0');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/credentials/access_key', '');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/environment/notify_feed', '1');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/environment/delta_feed', '1');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/general_config/brand_feed_enabled', '1');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/general_config/brand_attribute_code', 'brand');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/override_urls/full_feed_prod_url', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/override_urls/full_feed_cat_url', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/override_urls/full_feed_brand_url', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/override_urls/base_image_url', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/general_config/search_active', '1');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/advanced/bmz_debug', '0');
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/placeholders/placeholder_product', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/placeholders/placeholder_category', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/placeholders/placeholder_category_secondary', NULL);
-// INSERT INTO `core_config_data` (`scope`, `scope_id`, `path`, `value`) VALUES ('default', 0, 'pureclarity_core/placeholders/placeholder_brand', NULL);
-
-
-
-
 // // This upgrade script makes sure that the BMZ block has permission to be used in a CMS block
 // // and that the secondary image attribute is available
 // $getIsAllowed    = "SELECT `is_allowed` FROM `permission_block` WHERE `block_name`='pureclarity_core/bmz'";
 // $createIsAllowed = "INSERT INTO `permission_block` (`block_name`, `is_allowed`) VALUES ('pureclarity_core/bmz', 1);";
 // $setIsAllowed    = "UPDATE `permission_block` SET `is_allowed`=1 WHERE  `block_name`='pureclarity_core/bmz';";
 
-// $installer->startSetup();
 // // Check the current state
 // $allowed = $installer->getConnection()->fetchOne($getIsAllowed);
 // if ($allowed == null){
@@ -94,21 +93,21 @@ $installer->getConnection()->createTable($ddlTable);
 //     'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
 // ));
 
-// // Add attribute for hiding product from recommenders
-// $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_hide_from_feed', array(
-//     'group'         => 'General Information',
-//     'input'         => 'select',
-//     'type'          => 'text',
-//     'backend'       => '',
-//     'source'        => 'eav/entity_attribute_source_boolean',
-//     'label'         => 'Hide from Pureclarity recommenders',
-//     'visible'       => 1,
-//     'required'      => 0,
-//     'user_defined'  => 1,
-//     'default'       => '0',
-//     'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-//     'visible_on_front' => true
-// ));
+// Add attribute for hiding product from recommenders
+$installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_hide_from_feed', array(
+    'group'         => 'General Information',
+    'input'         => 'select',
+    'type'          => 'text',
+    'backend'       => '',
+    'source'        => 'eav/entity_attribute_source_boolean',
+    'label'         => 'Hide from Pureclarity recommenders',
+    'visible'       => 1,
+    'required'      => 0,
+    'user_defined'  => 1,
+    'default'       => '0',
+    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+    'visible_on_front' => true
+));
 
 
 
