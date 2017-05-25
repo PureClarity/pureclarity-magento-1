@@ -65,7 +65,7 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
         // Generate debug text if needed
         $debugContent = '';
         if ($this->debug){
-            $debugContent = "<p>PureClarity BMZ: $this->bmzId.</p>";
+            $debugContent = "<p>PureClarity BMZ: $this->bmzId</p>";
         }
 
         // Get the fallback content

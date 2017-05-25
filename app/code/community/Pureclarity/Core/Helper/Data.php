@@ -29,7 +29,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
 
     // ENDPOINTS
-    protected $apiAccessUrl = '//pcs.pureclarity.net';
+    protected $scriptUrl = '//pcs.pureclarity.net';
     protected $regions = array(1 => 'api.pureclarity.net/',         
                                2 => 'api-us-e.pureclarity.net/',
                                3 => 'api-us-w.pureclarity.net/',
@@ -51,7 +51,10 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     // Environment Variables
     public function isActive($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/environment/active", $storeId);
+        $accessKey = $this->getAccessKey($storeId);
+        if ($accessKey != null && $accessKey != "")
+            return Mage::getStoreConfig("pureclarity_core/environment/active", $storeId);
+        return false;
     }
 
     public function getAdminUrl()
@@ -82,12 +85,18 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     // General Config 
     public function isSearchActive($storeId = null)
     {
-        return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $this->getStoreId($storeId));
+        if ($this->isActive($this->getStoreId($storeId))){
+            return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $this->getStoreId($storeId));
+        }
+        return false;
     }
 
     public function isMerchActive($storeId = null)
     {
-        return Mage::getStoreConfig("pureclarity_core/general_config/merch_active", $this->getStoreId($storeId));
+        if ($this->isActive($this->getStoreId($storeId))){
+            return Mage::getStoreConfig("pureclarity_core/general_config/merch_active", $this->getStoreId($storeId));
+        }
+        return false;
     }
 
     public function isFeedNotificationActive($storeId)
@@ -197,20 +206,23 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
 
     // MISC/HELPER METHODS
-    public function getApiAccessUrl()
+    public function getScriptUrl()
     {
-        return $this->apiAccessUrl;
+        return $this->scriptUrl;
     }
 
     public function getApiStartUrl()
     {
-        return $this->apiAccessUrl . '/' . $this->getAccessKey($this->getStoreId()) . '/cs.js';
+        $pureclarityScriptUrl = getenv('PURECLARITY_SCRIPT_URL');
+        if ($pureclarityScriptUrl != null && $pureclarityScriptUrl != '')
+            return $pureclarityScriptUrl;
+        return $this->getScriptUrl() . '/' . $this->getAccessKey($this->getStoreId()) . '/cs.js';
     }
 
     public function getStoreId($storeId = null)
     {
         if (is_null(storeId)) {
-            $storeId = Mage::app()->getStore()->getId();
+            $storeId =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              app()->getStore()->getId();
         }
         return $storeId;
     }

@@ -12,8 +12,47 @@
                     <value>HP01</value>
                 </action>
             </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp02" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>HP02</value>
+                </action>
+            </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp03" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>HP03</value>
+                </action>
+            </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp04" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>HP04</value>
+                </action>
+            </block>
         </reference>
     </cms_index_index>
+
+    <!-- Product page -->
+    <catalog_product_view>
+        <reference name="before_body_end">
+            <block type="pureclarity_core/productview" name="pureclarity.product.view" template="pureclarity/core/product_view.phtml" />
+        </reference>
+        <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp01" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>PP01</value>
+                </action>
+            </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp02" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>PP02</value>
+                </action>
+            </block>
+        </reference>
+    </catalog_product_view>
     
 
 
@@ -64,11 +103,7 @@
         </reference>
     </catalogsearch_result_index>
 
-    <catalog_product_view>
-        <reference name="before_body_end">
-            <block type="pureclarity_core/productview" name="pureclarity.product.view" template="pureclarity/core/product_view.phtml" />
-        </reference>
-    </catalog_product_view>
+    
 
     <checkout_onepage_success>
         <reference name="before_body_end">
