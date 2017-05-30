@@ -186,7 +186,8 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
         $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
         $body = Mage::helper('pureclarity_core')->getFeedBody($storeId);
-        //$response = $this->soapHelper->request($url, $useSSL, $body);
+        Mage::log($url . ' - ' . $useSSL . ' - ' . $body . ' - ' . false);
+        $response = $this->soapHelper->request($url, $useSSL, $body);
     }
 
 

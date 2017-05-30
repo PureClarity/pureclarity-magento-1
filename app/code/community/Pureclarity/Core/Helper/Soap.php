@@ -30,9 +30,8 @@ class Pureclarity_Core_Helper_Soap
 
     public function request($url, $useSSL, $payload = null)
     {
-
         $soap_do = curl_init();
-        curl_setopt($soap_do, CURLOPT_URL, $this->url);
+        curl_setopt($soap_do, CURLOPT_URL, $url);
         curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 5000);
         curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 10000);
         curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
@@ -53,13 +52,13 @@ class Pureclarity_Core_Helper_Soap
         curl_setopt($soap_do, CURLOPT_VERBOSE, true);
 
         if (!$result = curl_exec($soap_do)) {
-            Mage::log(curl_error($soap_do), null, self::LOG_FILE);
+            Mage::log('ERROR: ' . curl_error($soap_do), null, self::LOG_FILE);
         }
 
         curl_close($soap_do);
 
         Mage::log("------------------ REQUEST ------------------", null, self::LOG_FILE);
-        Mage::log(print_r($this->url, true), null, self::LOG_FILE);
+        Mage::log(print_r($url, true), null, self::LOG_FILE);
         if ($payload != null)
             Mage::log(print_r($payload, true), null, self::LOG_FILE);
         Mage::log("------------------ RESPONSE ------------------", null, self::LOG_FILE);
@@ -110,7 +109,7 @@ class Pureclarity_Core_Helper_Soap
         $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
 
         $soap_do = curl_init();
-        curl_setopt($soap_do, CURLOPT_URL, $this->url . $this->motoUrl . $additional);
+        curl_setopt($soap_do, CURLOPT_URL, $url . $this->motoUrl . $additional);
         curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 3000);
         curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 3000);
         curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
@@ -130,7 +129,7 @@ class Pureclarity_Core_Helper_Soap
 
         Mage::log("------------------ BEGIN SOAP TRANSACTION ------------------", null, self::LOG_FILE);
         Mage::log("------------------ REQUEST ------------------", null, self::LOG_FILE);
-        Mage::log(print_r($this->feedUrl . $this->motoUrl . $additional, true), null, self::LOG_FILE);
+        Mage::log(print_r($url, true), null, self::LOG_FILE);
         Mage::log("------------------ RESPONSE ------------------", null, self::LOG_FILE);
         Mage::log(print_r($result, true), null, self::LOG_FILE);
         Mage::log("------------------ END SOAP TRANSACTION ------------------", null, self::LOG_FILE);

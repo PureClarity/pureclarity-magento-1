@@ -30,16 +30,16 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
     // ENDPOINTS
     protected $scriptUrl = '//pcs.pureclarity.net';
-    protected $regions = array(1 => 'api.pureclarity.net/',         
-                               2 => 'api-us-e.pureclarity.net/',
-                               3 => 'api-us-w.pureclarity.net/',
-                               4 => 'api-ap-s.pureclarity.net/',
-                               5 => 'api-ap-ne.pureclarity.net/',
-                               6 => 'api-ap-se.pureclarity.net/',
-                               7 => 'api-ap-se2.pureclarity.net/',
-                               8 => 'api-ap-ne2.pureclarity.net/',
-                               9 => 'api-eu-c.pureclarity.net/',
-                               10 => 'api-eu-w.pureclarity.net/');
+    protected $regions = array(1 => 'api.pureclarity.net',         
+                               2 => 'api-us-e.pureclarity.net',
+                               3 => 'api-us-w.pureclarity.net',
+                               4 => 'api-ap-s.pureclarity.net',
+                               5 => 'api-ap-ne.pureclarity.net',
+                               6 => 'api-ap-se.pureclarity.net',
+                               7 => 'api-ap-se2.pureclarity.net',
+                               8 => 'api-ap-ne2.pureclarity.net',
+                               9 => 'api-eu-c.pureclarity.net',
+                               10 => 'api-eu-w.pureclarity.net');
 
     const FEED_TYPE_PRODUCT  = 'product';
     const FEED_TYPE_CATEGORY = 'category';
@@ -176,22 +176,23 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     public function getDeltaEndpoint($storeid){
-        return $this->getHost($storeId) . 'api/productdelta';
+        return $this->getHost($storeId) . '/api/productdelta';
     }
 
     public function getMotoEndpoint($storeid){
-        return $this->getHost($storeId) . 'api/track/appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
+        return $this->getHost($storeId) . '/api/track/appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
     }
 
     public function getFeedNotificationEndpoint($storeId, $websiteDomain, $feedType){
         $returnUrl = $websiteDomain . '/' . self::PURECLARITY_EXPORT_URL;
         $returnUrl = str_replace('{storeid}', $storeId, $returnUrl);
         $returnUrl = str_replace('{type}', $feedType, $returnUrl);
-        return $this->getHost($storeId) . 'api/productfeed?appkey=' . $this->getAccessKey($storeId) . '&url='. urlencode($returnUrl) . '&feedtype=magentoplugin1.0.0';
+        return $this->getHost($storeId) . '/api/productfeed?appkey=' . $this->getAccessKey($storeId) . '&url='. urlencode($returnUrl) . '&feedtype=magentoplugin1.0.0';
     }
 
     public function getFeedBody($storeId){
-        return array("AccessKey" => $this->getAccessKey($storeId), "SecretKey" => $this->getSecretKey($storeId));
+        $body = array("AccessKey" => $this->getAccessKey($storeId), "SecretKey" => $this->getSecretKey($storeId));
+        return Mage::helper('pureclarity_core')->formatFeed($body);
     }
 
     public static function getFileNameForFeed($feedtype, $storeCode){
