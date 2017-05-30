@@ -76,7 +76,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                                 $productHash[$deltaProduct->getProductId().'-'.$deltaProduct->getStoreId()] = $deltaProduct;
                             }
                             
-                            $productExportModel = Mage::getModel('pureclarity_core/productexport');
+                            $productExportModel = Mage::getModel('pureclarity_core/productExport');
                             $productExportModel->init($store->getId());
                             // load products
                             foreach ($productHash as $deltaProduct) {
@@ -155,7 +155,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $feedName = '';
         switch($feedtype){
             case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:
-                $productExportModel = Mage::getModel('pureclarity_core/productexport');
+                $productExportModel = Mage::getModel('pureclarity_core/productExport');
                 $productExportModel->init($storeId);
                 $feedData = $this->processProductFeed($productExportModel, $progressFileName);
                 $feedName = 'product';
@@ -186,7 +186,6 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
         $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
         $body = Mage::helper('pureclarity_core')->getFeedBody($storeId);
-        Mage::log($url . ' - ' . $useSSL . ' - ' . $body . ' - ' . false);
         $response = $this->soapHelper->request($url, $useSSL, $body);
     }
 
