@@ -45,7 +45,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     const FEED_TYPE_CATEGORY = 'category';
     const FEED_TYPE_BRAND    = 'brand';
     const PROGRESS_FILE_BASE_NAME = 'pureclarity_feed_progress';
-    const PURECLARITY_EXPORT_URL = 'pureclarity/exports?storeId={storeid}&type={type}';
+    const PURECLARITY_EXPORT_URL = 'pureclarity/export/feed?storeid={storeid}&type={type}';
 
 
     // Environment Variables
