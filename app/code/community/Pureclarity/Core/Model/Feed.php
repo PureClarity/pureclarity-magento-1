@@ -75,16 +75,20 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             $categoryData = array(
                 "Id" => $category->getId(),
                 "DisplayName" => $category->getName(),
-                "ParentIds" => array($category->getParentCategory()->getId()),
                 "Image" => $imageURL,
                 "Link" => sprintf("/%s", str_replace(Mage::getUrl('',array('_secure'=>true)), '', $category->getUrl($category)))
             );
+
+            if ($category->getLevel() > 1){
+                $categoryData["ParentIds"] = array($category->getParentCategory()->getId());
+            }
 
             if ($imageURL2 != null){
                 $categoryData["Image2"] = $imageURL2;
             }
 
             $feedCategories['Categories'][] = $categoryData;
+            $feedCategories['Version']=2;
             $currentProgress += 1;
             $progressFile = fopen($progressFileName, "w");
             fwrite($progressFile, "{\"name\":\"category\",\"cur\":$currentProgress,\"max\":$maxProgress,\"isComplete\":false}");
