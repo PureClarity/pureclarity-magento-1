@@ -97,7 +97,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                                         $deleteProducts[] = $product->getSku();
                                     } else {
                                         // Get data from product exporter
-                                        $data = $productExportModel->processProduct($product);
+                                        $data = $productExportModel->processProduct($product, count($feedProducts)+1);
                                         if ($data != null)
                                             $feedProducts[] = $data;
                                     }
@@ -142,6 +142,9 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     // Produce a feed and notify PureClarity so that it can fetch it.
     public function doFeed($feedtype, $storeId){
 
+        //can take a while to run the feed
+        set_time_limit(0);
+
         $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($feedtype);
         $store = Mage::getModel('core/store')->load($storeId);
         $feedFilePath = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . Pureclarity_Core_Helper_Data::getFileNameForFeed($feedtype, $store->getCode());
@@ -157,7 +160,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
             case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:
                 $productExportModel = Mage::getModel('pureclarity_core/productExport');
                 $productExportModel->init($storeId);
-                $feedData = $this->processProductFeed($productExportModel, $progressFileName);
+                $this->processProductFeed($productExportModel, $progressFileName, $feedFile);
                 $feedName = 'product';
                 break;
             case Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY:
@@ -174,9 +177,12 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                 throw new \Exception("Pureclarity feed type not recognised: $feedtype");
         }
 
-        // Format the feed in JSON format and save
-        $json = Mage::helper('pureclarity_core')->formatFeed($feedData, 'json');
-        fwrite($feedFile, $json);
+        // Format the feed in JSON format and save - unless its a product feed which has been 
+        // written as we go as can get very big
+        if ($feedtype != Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT ){
+            $json = Mage::helper('pureclarity_core')->formatFeed($feedData, 'json');
+            fwrite($feedFile, $json);
+        }
         fclose($feedFile);
 
         // Ensure progress file is set to complete
@@ -191,23 +197,37 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
 
     // Process the product feed and update the progress file, in page sizes of 20 (or other if overriden)
-    protected function processProductFeed($productExportModel, $progressFileName, $pageSize = 20){
-        $currentPage = 1;
+    protected function processProductFeed($productExportModel, $progressFileName, $feedFile, $pageSize = 20){
+        $currentPage = 0;
         $pages = 0;
         $feedProducts = array();
         $this->updateProgressFile($progressFileName, 'product', 0, 1, "false");
+
+        fwrite($feedFile, '{"Products":[');
+        $firstProduct = true;
         do {
             $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
             $pages = $result["Pages"];
-            $feedProducts = array_merge($feedProducts,$result["Products"]);
+        
+            foreach ($result["Products"] as $product) {
+                $json = Mage::helper('pureclarity_core')->formatFeed($product, 'json');
+
+                if (!$firstProduct){
+                    fwrite($feedFile, ',');                   
+                }
+                fwrite($feedFile, $json);
+                $firstProduct=false;
+            }
+
             $this->updateProgressFile($progressFileName, 'product', $currentPage, $pages, "false");
             $currentPage++;
         } while ($currentPage <= $pages);
+
+        fwrite($feedFile, '],"Pages":');
+        fwrite($feedFile, $pages);
+        fwrite($feedFile, '}');
+
         $this->updateProgressFile($progressFileName, 'product', $currentPage, $pages, "true");
-        return  array(
-            "Products" => $feedProducts,
-            "Pages" => $pages
-        );
     }
 
     // Helper function to update the progress file

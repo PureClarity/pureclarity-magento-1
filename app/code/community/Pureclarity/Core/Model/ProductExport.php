@@ -118,12 +118,11 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         // Loop through products
         $feedProducts = array();
         foreach($products as $product) {
-            $data = $this->processProduct($product);
+            $data = $this->processProduct($product, count($feedProducts)+($pageSize * $currentPage)+1);
             if ($data != null)
                 $feedProducts[] = $data;
         }
         
-        $products->clear;
         return  array(
             "Pages" => $pages,
             "Products" => $feedProducts
@@ -131,10 +130,10 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     }
 
     // Gets the data for a product.
-    public function processProduct(&$product)
+    public function processProduct(&$product, $index)
     {
         // Check hash that we've not already seen this product
-        if($this->seenProductIds[$product->getId()]===null) {
+        if(!array_key_exists($product->getId(), $this->seenProductIds) || $this->seenProductIds[$product->getId()]===null) {
 
             // Set Category Ids for product
             $categories = $product->getCategoryIds();
@@ -157,22 +156,27 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             }
 
             // Get Product Image URL
+
             $productImageUrl = '';
             if($product->getImage() && $product->getImage() != 'no_selection'){
-                $productImageUrl = Mage::helper('catalog/image')->init($product, 'image')->resize(250)->__toString();
+                $image =Mage::helper('catalog/image');
+                $image->init($product, 'image');
+                $image->resize(250);
+                $productImageUrl = $image->__toString();
             }
             else{
                 $productImageUrl = Mage::helper('pureclarity_core')->getProductPlaceholderUrl($this->storeId);
                 if (!$productImageUrl) {
                     $productImageUrl = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
-                    if (!$productImageUrl) {
+                if (!$productImageUrl) {
                         $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
+
                     }
                 }
             }
             
             // Set standard data
-            $data = array("_index" => count($feedProducts)+1);
+            $data = array("_index" => $index);
             $this->setProductData($product, $data);
 
             // Set Other data
@@ -214,6 +218,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             // Add to feed array
             return $data;
         }
+
         return null;
     }
 
@@ -233,7 +238,10 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     }
 
     protected function addValueToDataArray(&$data, $key, $value){
-        if ($value !== null && (!is_array($data[$key]) || !in_array($value, $data[$key]))){
+
+        if (!array_key_exists($key,$data)){
+            $data[$key][] = $value;
+        }else if ($value !== null && (!is_array($data[$key]) || !in_array($value, $data[$key]))){
             $data[$key][] = $value;
         }
     }
