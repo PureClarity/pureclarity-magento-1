@@ -1,6 +1,6 @@
 <?php
 
-class Pureclarity_Core_Block_Adminhtml_System_Config_RunFeedButton extends Mage_Adminhtml_Block_System_Config_Form_Field
+class Pureclarity_Core_Block_Adminhtml_System_Config_Runfeedbutton extends Mage_Adminhtml_Block_System_Config_Form_Field
 {
     /*
     * Set template
