@@ -150,7 +150,8 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             }
 
             $feedBrands['Brands'][] = $thisBrand;
-                              
+            $feedBrands['Version']=2;
+                                         
             $currentProgress += 1;
             if ($progressFile != null){
                 $progressFile = fopen($progressFileName, "w");
