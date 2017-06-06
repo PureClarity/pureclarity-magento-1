@@ -9,25 +9,25 @@
             <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp01" after="-" template="pureclarity/BMZ/bmz.phtml">
                 <action method="setData">
                     <name>bmz_id</name>
-                    <value>HP01</value>
+                    <value>HP-01</value>
                 </action>
             </block>
             <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp02" after="-" template="pureclarity/BMZ/bmz.phtml">
                 <action method="setData">
                     <name>bmz_id</name>
-                    <value>HP02</value>
+                    <value>HP-02</value>
                 </action>
             </block>
             <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp03" after="-" template="pureclarity/BMZ/bmz.phtml">
                 <action method="setData">
                     <name>bmz_id</name>
-                    <value>HP03</value>
+                    <value>HP-03</value>
                 </action>
             </block>
             <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp04" after="-" template="pureclarity/BMZ/bmz.phtml">
                 <action method="setData">
                     <name>bmz_id</name>
-                    <value>HP04</value>
+                    <value>HP-04</value>
                 </action>
             </block>
         </reference>
@@ -42,13 +42,13 @@
             <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp01" after="-" template="pureclarity/BMZ/bmz.phtml">
                 <action method="setData">
                     <name>bmz_id</name>
-                    <value>PP01</value>
+                    <value>PP-01</value>
                 </action>
             </block>
             <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp02" after="-" template="pureclarity/BMZ/bmz.phtml">
                 <action method="setData">
                     <name>bmz_id</name>
-                    <value>PP02</value>
+                    <value>PP-02</value>
                 </action>
             </block>
         </reference>

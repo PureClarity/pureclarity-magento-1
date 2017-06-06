@@ -291,6 +291,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 $config = Mage::getSingleton('catalog/config');
                 $groupProduct = Mage::getModel('pureclarity_core/product')
                     ->getCollection()
+                    ->setStoreId($this->storeId)
                     ->addAttributeToSelect($config->getProductAttributes())
                     ->addAttributeToFilter('entity_id', $product->getId())
                     ->setPage(1, 1)
