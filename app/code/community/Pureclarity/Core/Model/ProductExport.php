@@ -259,7 +259,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             $this->addValueToDataArray($data, 'Prices', number_format($minPrice, 2, '.', '').' '.$currency);
             $minFinalPrice = $this->convertCurrency($baseFinalPrices['min'], $currency);
             if ($minFinalPrice !== null && $minFinalPrice < $minPrice){
-                $this->addValueToDataArray($data, 'SalesPrices', number_format($minFinalPrice, 2,'.', '').' '.$currency);
+                $this->addValueToDataArray($data, 'SalePrices', number_format($minFinalPrice, 2,'.', '').' '.$currency);
             }
             // Process currency for max price if it's different to min price
             $maxPrice = $this->convertCurrency($basePrices['max'], $currency);
@@ -267,7 +267,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 $this->addValueToDataArray($data, 'Prices', number_format($maxPrice, 2, '.', '').' '.$currency);
                 $maxFinalPrice = $this->convertCurrency($baseFinalPrices['max'], $currency);
                 if ($maxFinalPrice !== null && $maxFinalPrice < $maxPrice){
-                    $this->addValueToDataArray($data, 'SalesPrices', number_format($maxFinalPrice, 2,'.', '').' '.$currency);
+                    $this->addValueToDataArray($data, 'SalePrices', number_format($maxFinalPrice, 2,'.', '').' '.$currency);
                 }
             }
         }
