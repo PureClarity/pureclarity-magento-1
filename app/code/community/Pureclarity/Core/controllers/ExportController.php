@@ -46,7 +46,7 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
     public function deltasAction()
     {
         $model = Mage::getModel('pureclarity_core/cron');
-        $requests = $model->deltaFeed(true);
+        $requests = $model->deltaFeed(null, true);
         $formatType = 'json';
         $contentType = 'application/octet-stream';
         if ((strnatcmp(phpversion(),'5.4.0') >= 0) && $this->getRequest()->getParam('pretty', 'false') === 'true'){

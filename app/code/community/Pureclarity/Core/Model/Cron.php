@@ -38,7 +38,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     /**
      * Process Delta Feeds and push to PureClarity
      */
-    public function deltaFeed($peakModeOnly = false)
+    public function deltaFeed($observerObject, $peakModeOnly = false)
     {
         // create a unique token until we get a response from PureClarity
         $uniqueId = 'PureClarity' . uniqid();
