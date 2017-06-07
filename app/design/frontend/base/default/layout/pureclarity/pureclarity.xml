@@ -53,6 +53,33 @@
             </block>
         </reference>
     </catalog_product_view>
+
+
+    <!-- Search Results Page -->
+    <catalogsearch_result_index>
+        <reference name="root">
+            <action method="setTemplate">
+            <template>page/1column.phtml</template>
+            </action>
+        </reference>
+        <reference name="search.result">
+            <action method="setTemplate" ifconfig="pureclarity_core/general_config/search_active">
+                <template>pureclarity/search/search_results.phtml</template>
+            </action>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.sr01" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>SR-01</value>
+                </action>
+            </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.sr02" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>SR-02</value>
+                </action>
+            </block>
+        </reference>
+    </catalogsearch_result_index>
     
 
 
@@ -87,21 +114,7 @@
 
     </default>
 
-    <catalogsearch_result_index>
-        <reference name="search.result">
-            <action method="setTemplate" ifconfig="pureclarity_core/general_config/search_active">
-                <template>pureclarity/search/search_results.phtml</template>
-            </action>
-        </reference>
-        <reference name="left">
-            <!--
-            <action method="setTemplate" ifconfig="pureclarity_core/general_config/search_active">
-                <template>pureclarity/search/search_results_filters.phtml</template>
-            </action>
-            -->
-            <block type="pureclarity_core/search_filters" name="pureclarity.search.filters" template="pureclarity/search/search_results_filters.phtml"/>
-        </reference>
-    </catalogsearch_result_index>
+    
 
     
 
