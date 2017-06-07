@@ -222,8 +222,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
     public function getStoreId($storeId = null)
     {
-        if (is_null(storeId)) {
-            $storeId =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              app()->getStore()->getId();
+        if (is_null($storeId)) {
+            $storeId = Mage::app()->getStore()->getId();
         }
         return $storeId;
     }
