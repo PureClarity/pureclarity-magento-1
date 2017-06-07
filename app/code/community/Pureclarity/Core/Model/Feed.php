@@ -119,7 +119,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         $modules = Mage::getConfig()->getNode('modules')->children();
         $modulesArray = (array)$modules;
 
-        if(isset($modulesArray['Mage_Attributeimage_Helper_Data'])) {
+        if(isset($modulesArray['Solwin_AttributeImage'])) {
             $solwinImageHelper = Mage::helper('attributeimage');
         } 
 
