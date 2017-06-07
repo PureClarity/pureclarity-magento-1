@@ -109,7 +109,7 @@
         </reference>
 
         <reference name="head">
-            <action method="addCss"><stylesheet>css/pureclarity/pureclarity_bmz_selection.css</stylesheet></action>
+            <action method="addCss"><stylesheet>css/pureclarity/pureclarity.css</stylesheet></action>
         </reference>
 
     </default>
