@@ -290,7 +290,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         if (!$order){
             throw new \Exception("Pureclarity: unable to get order");
         }
-        $orderItems = $order->getAllItems();
+        $orderItems = $order->getAllVisibleItems();
         foreach($orderItems as $orderItem) {
 
             /** @var Mage_Sales_Model_Order_Item $orderItem */
