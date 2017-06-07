@@ -80,18 +80,18 @@ $installer->getConnection()->createTable($ddlTable);
 //     $installer->run($setIsAllowed);
 // }
 
-// // Make sure the attribute for the secondary image is added
-// $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_secondary_image', array(
-//     'group'         => 'General Information',
-//     'input'         => 'image',
-//     'type'          => 'varchar',
-//     'backend'       => 'catalog/category_attribute_backend_image',
-//     'label'         => 'Pureclarity Secondary Image',
-//     'visible'       => 1,
-//     'required'      => 0,
-//     'user_defined'  => 1,
-//     'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
-// ));
+// Make sure the attribute for the secondary image is added
+$installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_secondary_image', array(
+    'group'         => 'General Information',
+    'input'         => 'image',
+    'type'          => 'varchar',
+    'backend'       => 'catalog/category_attribute_backend_image',
+    'label'         => 'Pureclarity Image',
+    'visible'       => 1,
+    'required'      => 0,
+    'user_defined'  => 1,
+    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
+));
 
 // Add attribute for hiding product from recommenders
 $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_hide_from_feed', array(

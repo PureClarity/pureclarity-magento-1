@@ -84,7 +84,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             }
 
             if ($imageURL2 != null){
-                $categoryData["Image2"] = $imageURL2;
+                $categoryData["PCImage"] = $imageURL2;
             }
 
             $feedCategories['Categories'][] = $categoryData;
