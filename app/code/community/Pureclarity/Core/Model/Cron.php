@@ -108,7 +108,8 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                                 'AppKey'            => Mage::helper('pureclarity_core')->getAccessKey($store->getId()),
                                 'Secret'            => Mage::helper('pureclarity_core')->getSecretKey($store->getId()),
                                 'Products'          => $feedProducts,
-                                'DeleteProducts'    => $deleteProducts
+                                'DeleteProducts'    => $deleteProducts,
+                                'Format'            => 'magentoplugin1.0.0'
                             );
                             $requests[] = $request;
                             
