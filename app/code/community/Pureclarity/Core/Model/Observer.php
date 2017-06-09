@@ -255,7 +255,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             'productcount'  => count($order->getAllItems())
         );
 
-        Mage::helper('pureclarity_core/soap')->makeMotoGetRequest($information, $order->getAllItems());
+        Mage::helper('pureclarity_core/soap')->motoOrderGetRequest($information, $order->getAllItems());
 
     }
 

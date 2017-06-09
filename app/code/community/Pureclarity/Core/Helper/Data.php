@@ -180,7 +180,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     public function getMotoEndpoint($storeid){
-        return $this->getHost($storeId) . '/api/track/appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
+        return $this->getHost($storeId) . '/api/track?appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
     }
 
     public function getFeedNotificationEndpoint($storeId, $websiteDomain, $feedType){
