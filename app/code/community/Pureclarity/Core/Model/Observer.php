@@ -62,7 +62,11 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             return;
         }
 
-        $product = Mage::getModel('catalog/product')->getCollection()->addAttributeToSelect("sku")->addAttributeToFilter("entity_id", array("eq" => Mage::app()->getRequest()->getParam('product', 0)))->getFirstItem();
+        $product = Mage::getModel('catalog/product')
+            ->getCollection()
+            ->addAttributeToSelect("sku")
+            ->addAttributeToFilter("entity_id", array("eq" => Mage::app()->getRequest()->getParam('product', 0)))
+            ->getFirstItem();
 
         if (!$product->getId()) {
             return;
@@ -70,7 +74,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
 
         Mage::getModel('core/session')->setPCProductToShoppingCart(
             new Varien_Object(array(
-                'sku' => $product->getId(),
+                'sku' => $product->getSku(),
                 'qty' => Mage::app()->getRequest()->getParam('qty', 1)
             ))
         );
@@ -91,7 +95,11 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             return;
         }
 
-        $product = Mage::getModel('catalog/product')->getCollection()->addAttributeToSelect("sku")->addAttributeToFilter("entity_id", array("eq" => $observer->getQuoteItem()->getProduct()->getId()))->getFirstItem();
+        $product = Mage::getModel('catalog/product')
+            ->getCollection()
+            ->addAttributeToSelect("sku")
+            ->addAttributeToFilter("entity_id", array("eq" => $observer->getQuoteItem()->getProduct()->getId()))
+            ->getFirstItem();
 
         if (!$product->getId()) {
             return;
@@ -99,7 +107,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
 
         Mage::getModel('core/session')->setPCProductRemovedShoppingCart(
             new Varien_Object(array(
-                'sku' => $product->getId()
+                'sku' => $product->getSku()
             ))
         );
 

@@ -1,20 +1,2 @@
-<?php
-$category = $this->getLayer()->getCurrentCategory();
-$parentTree = array();
-
-foreach ($category->getParentCategories() as $parent) {
-    // TODO don't hard-code store=1
-    if($parent->getId() != $category->getId() && $parent->getId() != Mage::app()->getStore(1)->getRootCategoryId()) {
-        $parentTree[] = str_replace("|", "/", $parent->getName());
-    }
-}
-
-if(!empty($parentTree)) {
-    $catText = implode(' > ', $parentTree) . ' > ' . str_replace("|", "/", $category->getName());
-} else {
-    $catText = str_replace("|", "/", $category->getName());
-}
-
-?>
-<div data-pureclarity="navigation_category_products:<?php echo $catText; ?>">
+<div data-pureclarity="navigation_category:<?php echo Mage::registry('current_category')->getId(); ?>">
 </div>

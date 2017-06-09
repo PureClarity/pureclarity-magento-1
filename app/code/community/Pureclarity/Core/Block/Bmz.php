@@ -31,6 +31,8 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
     protected $classes;
     protected $extraAttrs;
 
+    protected $bmzData = "";
+
     public function _construct()
     {
         return parent::_construct();
@@ -44,6 +46,10 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
         return '';
     }
 
+    public function addBmzData($field, $value){
+        $this->bmzData = $this->bmzData . $field . ':' . $value . ';';
+    }
+
     public function _beforeToHtml(){
 
         // Get some parameters
@@ -53,6 +59,24 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
         if ($this->bmzId == null or $this->bmzId == ""){
             Mage::log("Pureclarity BMZ block instantiated without a BMZ Id.", Zend_Log::ERR);
         }
+        else {
+            $this->addBmzData('bmz', $this->bmzId);
+
+            // Set product data
+            $product = Mage::registry("current_product");
+            if ($product != null){
+                $this->addBmzData('sku', $product->getSku());
+            }
+
+            // Set category data
+            $category = Mage::registry('current_category');
+            if ($category != null){
+                $this->addBmzData('categoryid', $category->getId());
+            }
+
+        }
+
+        
 
         // Generate the extra attributes string
         $extraAttrsString = '';
@@ -153,6 +177,10 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
     public function getExtraAttrs()
     {
         return $this->extraAttrs;
+    }
+
+    public function getBmzData(){
+        return $this->bmzData;
     }
 
 }
