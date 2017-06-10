@@ -247,24 +247,30 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
 
     public function motoOrder(Varien_Event_Observer $observer)
     {
+        //observer gets called multiple times - only count 1st one
+        //see: https://magento.stackexchange.com/questions/84979/ce-1-9-2-custom-sales-order-save-after-observer-fires-twice
+        if(!Mage::registry('pureclarity_moto_prevent_observer')){
 
-        /** @var Mage_Sales_Model_Order $order */
-        $order = $observer->getEvent()->getOrder();
+            // Assign value to registry variable
+            Mage::register('pureclarity_moto_prevent_observer',true);
 
-        $additional = self::PURECLARITY_FEED_MOTO_ENDPOINT;
+            /** @var Mage_Sales_Model_Order $order */
+            $order = $observer->getEvent()->getOrder();
 
-        $information = array(
-            'orderid'       => $order->getIncrementId(),
-            'firstname'     => $order->getCustomerFirstname(),
-            'lastname'      => $order->getCustomerLastname(),
-            'postcode'      => $order->getBillingAddress()->getPostcode(),
-            'email'         => $order->getCustomerEmail(),
-            'ordertotal'    => $order->getGrandTotal(),
-            'productcount'  => count($order->getAllItems())
-        );
+            $additional = self::PURECLARITY_FEED_MOTO_ENDPOINT;
 
-        Mage::helper('pureclarity_core/soap')->motoOrderGetRequest($information, $order->getAllItems());
+            $information = array(
+                'orderid'       => $order->getIncrementId(),
+                'firstname'     => $order->getCustomerFirstname(),
+                'lastname'      => $order->getCustomerLastname(),
+                'postcode'      => $order->getBillingAddress()->getPostcode(),
+                'email'         => $order->getCustomerEmail(),
+                'ordertotal'    => $order->getGrandTotal(),
+                'productcount'  => count($order->getAllVisibleItems())
+            );
 
+            Mage::helper('pureclarity_core/soap')->motoOrderGetRequest($information, $order->getAllVisibleItems());
+        }
     }
 
 }
