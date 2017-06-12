@@ -176,8 +176,12 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             }
             
             // Set standard data
-            $data = array("_index" => $index);
-            $this->setProductData($product, $data);
+            $data = array(
+                "_index" => $index,
+                "Sku" => $product->getData('sku'),
+                "Title" => $product->getData('name'),
+                "Description" => array(strip_tags($product->getData('description')), strip_tags($product->getShortDescription()))
+            );
 
             // Set Other data
             $data["Link"] = $productUrl;
@@ -231,8 +235,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
 
     protected function setProductData($product, &$data)
     {
-        $this->addValueToDataArray($data, 'Sku', $product->getData('sku'));
-        $this->addValueToDataArray($data, 'Title', $product->getData('name'));
+        $this->addValueToDataArray($data, 'AssociatedSkus', $product->getData('sku'));
+        $this->addValueToDataArray($data, 'AssociatedTitles', $product->getData('name'));
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getData('description')));
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getShortDescription()));
     }
