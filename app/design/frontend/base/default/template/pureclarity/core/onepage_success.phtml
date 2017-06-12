@@ -17,12 +17,7 @@
     });
     <?php
         foreach ($orderItems as $orderItem):
-    ?>_pc('order:addItem', {
-        orderid:    "<?php echo $orderItem['orderId'];?>",
-        sku:        "<?php echo $orderItem['sku'];?>",
-        qty:        "<?php echo $orderItem['qty'];?>",
-        unitprice:  "<?php echo $orderItem['unitPrice'];?>"
-    });
+    ?>_pc('order:addItem', <?php echo json_encode($orderItem) ?> );
     <?php
         endforeach;
     ?>_pc('order:track');

@@ -58,7 +58,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
     public function logCartAdd(Varien_Event_Observer $observer)
     {
 
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
             return;
         }
 
@@ -91,7 +91,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
     public function logCartRemove(Varien_Event_Observer $observer)
     {
 
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
             return;
         }
 
@@ -122,7 +122,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
      */
     public function logCheckoutUpdateItems(Varien_Event_Observer $observer)
     {
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
             return;
         }
 
@@ -162,7 +162,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
     public function logCustomerLogin(Varien_Event_Observer $observer)
     {
 
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
             return;
         }
 
@@ -194,7 +194,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
     public function logCustomerLogout(Varien_Event_Observer $observer)
     {
 
-        if(!Mage::helper('pureclarity_core')->isActive()) {
+        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
             return;
         }
 

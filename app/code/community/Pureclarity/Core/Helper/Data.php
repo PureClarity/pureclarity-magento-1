@@ -292,22 +292,53 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
 
     public function getOrderItems()
     {
-        $orderInformation = array();
-
+        
         $order = $this->getOrderObject();
         if (!$order){
             throw new \Exception("Pureclarity: unable to get order");
         }
-        $orderItems = $order->getAllVisibleItems();
-        foreach($orderItems as $orderItem) {
 
-            /** @var Mage_Sales_Model_Order_Item $orderItem */
-            $orderInformation[] = array(
-                'orderId'       => $order->getIncrementId(),
-                'sku'           => $orderItem->getSku(),
-                'qty'           => $orderItem->getQtyOrdered(),
-                'unitPrice'     => $orderItem->getPrice()
+        $items = array();
+        $orderInformation = array();
+        $orderItems = $order->getAllItems();
+
+        // process parents
+        foreach($orderItems as $item) {
+            if (!$item->getParentItemId()){
+                $items[$item->getId()] = array(
+                    'sku' => $item->getProduct()->getSku(),
+                    'qty' => $item->getQtyOrdered(),
+                    'unitPrice' => $item->getPrice()
+                );
+            }
+        }
+
+        // Process child products
+        foreach($orderItems as $item) {
+            $parentId = $item->getParentItemId();
+            if ($parentId != null && $items[$parentId] != null){
+                $items[$parentId]['associatedproducts'][] = array(
+                        'sku' => $item->getProduct()->getSku(),
+                        'qty' => $item->getQtyOrdered()
+                );
+            }
+        }
+
+        // Build output information
+        foreach($items as $item){
+            $orderObject = array(
+                'orderid'       => $order->getIncrementId(),
+                'sku'           => $item['sku'],
+                'qty'           => $item['qty'],
+                'unitprice'     => $item['unitPrice']
             );
+            $associatedIndex = 1;
+            foreach($item['associatedproducts'] as $associated){
+                $orderObject['associatedproduct' . $associatedIndex . '_sku'] = $associated['sku'];
+                $orderObject['associatedproduct' . $associatedIndex . '_qty'] = $associated['qty'];
+                $associatedIndex += 1;
+            }
+            $orderInformation[] = $orderObject;
         }
 
         return $orderInformation;
