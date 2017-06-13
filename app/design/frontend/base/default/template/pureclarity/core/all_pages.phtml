@@ -7,6 +7,7 @@ if(Mage::helper('pureclarity_core')->isActive(Mage::helper('pureclarity_core')->
         var p = d.createElement(s), h = d.getElementsByTagName(s)[0];
         p.src = u;p.async=1;h.parentNode.insertBefore(p, h);
     })(window, document, 'script', '<?php echo Mage::helper('pureclarity_core')->getApiStartUrl();?>', '_pc');
+    _pc('currency', '<?php echo Mage::app()->getStore()->getCurrentCurrencyCode() ?>' );
     _pc('page_view');
 </script>
 <?php
