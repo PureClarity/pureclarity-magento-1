@@ -204,6 +204,12 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
 
             if ($product->getData('pureclarity_exc_rec') == '1')
                  $data["ExcludeFromRecommenders"] = true;
+        
+            if ($product->getData('pureclarity_newarrival') == '1')
+                 $data["NewArrival"] = true;
+            
+            if ($product->getData('pureclarity_onoffer') == '1')
+                 $data["OnOffer"] = true;
 
             // Add attributes
             $this->setAttributes($product, $data);

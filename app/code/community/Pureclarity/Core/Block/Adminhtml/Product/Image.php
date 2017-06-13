@@ -5,7 +5,7 @@ class Pureclarity_Core_Block_Adminhtml_Product_Image extends Varien_Data_Form_El
     {
         $url = false;
         if ($this->getValue()) {
-            $url = Mage::helper('pureclarity_core')->getPlaceholderUrl() . $this->getValue();
+            $url = 'pureclarity/' . $this->getValue();
         }
         return $url;
     }
