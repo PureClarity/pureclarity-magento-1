@@ -38,10 +38,6 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         $maxProgress = count($categoryCollection);
         $currentProgress = 0;
         foreach ($categoryCollection as $category) {
-
-            // Check if to ignore this category
-            if ($category->getData('pureclarity_hide_from_feed') == '1')
-                continue;
             
             // Get image
             $firstImage = $category->getImageUrl();
@@ -78,6 +74,12 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 "Image" => $imageURL,
                 "Link" => sprintf("/%s", str_replace(Mage::getUrl('',array('_secure'=>true)), '', $category->getUrl($category)))
             );
+
+            
+            // Check if to ignore this category
+            if ($category->getData('pureclarity_hide_from_feed') == '1'){
+                 $categoryData["ExcludeFromRecommenders"] = true;
+            }
 
             if ($category->getLevel() > 1){
                 $categoryData["ParentIds"] = array($category->getParentCategory()->getId());
