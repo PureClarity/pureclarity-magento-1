@@ -237,6 +237,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         $deltaProduct->setData(
             array(
                 'product_id'    => $product->getId(),
+                'oldsku'        => $product->getOrigData('sku'),
                 'token'         => '',
                 'status_id'     => 0,
                 'store_id'      => $product->getStoreId()
