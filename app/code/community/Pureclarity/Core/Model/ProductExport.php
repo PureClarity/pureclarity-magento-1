@@ -201,9 +201,14 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             switch ($product->getTypeId()) {
                 case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
                     $childIds = Mage::getModel('catalog/product_type_configurable')->getChildrenIds($product->getId());
-                    $childProducts = Mage::getModel('pureclarity_core/product')->getCollection()
+                    if (count($childIds[0]) > 0){
+                        $childProducts = Mage::getModel('pureclarity_core/product')->getCollection()
                             ->addAttributeToSelect('*')
-                            ->addFieldToFilter('entity_id', array('in'=> $childIds));
+                            ->addFieldToFilter('entity_id', array('in'=> $childIds[0]));
+                    }else{
+                        //configurable with no children - exlude from feed
+                        return null;
+                    }
                     break;
                 case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
                     $childProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
@@ -212,10 +217,13 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     $childProducts = $product->getTypeInstance(true)->getSelectionsCollection($product->getTypeInstance(true)->getOptionsIds($product), $product);
                     break;
             }
-            // Set child products if we have any
+
+            // Process any child products
             $this->childProducts($childProducts, $data);
+
             // Set prices
             $this->setProductPrices($product, $data, $childProducts);
+
             // Add to hash to make sure we don't get dupes
             $this->seenProductIds[$product->getId()] = true;
 
