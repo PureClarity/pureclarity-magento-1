@@ -131,7 +131,7 @@
                             <comment><![CDATA[<strong>Choose if changes to products are automatically pushed to PureClarity</strong>]]></comment>
                         </delta_feed>
                         <brand_feed_enabled translate="label">
-                            <label>Enable brand feed</label>
+                            <label>Enable Brand Feed</label>
                             <frontend_type>select</frontend_type>
                             <source_model>adminhtml/system_config_source_yesno</source_model>
                             <sort_order>6</sort_order>
@@ -141,7 +141,7 @@
                             <comment><![CDATA[<strong>If this is enabled the attribute name that has the brand values should be set below.</strong>]]></comment>
                         </brand_feed_enabled>
                         <brand_attribute_code>
-                            <label>Brand attribute code</label>
+                            <label>Brand Attribute Code</label>
                             <frontend_type>text</frontend_type>
                             <sort_order>7</sort_order>
                             <show_in_default>1</show_in_default>
