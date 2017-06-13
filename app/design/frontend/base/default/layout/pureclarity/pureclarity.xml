@@ -59,12 +59,17 @@
     <catalogsearch_result_index>
         <reference name="root">
             <action method="setTemplate">
-            <template>page/1column.phtml</template>
+            <template>page/2columns-left.phtml</template>
+            </action>
+        </reference>
+        <reference name="catalogsearch.leftnav">
+            <action method="setTemplate" ifconfig="pureclarity_core/general_config/search_active">
+                <template>pureclarity/search/search_results_filters.phtml</template>
             </action>
         </reference>
         <reference name="search.result">
             <action method="setTemplate" ifconfig="pureclarity_core/general_config/search_active">
-                <template>pureclarity/search/search_results.phtml</template>
+                <template>pureclarity/search/search_results_products.phtml</template>
             </action>
         </reference>
         <reference name="content">
@@ -86,25 +91,27 @@
 
     <!-- Category page -->
     <catalog_category_default>
-        <reference name="category.products">
-            <action method="setTemplate" ifconfig="pureclarity_core/general_config/prodlisting_active">
-                <template>pureclarity/search/category_results_products.phtml</template>
-            </action>
-        </reference>
         <update handle="pureclarity_core_catalog_category" />
     </catalog_category_default>
+
     <catalog_category_layered>
-        <reference name="category.products">
-            <action method="setTemplate" ifconfig="pureclarity_core/general_config/prodlisting_active">
-                <template>pureclarity/search/category_results.phtml</template>
-            </action>
-        </reference>
         <update handle="pureclarity_core_catalog_category" />
     </catalog_category_layered>
+
     <pureclarity_core_catalog_category>
         <reference name="root">
             <action method="setTemplate">
-            <template>page/1column.phtml</template>
+                <template>page/2columns-left.phtml</template>
+            </action>
+        </reference>
+        <reference name="catalog.leftnav">
+            <action method="setTemplate" ifconfig="pureclarity_core/general_config/prodlisting_active">
+                <template>pureclarity/search/category_results_filters.phtml</template>
+            </action>
+        </reference>
+        <reference name="category.products">
+            <action method="setTemplate" ifconfig="pureclarity_core/general_config/prodlisting_active">
+                <template>pureclarity/search/category_results_products.phtml</template>
             </action>
         </reference>
         <reference name="content">
