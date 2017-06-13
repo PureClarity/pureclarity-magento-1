@@ -236,6 +236,15 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $storeId;
     }
 
+    const PLACEHOLDER_UPLOAD_DIR = "pureclarity";
+    public function getPlaceholderDir(){
+        return Mage::getBaseDir('media') . DS . self::PLACEHOLDER_UPLOAD_DIR . DS;
+    }
+    public function getPlaceholderUrl(){
+        //return Mage::getBaseUrl('media', array('_secure'=>true)) . '/' . self::PLACEHOLDER_UPLOAD_DIR . '/';
+        return '/media/' . self::PLACEHOLDER_UPLOAD_DIR . '/';
+    }
+
     public function getOrderObject()
     {
         $orderId = Mage::getSingleton('checkout/session')->getLastRealOrderId();

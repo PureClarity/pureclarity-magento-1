@@ -193,6 +193,18 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             $data["InStock"] = (Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getIsInStock() == 1) ? true : false;
             $data["Visibility"] = $product->getVisibility();
 
+            // Set PureClarity Custom values
+            $searchTag = $product->getData('pureclarity_search_tags');
+            if ($searchTag != null && $searchTag != '')
+                 $data["SearchTags"] = array($searchTag);
+
+            $overlayImage = $product->getData('pureclarity_overlay_image');
+            if ($overlayImage != "")
+                $data["ImageOverlay"] = Mage::helper('pureclarity_core')->getPlaceholderUrl() . $overlayImage;
+
+            if ($product->getData('pureclarity_exc_rec') == '1')
+                 $data["ExcludeFromRecommenders"] = true;
+
             // Add attributes
             $this->setAttributes($product, $data);
 
@@ -247,6 +259,9 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $this->addValueToDataArray($data, 'AssociatedTitles', $product->getData('name'));
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getData('description')));
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getShortDescription()));
+        $searchTag = $product->getData('pureclarity_search_tags');
+        if ($searchTag != null && $searchTag != '')
+            $this->addValueToDataArray($data, 'SearchTags', $searchTag);
     }
 
     protected function addValueToDataArray(&$data, $key, $value){

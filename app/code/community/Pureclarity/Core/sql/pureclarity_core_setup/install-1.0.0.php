@@ -68,7 +68,7 @@ $installer->getConnection()->createTable($ddlTable);
 
 
 // adding attribute group
-$setup->addAttributeGroup(Mage_Catalog_Model_Category::ENTITY, 'Default', 'PureClarity', 1000);
+$installer->addAttributeGroup(Mage_Catalog_Model_Category::ENTITY, 'Default', 'PureClarity', 1000);
 
 // Make sure the attribute for the secondary image is added
 $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_secondary_image', array(
@@ -76,7 +76,7 @@ $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_secon
     'input'         => 'image',
     'type'          => 'varchar',
     'backend'       => 'catalog/category_attribute_backend_image',
-    'label'         => 'Pureclarity Image',
+    'label'         => 'PureClarity image',
     'visible'       => 1,
     'required'      => 0,
     'user_defined'  => 1,
@@ -90,7 +90,7 @@ $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_hide_
     'type'          => 'text',
     'backend'       => '',
     'source'        => 'eav/entity_attribute_source_boolean',
-    'label'         => 'Hide from Pureclarity recommenders',
+    'label'         => 'Exclude from recommenders',
     'visible'       => 1,
     'required'      => 0,
     'user_defined'  => 1,
@@ -100,14 +100,14 @@ $installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_hide_
 ));
 
 // adding attribute group
-$setup->addAttributeGroup(Mage_Catalog_Model_Product::ENTITY, 'Default', 'PureClarity', 1000);
+$installer->addAttributeGroup(Mage_Catalog_Model_Product::ENTITY, 'Default', 'PureClarity', 1000);
 
 // Add attribute for Search Tags
 $installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_search_tags', array(
     'group'         => 'PureClarity',
     'input'         => 'text',
     'type'          => 'text',
-    'label'         => 'Additional Search Tags',
+    'label'         => 'Search tags',
     'backend'       => '',
     'visible'       => 1,
     'required'      => 0,
@@ -117,12 +117,42 @@ $installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_search
     'visible_on_front' => true
 ));
 
-// Add attribute for 
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_exclude_recommender', array(
+// Add attribute for exluding product from recommenders
+$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_exc_rec', array(
     'group'         => 'PureClarity',
     'input'         => 'select',
     'type'          => 'text',
-    'label'         => 'Exclude from Recommenders',
+    'label'         => 'Exclude from recommenders',
+    'backend'       => '',
+    'source'        => 'eav/entity_attribute_source_boolean',
+    'visible'       => 1,
+    'required'      => 0,
+    'user_defined'  => 1,
+    'default'       => '0',
+    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+    'visible_on_front' => true
+));
+
+$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_newarrival', array(
+    'group'         => 'PureClarity',
+    'input'         => 'select',
+    'type'          => 'text',
+    'label'         => 'New arrival',
+    'backend'       => '',
+    'source'        => 'eav/entity_attribute_source_boolean',
+    'visible'       => 1,
+    'required'      => 0,
+    'user_defined'  => 1,
+    'default'       => '0',
+    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+    'visible_on_front' => true
+));
+
+$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_onoffer', array(
+    'group'         => 'PureClarity',
+    'input'         => 'select',
+    'type'          => 'text',
+    'label'         => 'On offer',
     'backend'       => '',
     'source'        => 'eav/entity_attribute_source_boolean',
     'visible'       => 1,
@@ -138,7 +168,8 @@ $installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_overla
     'group'         => 'PureClarity',
     'input'         => 'image',
     'type'          => 'varchar',
-    'backend'       => 'catalog/category_attribute_backend_image',
+    'backend'       => 'pureclarity_core/product_attribute_backend_image',
+    'input_renderer'=> 'pureclarity_core/adminhtml_product_image',
     'label'         => 'Overlay Image',
     'visible'       => 1,
     'required'      => 0,
