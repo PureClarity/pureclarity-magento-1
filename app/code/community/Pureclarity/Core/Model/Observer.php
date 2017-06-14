@@ -101,7 +101,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             ->addAttributeToFilter("entity_id", array("eq" => $observer->getQuoteItem()->getProduct()->getId()))
             ->getFirstItem();
 
-        if (!$product->getId()) {
+        if (!$product->getSku()) {
             return;
         }
 
