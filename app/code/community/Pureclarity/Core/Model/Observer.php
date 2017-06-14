@@ -270,7 +270,9 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
                 'productcount'  => count($order->getAllVisibleItems())
             );
 
-            Mage::helper('pureclarity_core/soap')->motoOrderGetRequest($information, $order->getAllVisibleItems());
+            // Construct order items
+            $orderItems = Mage::helper('pureclarity_core')->getOrderItems($order);
+            Mage::helper('pureclarity_core/soap')->motoOrderGetRequest($order->getStoreId(), $information, $orderItems);
         }
     }
 

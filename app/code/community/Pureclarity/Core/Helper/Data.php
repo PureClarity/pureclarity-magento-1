@@ -299,10 +299,12 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         );
     }
 
-    public function getOrderItems()
+    public function getOrderItems($order = null)
     {
-        
-        $order = $this->getOrderObject();
+
+        if (!$order)
+            $order = $this->getOrderObject();
+
         if (!$order){
             throw new \Exception("Pureclarity: unable to get order");
         }
@@ -314,8 +316,9 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         // process parents
         foreach($orderItems as $item) {
             if (!$item->getParentItemId()){
+                $product = Mage::getModel('catalog/product')->load($item->getProductId());
                 $items[$item->getId()] = array(
-                    'sku' => $item->getProduct()->getSku(),
+                    'sku' => $product->getSku(),
                     'qty' => $item->getQtyOrdered(),
                     'unitPrice' => $item->getPrice()
                 );
@@ -341,11 +344,13 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
                 'qty'           => $item['qty'],
                 'unitprice'     => $item['unitPrice']
             );
-            $associatedIndex = 1;
-            foreach($item['associatedproducts'] as $associated){
-                $orderObject['associatedproduct' . $associatedIndex . '_sku'] = $associated['sku'];
-                $orderObject['associatedproduct' . $associatedIndex . '_qty'] = $associated['qty'];
-                $associatedIndex += 1;
+            if ($item['associatedproducts']){
+                $associatedIndex = 1;
+                foreach($item['associatedproducts'] as $associated){
+                    $orderObject['associatedproduct' . $associatedIndex . '_sku'] = $associated['sku'];
+                    $orderObject['associatedproduct' . $associatedIndex . '_qty'] = $associated['qty'];
+                    $associatedIndex += 1;
+                }
             }
             $orderInformation[] = $orderObject;
         }

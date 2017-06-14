@@ -77,7 +77,7 @@ class Pureclarity_Core_Helper_Soap
      * @param null $orderItems
      * @return mixed
      */
-    public function motoOrderGetRequest($order = null, $orderItems = null)
+    public function motoOrderGetRequest($storeId, $order = null, $orderItems = null)
     {
 
         $additional = '';
@@ -98,31 +98,33 @@ class Pureclarity_Core_Helper_Soap
 
         /** @var Mage_Sales_Model_Order_Item $item */
         foreach ($orderItems as $item) {
-            $additional .= '&sku' . $i . '=' . $item->getSku();
-            $additional .= '&qty' . $i . '=' . $item->getQtyOrdered();
-            $additional .= '&unitprice' . $i . '=' . $item->getPrice();
-
+            foreach($item as $key => $value){
+                if ($key != 'orderid'){
+                    $additional .= '&' . $key . $i . '=' . $value;
+                }
+            }
             $i++;
         }
+
 
         $url = Mage::helper('pureclarity_core')->getMotoEndpoint($storeId);
         $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
 
         $soap_do = curl_init();
-        curl_setopt($soap_do, CURLOPT_URL, $url . $this->motoUrl . $additional);
-        curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 3000);
-        curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 3000);
+        curl_setopt($soap_do, CURLOPT_URL, $url . $additional);
+        curl_setopt($soap_do, CURLOPT_CONNECTTIMEOUT_MS, 5000);
+        curl_setopt($soap_do, CURLOPT_TIMEOUT_MS, 10000);
         curl_setopt($soap_do, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($soap_do, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($soap_do, CURLOPT_SSL_VERIFYPEER, $useSSL);
+        curl_setopt($soap_do, CURLOPT_SSL_VERIFYHOST, $useSSL);
         curl_setopt($soap_do, CURLOPT_POST, false);
 
         curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
         curl_setopt($soap_do, CURLOPT_VERBOSE, true);
 
         if (!$result = curl_exec($soap_do)) {
-            Mage::log(curl_errno($soap_do) . curl_error($soap_do));
+            Mage::log('ERROR: ' . curl_error($soap_do), null, self::LOG_FILE);
         }
 
         curl_close($soap_do);
