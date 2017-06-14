@@ -129,6 +129,42 @@
             </block>
         </reference>
     </pureclarity_core_catalog_category>
+
+    <!-- Basket Page -->
+    <checkout_cart_index>
+        <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.bp01" before="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>BP-01</value>
+                </action>
+            </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.bp02" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>BP-02</value>
+                </action>
+            </block>
+        </reference>
+    </checkout_cart_index>
+
+    <!-- Order confirmation -->
+    <checkout_onepage_success>
+        <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.oc01" before="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>OC-01</value>
+                </action>
+            </block>
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.oc02" after="-" template="pureclarity/BMZ/bmz.phtml">
+                <action method="setData">
+                    <name>bmz_id</name>
+                    <value>OC-02</value>
+                </action>
+            </block>
+        </reference>
+    </checkout_onepage_success>
     
 
 
