@@ -168,21 +168,11 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </go_admin_button>
-                        <install_bmz_button translate="label">
-                            <label>Install default BMZ blocks</label>
-                            <frontend_type>button</frontend_type>
-                            <frontend_model>pureclarity_core/adminhtml_system_config_bmzinstallbutton</frontend_model>
-                            <sort_order>2</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>If you want the default BMZ static block, click this button. You should only need to do this once, but if you deleted the default BMZ you can click this button again to reinstall it.</strong>]]></comment>
-                        </install_bmz_button>
                         <run_feed_button translate="label">
                             <label>Run a feed now</label>
                             <frontend_type>button</frontend_type>
                             <frontend_model>pureclarity_core/adminhtml_system_config_runfeedbutton</frontend_model>
-                            <sort_order>3</sort_order>
+                            <sort_order>2</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
