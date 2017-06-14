@@ -26,6 +26,9 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
 {
     public function productsAction()
     {
+        if (!Mage::helper('pureclarity_core')->isBMZDebugActive())
+            return;
+
         $pageSize = (int)$this->getRequest()->getParam('size', 100000);
         $currentPage = (int)$this->getRequest()->getParam('page', 1);
 
@@ -45,6 +48,9 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
 
     public function deltasAction()
     {
+        if (!Mage::helper('pureclarity_core')->isBMZDebugActive())
+            return;
+            
         $model = Mage::getModel('pureclarity_core/cron');
         $requests = $model->deltaFeed(null, true);
         $formatType = 'json';
