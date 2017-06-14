@@ -165,8 +165,8 @@
         <jobs>
             <pureclarity_core_delta_feed>
                 <schedule>
-                    <!-- Every fifth minute -->
-                    <cron_expr>*/5 * * * *</cron_expr>
+                    <!-- Every minute -->
+                    <cron_expr>*/1 * * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>pureclarity_core/cron::deltaFeed</model>
