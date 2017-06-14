@@ -315,12 +315,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $minPrice = 0;
         $maxPrice = 0;
         switch ($product->getTypeId()) {
-            case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
-                $model = $product->getPriceModel();
-                $minPrice = $model->getTotalPrices($product, 'min', $includeTax);
-                $maxPrice = $model->getTotalPrices($product, 'max', $includeTax);
-                break;
             case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
+            case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
                 $config = Mage::getSingleton('catalog/config');
                 $groupProduct = Mage::getModel('pureclarity_core/product')
                     ->getCollection()
