@@ -70,7 +70,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             $feedModel = Mage::getModel('pureclarity_core/feed');
             $brands = $feedModel->getFullBrandFeed(null, $this->storeId)["Brands"];
             foreach ($brands as $brand){
-                $this->brandLookup[$brand["Id"]] = $brand["DisplayName"];
+                $this->brandLookup[$brand["Id"]] = $brand["Id"];
             }
         }
 
