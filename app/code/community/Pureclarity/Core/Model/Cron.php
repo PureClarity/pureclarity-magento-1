@@ -101,6 +101,10 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                                         if ($data != null)
                                             $feedProducts[] = $data;
                                     }
+                                    //if we've changed the sku - make sure old one gets deleted
+                                    if ($deltaProduct->getOldsku() != $product->getSku()){
+                                        $deleteProducts[] = $deltaProduct->getOldsku();
+                                    }
                                 }
                             }
 
