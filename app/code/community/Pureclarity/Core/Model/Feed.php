@@ -30,8 +30,8 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         $feedCategories = array("Categories" => array());
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
             ->setStoreId($storeId)
-            ->addAttributeToSelect('*')
-            ->addFieldToFilter('is_active',array("eq"=> true))
+            ->addAttributeToSelect('name')
+            ->addAttributeToSelect('is_active')
             ->addUrlRewriteToResult();
         
 
@@ -76,9 +76,14 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             );
 
             
-            // Check if to ignore this category
+            // Check if to ignore this category in recommenders
             if ($category->getData('pureclarity_hide_from_feed') == '1'){
                  $categoryData["ExcludeFromRecommenders"] = true;
+            }
+
+            //Check if category is active
+            if (!$category->getIsActive()){
+                 $categoryData["IsActive"] = false;
             }
 
             if ($category->getLevel() > 1){
