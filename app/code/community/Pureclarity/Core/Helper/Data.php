@@ -40,6 +40,16 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
                                8 => 'api-ap-ne2.pureclarity.net',
                                9 => 'api-eu-c.pureclarity.net',
                                10 => 'api-eu-w.pureclarity.net');
+    protected $sftpRegions = array(1 => 'sftp.pureclarity.net',         
+                               2 => 'sftp-us-e.pureclarity.net',
+                               3 => 'sftp-us-w.pureclarity.net',
+                               4 => 'sftp-ap-s.pureclarity.net',
+                               5 => 'sftp-ap-ne.pureclarity.net',
+                               6 => 'sftp-ap-se.pureclarity.net',
+                               7 => 'sftp-ap-se2.pureclarity.net',
+                               8 => 'sftp-ap-ne2.pureclarity.net',
+                               9 => 'sftp-eu-c.pureclarity.net',
+                               10 => 'sftp-eu-w.pureclarity.net');
 
     const FEED_TYPE_PRODUCT  = 'product';
     const FEED_TYPE_CATEGORY = 'category';
@@ -174,6 +184,21 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
             return $pureclarityHostEnv;
         $region = $this->getRegion($storeId);
         return $this->regions[$region];
+    }
+
+    public function getSftpHost($storeId){
+        $pureclarityHostEnv = getenv('PURECLARITY_SFTP_HOST');
+        if ($pureclarityHostEnv != null && $pureclarityHostEnv != '')
+            return $pureclarityHostEnv;
+        $region = $this->getRegion($storeId);
+        return $this->sftpRegions[$region];
+    }
+
+    public function getSftpPort($storeId){
+        $pureclarityHostEnv = getenv('PURECLARITY_SFTP_PORT');
+        if ($pureclarityHostEnv != null && $pureclarityHostEnv != '')
+            return intval($pureclarityHostEnv);
+        return 2222;
     }
 
     public function useSSL($storeId){

@@ -29,10 +29,12 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 {
     const DELTA_LOG = 'pureclarity_delta.log';
     protected $soapHelper;
+    protected $sftpHelper;
 
     public function _construct()
     {
         $this->soapHelper = Mage::helper('pureclarity_core/soap');
+        $this->sftpHelper = Mage::helper('pureclarity_core/sftp');
     }
 
     /**
@@ -191,13 +193,25 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         fclose($feedFile);
 
         // Ensure progress file is set to complete
-        $this->updateProgressFile($progressFileName, $feedName, 1, 1, 'true');
+        $uniqueId = 'PureClarity-Feed' . uniqid();
+        $this->updateProgressFile($progressFileName, $feedName, 1, 1, "true", "false", $uniqueId);
+
+        // Uploade to sftp
+        $host = Mage::helper('pureclarity_core')->getSftpHost($storeId);
+        $port = Mage::helper('pureclarity_core')->getSftpPort($storeId);
+        $appKey = Mage::helper('pureclarity_core')->getAccessKey($storeId);
+        $secretKey = Mage::helper('pureclarity_core')->getSecretKey($storeId);
+        $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath);
+
+        // Set to uploaded
+        $this->updateProgressFile($progressFileName, $feedName, 1, 1, "true", "true", $uniqueId);
+
 
         // Notify PC about the feed being available
-        $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
-        $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
-        $body = Mage::helper('pureclarity_core')->getFeedBody($storeId);
-        $response = $this->soapHelper->request($url, $useSSL, $body);
+        // $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
+        // $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
+        // $body = Mage::helper('pureclarity_core')->getFeedBody($storeId);
+        // $response = $this->soapHelper->request($url, $useSSL, $body);
     }
 
 
@@ -236,10 +250,10 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     }
 
     // Helper function to update the progress file
-    protected function updateProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete)
+    protected function updateProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete, $isUploaded = "false", $uniqueId = "")
     {
         $progressFile = fopen($progressFileName, "w");
-        fwrite($progressFile, "{\"name\":\"$feedName\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete}" );
+        fwrite($progressFile, "{\"name\":\"$feedName\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete,\"isUploaded\":$isUploaded,\"uniqueId\":\"$uniqueId\"}" );
         fclose($progressFile);
     }
     

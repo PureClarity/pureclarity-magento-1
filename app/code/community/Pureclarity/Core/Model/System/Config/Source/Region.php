@@ -50,7 +50,7 @@ class Pureclarity_Core_Model_System_Config_Source_Region
                 'value' => 5
             ),
             array(
-                'label' => $helper->__('Region65'),
+                'label' => $helper->__('Region 6'),
                 'value' => 6
             ),
             array(
