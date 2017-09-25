@@ -29,7 +29,7 @@ class Pureclarity_Core_Helper_Sftp
     
     public function send($host, $port, $username, $password, $filename, $src)
     {
-        $sftpDumpFile = new Varien_Io_Sftp();
+        $sftp = new Varien_Io_Sftp();
         try {
             $sftp->open(
                 array(
@@ -38,7 +38,7 @@ class Pureclarity_Core_Helper_Sftp
                     'password'  => $password
                 )
             );
-            $sftp->write($filename, $src);
+            $sftp->write("/magento-feeds/".$filename, $src);
             $sftp->close();
         } catch(Exception $e) {
             Mage::log("ERROR: Processing SFTP transfer: " . $src, null, self::LOG_FILE);
