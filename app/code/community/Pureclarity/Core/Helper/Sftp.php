@@ -22,30 +22,30 @@
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  *****************************************************************************************/
 
+//require_once('pureclarity/Net/PCSFTP.php');
+//require_once('phpseclib/Net/SFTP.php');
+// $path=Mage::getBaseDir('lib') . DS . 'Pureclarity' . DS . 'SFTP.php';
+// Mage::log($path, null, "pureclarity_sftp.log");
+// include_once $path;
+
 class Pureclarity_Core_Helper_Sftp
 {
-    
     const LOG_FILE = "pureclarity_sftp.log";
     
-    public function send($host, $port, $username, $password, $filename, $src)
+    public function send($host, $port, $username, $password, $filename, $payload)
     {
-        $sftp = new Varien_Io_Sftp();
+        $sftp = Mage::getModel('pureclarity_core/sftp');
         try {
-            $sftp->open(
-                array(
-                    'host'      => $host.':'.$port,
-                    'username'  => $username,
-                    'password'  => $password
-                )
-            );
-            $sftp->write("/magento-feeds/".$filename, $src);
-            $sftp->close();
+            $sftp->init($host, $port, 10);
+            if (!$sftp->login($username, $password)){
+                throw new Exception(sprintf(__("Unable to open SFTP connection as %s@%s:%s", $username, $host, $port)));
+            }
+            $sftp->put("/magento-feeds/".$filename, $payload, 1);
         } catch(Exception $e) {
-            Mage::log("ERROR: Processing SFTP transfer: " . $src, null, self::LOG_FILE);
+            Mage::log("ERROR: Processing SFTP transfer: " . $filename, null, self::LOG_FILE);
             Mage::logException($e);   
         }
+        $sftp->disconnect();
     }
-
-
 
 }

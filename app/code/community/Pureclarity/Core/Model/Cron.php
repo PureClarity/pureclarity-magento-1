@@ -21,7 +21,7 @@
  * @copyright Copyright (c) 2017 PureClarity Technologies Ltd
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  *****************************************************************************************/
-
+ 
 /**
 * PureClarity Cron Model
 */
@@ -193,7 +193,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         fclose($feedFile);
 
         // Ensure progress file is set to complete
-        $uniqueId = 'PureClarity-Feed' . uniqid();
+        $uniqueId = 'PureClarityFeed-' . uniqid();
         $this->updateProgressFile($progressFileName, $feedName, 1, 1, "true", "false", $uniqueId);
 
         // Uploade to sftp
@@ -205,7 +205,6 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
         // Set to uploaded
         $this->updateProgressFile($progressFileName, $feedName, 1, 1, "true", "true", $uniqueId);
-
 
         // Notify PC about the feed being available
         // $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
