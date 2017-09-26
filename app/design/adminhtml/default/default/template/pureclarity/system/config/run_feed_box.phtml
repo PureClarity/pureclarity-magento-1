@@ -47,24 +47,36 @@
                 document.getElementById("pureclarity-magento-brand-feed").disabled = false;
             }
 
-            function setProgress(feedtype, done, max){
+            function setProgress(feedtype, done, max, isComplete, isUploaded){
                 // Set progress bar value for the given feed type
-                eid = "pureclarity-magento-feed-progress-" + feedtype;
-                progBar = document.getElementById(eid);
-                if(progBar){
-                    progBar.setAttribute("max", max);
-                    progBar.setAttribute("value", done);
+                var statusMessage = document.getElementById("status-message");
+                if (!isComplete){
+                    var percent = ((done/max) * 100).toFixed(0)
+                    statusMessage.innerHTML = "Generating " + feedtype + " feed... (" + percent + "% done)";
                 }
+                else if (isComplete && !isUploaded){
+                    statusMessage.innerHTML = feedtype + "feed generated. Uploading to PureClarity...";
+                }
+                else if (isComplete && isUploaded){
+                    statusMessage.innerHTML = feedtype + " feed complete.";
+                };
+
+                // eid = "pureclarity-magento-feed-progress-" + feedtype;
+                // progBar = document.getElementById(eid);
+                // if(progBar){
+                //     progBar.setAttribute("max", max);
+                //     progBar.setAttribute("value", done);
+                // }
             }
 
             function feedComplete(request){
                 // Called when a feed AJAX returns
                 isComplete = true;
                 for (var i = 0; i<= selectedFeeds.length-1; i++){
-                    if (request.responseURL.indexOf('feedtype=' + selectedFeeds[i]) >= 0){
+                    if (request.responseURL.indexOf('feedtype=' + selectedFeeds[i].toLowerCase()) >= 0){
                         // Set the feed to complete and the progress to 100%
                         completedFeeds.push(selectedFeeds[i]);
-                        setProgress(selectedFeeds[i], 1, 1);
+                        setProgress(selectedFeeds[i], 1, 1, true, true);
                     }
                     if (completedFeeds.indexOf(selectedFeeds[i]) < 0)
                         isComplete = false;
@@ -88,8 +100,8 @@
                                 if (this.responseText != ""){
                                     progress = JSON.parse(this.responseText);
                                     // Update progress bar
-                                    setProgress(progress.name, progress.cur, progress.max);
-                                    if (progress.isComplete){
+                                    setProgress(progress.name, progress.cur, progress.max, progress.isComplete, progress.isUploaded);
+                                    if (progress.isComplete && progress.isUploaded){
                                         feedComplete(this);
                                     }
                                 }
@@ -99,7 +111,7 @@
                             }
                         };
                         now = encodeURIComponent(new Date()); // Append time to force a cache miss
-                        var thisFeedUrl = progressUrl + "?time=" + now + "&feedtype=" + selectedFeeds[i];
+                        var thisFeedUrl = progressUrl + "?time=" + now + "&feedtype=" + selectedFeeds[i].toLowerCase();
                         feedProgress.open("GET", thisFeedUrl, true);
                         feedProgress.send();
                     }
@@ -120,9 +132,9 @@
                 var doProducts = document.getElementById('pureclarity-magento-product-feed').checked;
                 var doCategories = document.getElementById('pureclarity-magento-category-feed').checked;
                 var doBrands = document.getElementById('pureclarity-magento-brand-feed').checked;
-                if (doProducts){selectedFeeds.push('product')}
-                if (doCategories){selectedFeeds.push('category')}
-                if (doBrands){selectedFeeds.push('brand')}
+                if (doProducts){selectedFeeds.push('Product')}
+                if (doCategories){selectedFeeds.push('Category')}
+                if (doBrands){selectedFeeds.push('Brand')}
 
                 if (selectedFeeds.length < 1){
                     alert("No feeds are selected. Please select at least one feed.");
@@ -140,12 +152,12 @@
                 for (var i = 0; i<= selectedFeeds.length-1; i++){
                     // Start each selected feed
                     // 0% progress at start
-                    setProgress(selectedFeeds[i], 0, 1);
+                    var currentFeed = selectedFeeds[i];
+                    setProgress(currentFeed, 0, 1);
                     var startfeed = new XMLHttpRequest();
                     startfeed.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) { feedComplete(this); }
                         if (this.readyState == 4 && this.status != 200) {
-                            console.log(this);
                             feedtype = /feedtype=([^&]*)/.exec(this.responseURL)[1];
                             if (this.status == 409) {
                                 alert("The '" + feedtype + "' feed is already running, please wait for it to finish before running it again.");
@@ -160,7 +172,7 @@
                         }
                     };
                     var now = encodeURIComponent(new Date()); // Append time to force a cache miss
-                    var thisFeedUrl = feedUrl + "?time=" + now + "&feedtype=" + selectedFeeds[i] + "&storeid=" + selectedStore;
+                    var thisFeedUrl = feedUrl + "?time=" + now + "&feedtype=" + currentFeed.toLowerCase() + "&storeid=" + selectedStore;
                     startfeed.open("GET", thisFeedUrl, true);
                     startfeed.send();
                 }
@@ -187,13 +199,22 @@
             </select>
         </p>
         <br />
+        
         <p><input type="checkbox" id="pureclarity-magento-product-feed"/><label for="pureclarity-magento-product-feed">Products</label></p>
         <progress id="pureclarity-magento-feed-progress-product" max="100" value="0"></progress>
+
         <p><input type="checkbox" id="pureclarity-magento-category-feed"/><label for="pureclarity-magento-category-feed">Categories</label></p>
         <progress id="pureclarity-magento-feed-progress-category" max="100" value="0"></progress>
+
         <p><input type="checkbox" id="pureclarity-magento-brand-feed"/><label for="pureclarity-magento-brand-feed">Brands</label></p>
         <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
+
         <p>&nbsp;</p>
+        <div id="status-box">
+            <p>
+            <strong>Status: <strong> <span id="status-message"></span>
+            </p>
+        </div>
         <p>
             <button id="pureclarity_magento_run_now" onclick="runFeeds()">Run selected feeds now</button>
             <img id="pureclarity_magento_loading_image" class="pureclarity_magento_loading_image pureclarity_magento_loading_image_hidden" src="<?php echo $this->getSkinUrl('images/ajax-loader-tr.gif') ?>">
