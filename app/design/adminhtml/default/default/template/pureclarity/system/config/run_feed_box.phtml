@@ -73,7 +73,7 @@
                 // Called when a feed AJAX returns
                 isComplete = true;
                 for (var i = 0; i<= selectedFeeds.length-1; i++){
-                    if (request.responseURL.indexOf('feedtype=' + selectedFeeds[i].toLowerCase()) >= 0){
+                    if (request.responseURL.indexOf('feedtype=all') >= 0){
                         // Set the feed to complete and the progress to 100%
                         completedFeeds.push(selectedFeeds[i]);
                         setProgress(selectedFeeds[i], 1, 1, true, true);
@@ -122,60 +122,37 @@
                 }
             }
 
+
             function runFeeds(){
-                
-                selectedFeeds = [];
-
-                // Get selected store and list of selected feeds
-                var store_select = document.getElementById("store_select");
-                var selectedStore = store_select.options[store_select.selectedIndex].value;
-                var doProducts = document.getElementById('pureclarity-magento-product-feed').checked;
-                var doCategories = document.getElementById('pureclarity-magento-category-feed').checked;
-                var doBrands = document.getElementById('pureclarity-magento-brand-feed').checked;
-                if (doProducts){selectedFeeds.push('Product')}
-                if (doCategories){selectedFeeds.push('Category')}
-                if (doBrands){selectedFeeds.push('Brand')}
-
-                if (selectedFeeds.length < 1){
-                    alert("No feeds are selected. Please select at least one feed.");
-                    return;
-                }
 
                 // Init loading
-                completedFeeds = [];
                 isComplete = false;
                 uiStartLoading();
+                setProgress(0, 1);
 
-                // Base feed URL, append ?feedtype=foo before requesting
                 var feedUrl = "<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/runselected'); ?>";
-
-                for (var i = 0; i<= selectedFeeds.length-1; i++){
-                    // Start each selected feed
-                    // 0% progress at start
-                    var currentFeed = selectedFeeds[i];
-                    setProgress(currentFeed, 0, 1);
-                    var startfeed = new XMLHttpRequest();
-                    startfeed.onreadystatechange = function() {
-                        if (this.readyState == 4 && this.status == 200) { feedComplete(this); }
-                        if (this.readyState == 4 && this.status != 200) {
-                            feedtype = /feedtype=([^&]*)/.exec(this.responseURL)[1];
-                            if (this.status == 409) {
-                                alert("The '" + feedtype + "' feed is already running, please wait for it to finish before running it again.");
-                            }
-                            else {
-                                if (this.responseText != "")
-                                    alert(this.responseText);
-                                else
-                                    alert("The '" + feedtype + "' feed did not complete correctly. You may need to rerun this feed.");
-                                feedComplete(this);
-                            }
+                
+                var startfeed = new XMLHttpRequest();
+                startfeed.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) { feedComplete(this); }
+                    if (this.readyState == 4 && this.status != 200) {
+                        if (this.status == 409) {
+                            alert("The feed is already running, please wait for it to finish before running it again.");
                         }
-                    };
-                    var now = encodeURIComponent(new Date()); // Append time to force a cache miss
-                    var thisFeedUrl = feedUrl + "?time=" + now + "&feedtype=" + currentFeed.toLowerCase() + "&storeid=" + selectedStore;
-                    startfeed.open("GET", thisFeedUrl, true);
-                    startfeed.send();
-                }
+                        else {
+                            if (this.responseText != "")
+                                alert(this.responseText);
+                            else
+                                alert("The feed did not complete correctly. You may need to rerun this feed.");
+                            feedComplete(this);
+                        }
+                    }
+                };
+                var now = encodeURIComponent(new Date());
+                var thisFeedUrl = feedUrl + "?time=" + now + "&feedtype=all&storeid=" + selectedStore;
+                startfeed.open("GET", thisFeedUrl, true);
+                startfeed.send();
+                    
                 // Start polling for progress updates.
                 lastPollComplete = true;
                 setTimeout(pollProgress, 1000);
@@ -210,9 +187,19 @@
         <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
 
         <p>&nbsp;</p>
-        <div id="status-box">
+        <div id="status-box-product" style="display:none">
             <p>
-            <strong>Status: <strong> <span id="status-message"></span>
+                <strong>Status: <strong> <span id="product-status-message"></span>
+            </p>
+        </div>
+        <div id="status-box-category" style="display:none">
+            <p>
+                <strong>Status: <strong> <span id="category-status-message"></span>
+            </p>
+        </div>
+        <div id="status-box-brand" style="display:none">
+            <p>
+                <strong>Status: <strong> <span id="brand-status-message"></span>
             </p>
         </div>
         <p>

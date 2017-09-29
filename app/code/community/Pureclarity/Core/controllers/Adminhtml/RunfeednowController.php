@@ -40,6 +40,9 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
             if (in_array($selection, $feeds)) {
                 $model = Mage::getModel('pureclarity_core/cron');
                 switch ($selection) {
+                    case "all":
+                        $model->allFeeds($storeId);
+                        break;
                     case "product":
                         $model->fullProductFeed($storeId);
                         break;
@@ -69,27 +72,13 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
     }
 
     public function getprogressAction(){
+        $contents = "";
         $selection = $this->getRequest()->getParam('feedtype');
-        $feeds = ["product", "category", "brand"];
-        if (in_array($selection, $feeds)){
-            $progressFileName = null;
-            switch ($selection){
-                case "product":
-                    $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName(Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT);
-                    break;
-                case "category":
-                    $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName(Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY);
-                    break;
-                case "brand":
-                    $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName(Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND);
-                    break;
-            }
-            if ($progressFileName != null){
-                $contents = '';
-                if (file_exists($progressFileName))
-                    $contents = file_get_contents($progressFileName);
-                $this->getResponse()->setBody($contents);
-            }
+        if (in_array($selection, array("product", "category", "brand"))) {
+            $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($selection);
+            if ($progressFileName != null && file_exists($progressFileName))
+                $contents = file_get_contents($progressFileName);
         }
+        $this->getResponse()->setBody($contents);
     }
 }

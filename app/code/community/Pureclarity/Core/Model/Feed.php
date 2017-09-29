@@ -27,7 +27,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
     function getFullCatFeed($progressFileName, $storeId) {
 
-        $feedCategories = array("Categories" => array());
+        $feedCategories = array();
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
             ->setStoreId($storeId)
             ->addAttributeToSelect('name')
@@ -94,12 +94,10 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 $categoryData["PCImage"] = $imageURL2;
             }
 
-            $feedCategories['Categories'][] = $categoryData;
-            $feedCategories['Version']=2;
+            $feedCategories[] = $categoryData;
+            
             $currentProgress += 1;
-            $progressFile = fopen($progressFileName, "w");
-            fwrite($progressFile, "{\"name\":\"category\",\"cur\":$currentProgress,\"max\":$maxProgress,\"isComplete\":false}");
-            fclose($progressFile);
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'category', $currentProgress, $maxProgress, "false");
         }
         return $feedCategories;
     }
@@ -118,7 +116,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             return;
         }
 
-        $feedBrands = array("Brands" => array());
+        $feedBrands = array();
         $options = $attribute->setStoreId($storeId)->getSource()->getAllOptions(false);
 
         // Find the SOLWIN image helper, if installed.
@@ -156,15 +154,10 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 $thisBrand['Image'] = $imageURL;
             }
 
-            $feedBrands['Brands'][] = $thisBrand;
-            $feedBrands['Version']=2;
+            $feedBrands[] = $thisBrand;
                                          
             $currentProgress += 1;
-            if ($progressFile != null){
-                $progressFile = fopen($progressFileName, "w");
-                fwrite($progressFile, "{\"name\":\"brand\",\"cur\":$currentProgress,\"max\":$maxProgress,\"isComplete\":false}");
-                fclose($progressFile);
-            }
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'brand', $currentProgress, $maxProgress, "false");
         }
         return $feedBrands;
     }

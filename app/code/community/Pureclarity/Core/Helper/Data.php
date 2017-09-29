@@ -51,10 +51,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
                                9 => 'sftp-eu-c.pureclarity.net',
                                10 => 'sftp-eu-w.pureclarity.net');
 
-    const FEED_TYPE_PRODUCT  = 'product';
-    const FEED_TYPE_CATEGORY = 'category';
-    const FEED_TYPE_BRAND    = 'brand';
-    const PROGRESS_FILE_BASE_NAME = 'pureclarity_feed_progress';
+    const PROGRESS_FILE_BASE_NAME = 'pureclarity-feed-progress-';
     const PURECLARITY_EXPORT_URL = 'pureclarity/export/feed?storeid={storeid}&type={type}';
 
 
@@ -229,12 +226,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     public static function getFileNameForFeed($feedtype, $storeCode){
-        switch($feedtype){
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:  return $storeCode . '-product.json';
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY: return $storeCode . '-category.json';
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND:    return $storeCode . '-brand.json';
-        }
-        return null;
+        return $storeCode . '-' . $feedType . '.json'
     }
 
 
@@ -277,16 +269,6 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $order;
     }
 
-    public static function feedName($feedtype){
-        // Get the string that identifies this feed
-        switch($feedtype){
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_PRODUCT:  return "product";
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_CATEGORY: return "category";
-            case Pureclarity_Core_Helper_Data::FEED_TYPE_BRAND:    return "brand";
-            default:
-                throw new \Exception("Pureclarity feed type not recognised: $feedtype");
-        }
-    }
     
     public static function getPureClarityBaseDir(){
         $varDir = Mage::getBaseDir('var') . DS . 'pureclarity';
@@ -296,7 +278,15 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     public static function getProgressFileName($feedtype){
-        return self::getPureClarityBaseDir() . DS . self::PROGRESS_FILE_BASE_NAME . self::feedName($feedtype);
+        return self::getPureClarityBaseDir() . DS . self::PROGRESS_FILE_BASE_NAME . $feedtype;
+    }
+
+    public static function setProgressFile($progressFileName, $feedName, $doingAll, $currentPage, $pages, $isComplete = "false", $isUploaded = "false", $uniqueId = ""){
+        if ($progressFile != null){
+            $progressFile = fopen($progressFileName, "w");
+            fwrite($progressFile, "{\"name\":\"$feedName\",\"doingAll\":$doingAll,\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete,\"isUploaded\":$isUploaded,\"uniqueId\":\"$uniqueId\"}" );
+            fclose($progressFile);
+        }
     }
 
 
