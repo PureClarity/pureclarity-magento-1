@@ -1,210 +1,186 @@
+
 <!DOCTYPE html>
 <html>
     <head>
-        <style type="text/css">
-            body{
-                font-family:helvetica;
-            }
-            p{
-                margin:0;
-                font-size:12px;
-            }
-            progress{
-                width: 100%;
-            }
-            label.disabled{
-                color:grey;
-            }
-            img.pureclarity_magento_loading_image{
-                float:right;
-            }
-            img.pureclarity_magento_loading_image_hidden{
-                display:none;
-            }
+        <style>
+            #pc-outputContainer {margin:20px 0;height:30px;}
         </style>
-        <script type="text/javascript">
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script  type="text/javascript">
+         
+        $.noConflict();
 
-            var selectedFeeds = [];
-            var completedFeeds = [];
-            var isComplete = false;
-            var lastPollComplete = true;
+        jQuery(document).ready(function(){
+            // Set vars
+            window.pureclarityObj = {
+                runFeedUrl: '<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/runselected'); ?>',
+                progressFeedUrl: '<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/getprogress'); ?>',
+                showImportOption: 'true',
+                isComplete: true,
+                selectStore: jQuery('#pc-selectStore'),
+                runButton: jQuery('#pc-runFeedButton'),
+                messageContainer: jQuery('#pc-statusMessage'),
+                chkProducts: jQuery('#pc-chkProducts'),
+                chkCategories: jQuery('#pc-chkCategories'),
+                chkBrands: jQuery('#pc-chkBrands'),
+                chkUsers: jQuery('#pc-chkUsers'),
+                chkOrders: jQuery('#pc-chkOrders'),
+                selectedStore: 0,
+                callError:null,
+                self:this,
 
-            function uiStartLoading(){
-                // Disable UI elements and show loading image
-                document.getElementById("pureclarity_magento_loading_image").className = "pureclarity_magento_loading_image";
-                document.getElementById("pureclarity_magento_run_now").disabled = true;
-                document.getElementById("pureclarity-magento-product-feed").disabled = true;
-                document.getElementById("pureclarity-magento-category-feed").disabled = true;
-                document.getElementById("pureclarity-magento-brand-feed").disabled = true;
-            }
+                message: function(message){
+                   
+                    this.messageContainer.show();
+                    this.messageContainer.html("<strong>Status: </strong>" + message);
+                },
 
-            function uiEndLoading(){
-                // Enable UI elements and hide loading image
-                document.getElementById("pureclarity_magento_loading_image").className = "pureclarity_magento_loading_image pureclarity_magento_loading_image_hidden";
-                document.getElementById("pureclarity_magento_run_now").disabled = false;
-                document.getElementById("pureclarity-magento-product-feed").disabled = false;
-                document.getElementById("pureclarity-magento-category-feed").disabled = false;
-                document.getElementById("pureclarity-magento-brand-feed").disabled = false;
-            }
-
-            function setProgress(feedtype, done, max, isComplete, isUploaded){
-                // Set progress bar value for the given feed type
-                var statusMessage = document.getElementById("status-message");
-                if (!isComplete){
-                    var percent = ((done/max) * 100).toFixed(0)
-                    statusMessage.innerHTML = "Generating " + feedtype + " feed... (" + percent + "% done)";
-                }
-                else if (isComplete && !isUploaded){
-                    statusMessage.innerHTML = feedtype + "feed generated. Uploading to PureClarity...";
-                }
-                else if (isComplete && isUploaded){
-                    statusMessage.innerHTML = feedtype + " feed complete.";
-                };
-
-                // eid = "pureclarity-magento-feed-progress-" + feedtype;
-                // progBar = document.getElementById(eid);
-                // if(progBar){
-                //     progBar.setAttribute("max", max);
-                //     progBar.setAttribute("value", done);
-                // }
-            }
-
-            function feedComplete(request){
-                // Called when a feed AJAX returns
-                isComplete = true;
-                for (var i = 0; i<= selectedFeeds.length-1; i++){
-                    if (request.responseURL.indexOf('feedtype=all') >= 0){
-                        // Set the feed to complete and the progress to 100%
-                        completedFeeds.push(selectedFeeds[i]);
-                        setProgress(selectedFeeds[i], 1, 1, true, true);
+                progressCheck: function(){
+                  
+                    if (this.callError){
+                        this.message(this.callError);
+                        this.isComplete = true;
+                        this.resetState();
                     }
-                    if (completedFeeds.indexOf(selectedFeeds[i]) < 0)
-                        isComplete = false;
-                }
-                if (isComplete == true){
-                    uiEndLoading();
-                }
-            }
-
+                    else {
+                        var manageProgressResponse = this.manageProgressResponse.bind(this);
+                        jQuery.ajax({
+                                url: this.progressFeedUrl,
+                                data: {form_key: window.FORM_KEY, storeid: this.selectedStore},
+                        }).done(manageProgressResponse);
+                    }
+                },
             
-            function pollProgress(){
-                if (lastPollComplete) {
-                    lastPollComplete = false;
-                    // Called every five seconds to update progress bars
-                    progressUrl = "<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/getprogress'); ?>";
-                    for (var i = 0; i <= selectedFeeds.length - 1; i++) {
-                        // Get progress for each feed selected
-                        var feedProgress = new XMLHttpRequest();
-                        feedProgress.onreadystatechange = function () {
-                            if (this.readyState == 4 && this.status == 200) {
-                                if (this.responseText != ""){
-                                    progress = JSON.parse(this.responseText);
-                                    // Update progress bar
-                                    setProgress(progress.name, progress.cur, progress.max, progress.isComplete, progress.isUploaded);
-                                    if (progress.isComplete && progress.isUploaded){
-                                        feedComplete(this);
-                                    }
-                                }
-                            }
-                            if (this.readyState == 4) {
-                                lastPollComplete = true;
-                            }
-                        };
-                        now = encodeURIComponent(new Date()); // Append time to force a cache miss
-                        var thisFeedUrl = progressUrl + "?time=" + now + "&feedtype=" + selectedFeeds[i].toLowerCase();
-                        feedProgress.open("GET", thisFeedUrl, true);
-                        feedProgress.send();
+                runFeed : function(){
+                   
+                    if (this.isComplete){
+                        if (!this.chkProducts.is(':checked') && !this.chkCategories.is(':checked') && !this.chkBrands.is(':checked') && !this.chkUsers.is(':checked') && !this.chkOrders.is(':checked')){
+                            this.message("Error: You must select at least one feed type to create.");
+                            return;
+                        }
+                        this.message("Initialising...");
+                        this.selectedStore = this.selectStore.find(":selected").val();
+                        this.selectStore.prop("disabled", true);
+                        this.runButton.prop("disabled", true);
+                        this.chkProducts.prop("disabled", true);
+                        this.chkCategories.prop("disabled", true);
+                        this.chkBrands.prop("disabled", true);
+                        this.chkUsers.prop("disabled", true);
+                        if (this.showImportOption)
+                            this.chkOrders.prop("disabled", true);
+                        this.isComplete = false;
+                        var urlParts = [this.runFeedUrl + '?storeid='+this.selectedStore];
+                        urlParts.push('product='+this.chkProducts.is(':checked'));
+                        urlParts.push('category='+this.chkCategories.is(':checked'));
+                        urlParts.push('brand='+this.chkBrands.is(':checked'));
+                        urlParts.push('user='+this.chkUsers.is(':checked'));
+                        if (this.showImportOption)
+                            urlParts.push('orders='+this.chkOrders.is(':checked'));
+                        var self = this;
+                        jQuery.ajax({
+                                        url: urlParts.join('&'),
+                                        data: {form_key: window.FORM_KEY, storeid: self.selectedStore},
+                                    }).done(function(response) {
+                                    }).fail(function(jqXHR, status, err) {
+                        self.callError = jqXHR.responseText;
+                        });
+                        var progressCheck = self.progressCheck.bind(self);
+                        setTimeout(progressCheck, 1000);
                     }
-                }
-                if (!isComplete) {
-                    // Keep going if we are not complete yet
-                    setTimeout(pollProgress, 1000);
-                }
-            }
+                },
 
+                manageProgressResponse: function(response){
+                    if (response && response.error){
+                        this.message("ERROR: Sorry but an error occured. " + response.error);
+                        this.isComplete = true;
+                        this.resetState();
+                    }
+                    else if (response && response.isUploaded){
+                        this.message("SUCCESS: Data feed sucessfully submitted to PureClarity.")
+                        this.resetState();
+                    }
+                    else{
+                        if (response && response.isComplete == false){
+                            var percent = ((response.cur/response.max) * 100).toFixed(0)
+                            var message = "Building " + response.name + " feed... (" + percent + "%)";
+                            this.message(message);
+                        }
+                        else if (response) {
+                            this.message('Uploading to PureClarity...');
+                        }
 
-            function runFeeds(){
-
-                // Init loading
-                isComplete = false;
-                uiStartLoading();
-                setProgress(0, 1);
-
-                var feedUrl = "<?php echo Mage::helper('adminhtml')->getUrl('adminhtml/adminhtml_runfeednow/runselected'); ?>";
+                        var progressCheck = this.progressCheck.bind(this);
+                        setTimeout(progressCheck, 1000);
+                    }
+                },
                 
-                var startfeed = new XMLHttpRequest();
-                startfeed.onreadystatechange = function() {
-                    if (this.readyState == 4 && this.status == 200) { feedComplete(this); }
-                    if (this.readyState == 4 && this.status != 200) {
-                        if (this.status == 409) {
-                            alert("The feed is already running, please wait for it to finish before running it again.");
-                        }
-                        else {
-                            if (this.responseText != "")
-                                alert(this.responseText);
-                            else
-                                alert("The feed did not complete correctly. You may need to rerun this feed.");
-                            feedComplete(this);
-                        }
-                    }
-                };
-                var now = encodeURIComponent(new Date());
-                var thisFeedUrl = feedUrl + "?time=" + now + "&feedtype=all&storeid=" + selectedStore;
-                startfeed.open("GET", thisFeedUrl, true);
-                startfeed.send();
-                    
-                // Start polling for progress updates.
-                lastPollComplete = true;
-                setTimeout(pollProgress, 1000);
-            }
+                resetState: function(hideMessage){
+                    this.isComplete = true;
+                    this.selectStore.prop("disabled", false);
+                    this.runButton.prop("disabled", false);
+                    this.chkProducts.prop("disabled", false);
+                    this.chkCategories.prop("disabled", false);
+                    this.chkBrands.prop("disabled", false);
+                    this.chkUsers.prop("disabled", false);
+                    if (this.showImportOption)
+                        this.chkOrders.prop("disabled", false);
+                }
+            };
+        });
         </script>
     </head>
+
     <body>
-        <h4>Select the store and feeds you would like to generate:</h4>
-        <p>
-            Select Store:
-        </p>
-        <p>
-            <select name="store_select" id="store_select" style="width:100%;">
-                <?php foreach (Mage::app()->getWebsites() as $website): ?>
-                <?php foreach ($website->getGroups() as $group): ?>
-                <?php foreach ($group->getStores() as $store): ?>
-                    <option value="<?php echo $store->getId(); ?>" ><?php echo $group->getName() . " - " . $store->getName() ?></option>
-                <?php endforeach; ?>
-                <?php endforeach; ?>
-                <?php endforeach; ?>
-            </select>
-        </p>
-        <br />
         
-        <p><input type="checkbox" id="pureclarity-magento-product-feed"/><label for="pureclarity-magento-product-feed">Products</label></p>
-        <progress id="pureclarity-magento-feed-progress-product" max="100" value="0"></progress>
+            <h4>Select the store that would like to generate feeds for:</h4>
 
-        <p><input type="checkbox" id="pureclarity-magento-category-feed"/><label for="pureclarity-magento-category-feed">Categories</label></p>
-        <progress id="pureclarity-magento-feed-progress-category" max="100" value="0"></progress>
+            <div>
+                <select name="pc-selectStore" id="pc-selectStore" class="select admin__controle-select">
+                    <?php foreach (Mage::app()->getWebsites() as $website): ?>
+                    <?php foreach ($website->getGroups() as $group): ?>
+                    <?php foreach ($group->getStores() as $store): ?>
+                        <option value="<?php echo $store->getId(); ?>" ><?php echo $group->getName() . " - " . $store->getName() ?></option>
+                    <?php endforeach; ?>
+                    <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
-        <p><input type="checkbox" id="pureclarity-magento-brand-feed"/><label for="pureclarity-magento-brand-feed">Brands</label></p>
-        <progress id="pureclarity-magento-feed-progress-brand" max="100" value="0"></progress>
+            <div style="margin:10px 0">
+                <div>
+                    <input id="pc-chkProducts" type="checkbox" checked="true" /><label>Products</label>
+                </div>
+                <div>
+                    <input id="pc-chkCategories" type="checkbox" checked="true" /><label>Categories</label>
+                </div>
+                <div>
+                    <input id="pc-chkBrands" type="checkbox" checked="true" /><label>Brands</label>
+                </div>
+                <div>
+                    <input id="pc-chkUsers" type="checkbox" checked="true" /><label>Users</label>
+                </div>
+            </div>
 
-        <p>&nbsp;</p>
-        <div id="status-box-product" style="display:none">
-            <p>
-                <strong>Status: <strong> <span id="product-status-message"></span>
-            </p>
-        </div>
-        <div id="status-box-category" style="display:none">
-            <p>
-                <strong>Status: <strong> <span id="category-status-message"></span>
-            </p>
-        </div>
-        <div id="status-box-brand" style="display:none">
-            <p>
-                <strong>Status: <strong> <span id="brand-status-message"></span>
-            </p>
-        </div>
-        <p>
-            <button id="pureclarity_magento_run_now" onclick="runFeeds()">Run selected feeds now</button>
-            <img id="pureclarity_magento_loading_image" class="pureclarity_magento_loading_image pureclarity_magento_loading_image_hidden" src="<?php echo $this->getSkinUrl('images/ajax-loader-tr.gif') ?>">
-        </p>
+            <div id="orderhistory" style="margin:30px 0">
+                <h2>Order History Initialization</h2>
+                <h4 style="color:red">WARNING: This can only be run once per application. Importing your orders helps to initialize PureClarity with the purchasing behavior of your visitors.</h4>
+                <div>
+                    <input id="pc-chkOrders" type="checkbox" /><label>Import Historic Sales Orders</label>
+                </div>
+            </div>
+            
+
+            <div id="pc-outputContainer">
+                <div id="pc-statusMessage" style="display:none"></div>
+            </div>
+
+            <div>
+                <button id="pc-runFeedButton" onclick="pureclarityObj.runFeed()">Run selected feed generations now</button>
+                <!-- <img id="pureclarity_magento_loading_image" class="pureclarity_magento_loading_image pureclarity_magento_loading_image_hidden" src="<?php echo $this->getSkinUrl('images/ajax-loader-tr.gif') ?>" /> -->
+            </div>
+
     </body>
+
 </html>
+
+<?php echo $this->getButtonHtml() ?>
