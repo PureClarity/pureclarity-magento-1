@@ -177,7 +177,6 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             
             // Set standard data
             $data = array(
-                "_index" => $index,
                 "Sku" => $product->getData('sku'),
                 "Title" => $product->getData('name'),
                 "Description" => array(strip_tags($product->getData('description')), strip_tags($product->getShortDescription()))
