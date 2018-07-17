@@ -144,16 +144,21 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     }
 
     
-
+    public function selectedFeeds($storeId, $feeds) {
+        $this->doFeed($feeds, $storeId, false);
+    }
 
     // Produce a feed and notify PureClarity so that it can fetch it.
-    public function doFeed($feedtypes, $storeId, $doAll, $feedFile){
+    public function doFeed($feedtypes, $storeId, $doAll){
 
         //can take a while to run the feed
         set_time_limit(0);
 
+
         foreach($feedtype as $feedtypes){
-        
+
+            $feedFile = $this->getFeedFile($storeId, $feedtype)
+
             $progressFileName = "";
             if ($doAll)
                 $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName(Pureclarity_Core_Helper_Data::FEED_TYPE_ALL);
