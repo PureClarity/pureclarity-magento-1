@@ -226,7 +226,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     public static function getFileNameForFeed($feedtype, $storeCode){
-        return $storeCode . '-' . $feedType . '.json'
+        return $storeCode . '-' . $feedType . '.json';
     }
 
 
