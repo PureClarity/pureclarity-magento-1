@@ -177,9 +177,9 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             new Varien_Object(array(
                 'userid' => $customer->getId(),
                 'email' => $customer->getEmail(),
-                'firstname' => $customer->getFirstName(),
-                'lastname' => $customer->getLastName(),
-                'salutation' => $customer->getTitle(),
+                'firstname' => $customer->getFirstname(),
+                'lastname' => $customer->getLastname(),
+                'salutation' => $customer->getPrefix()
             ))
         );
 
