@@ -47,7 +47,11 @@
                         jQuery.ajax({
                                 url: this.progressFeedUrl,
                                 data: {form_key: window.FORM_KEY, storeid: this.selectedStore},
-                        }).done(manageProgressResponse);
+                        }).done(manageProgressResponse)
+                        .fail(function(jqXHR, status, err) {
+                            console.log(err);
+                        self.callError = jqXHR.responseText;
+                        });
                     }
                 },
             

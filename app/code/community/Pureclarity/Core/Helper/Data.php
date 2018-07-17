@@ -286,14 +286,14 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $varDir;
     }
 
-    public static function getProgressFileName($feedtype){
-        return self::getPureClarityBaseDir() . DS . self::PROGRESS_FILE_BASE_NAME . $feedtype;
+    public static function getProgressFileName(){
+        return self::getPureClarityBaseDir() . DS . self::PROGRESS_FILE_BASE_NAME . 'all.json';
     }
 
-    public static function setProgressFile($progressFileName, $feedName, $doingAll, $currentPage, $pages, $isComplete = "false", $isUploaded = "false", $uniqueId = ""){
-        if ($progressFile != null){
+    public static function setProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete = "false", $isUploaded = "false", $error = ""){
+        if ($progressFileName != null){
             $progressFile = fopen($progressFileName, "w");
-            fwrite($progressFile, "{\"name\":\"$feedName\",\"doingAll\":$doingAll,\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete,\"isUploaded\":$isUploaded,\"uniqueId\":\"$uniqueId\"}" );
+            fwrite($progressFile, "{\"name\":\"$feedName\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete,\"isUploaded\":$isUploaded,\"error\":\"$error\"}" );
             fclose($progressFile);
         }
     }

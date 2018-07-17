@@ -57,14 +57,28 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
         }
     }
 
-    public function getprogressAction(){
+    public function getprogressAction()
+    {
         $contents = "";
-        $selection = $this->getRequest()->getParam('feedtype');
-        if (in_array($selection, array("product", "category", "brand"))) {
-            $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($selection);
-            if ($progressFileName != null && file_exists($progressFileName))
-                $contents = file_get_contents($progressFileName);
+        
+        $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
+
+        if ($progressFileName != null && file_exists($progressFileName)) {
+            $contents = file_get_contents($progressFileName);
         }
-        $this->getResponse()->setBody($contents);
+        try {
+            $this->getResponse()
+                ->clearHeaders()
+                ->setHeader('Content-type','application/json')
+                ->setBody($contents);
+            }
+        catch (\Exception $e){
+            Mage::log($e->getMessage());
+            $this->getResponse()
+                ->clearHeaders()
+                ->setHeader('HTTP/1.0', 409, true)
+                ->setHeader('Content-Type', 'text/html')
+                ->setBody($e->getMessage());
+        }
     }
 }

@@ -25,14 +25,12 @@
 class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 {
     // Process the product feed and update the progress file, in page sizes of 20 (or other if overriden)
-    function processProductFeed($productExportModel, $progressFileName, $doAll, $feedFile, $pageSize = 20)
+    function processProductFeed($productExportModel, $progressFileName, $feedFile, $pageSize = 20)
     {
         $currentPage = 0;
         $pages = 0;
         $feedProducts = array();
-        Mage::log('writing progress file');
-        Mage::log($progressFileName);
-        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $doAll, 0, 1);
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', 0, 1);
 
         fwrite($feedFile, '"Products":[');
         $firstProduct = true;
@@ -50,7 +48,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 $firstProduct = false;
             }
 
-            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $doAll, $currentPage, $pages, "false");
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $currentPage, $pages, "false");
             $currentPage++;
         } while ($currentPage <= $pages);
 
@@ -60,7 +58,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         // fwrite($feedFile, $pages);
         // fwrite($feedFile, '}');
 
-        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $doAll, $currentPage, $pages, "true");
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $currentPage, $pages, "true");
     }
 
     function getFullCatFeed($progressFileName, $storeId) {        
@@ -211,7 +209,4 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         $feedBrands .= ']';
         return $feedBrands;
     }
-
-
-
 }

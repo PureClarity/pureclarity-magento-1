@@ -149,31 +149,24 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
     public function selectedFeeds($storeId, $feeds)
     {
-        $this->doFeed($feeds, $storeId, false);
+        $this->doFeed($feeds, $storeId);
     }
 
     // Produce a feed and notify PureClarity so that it can fetch it.
-    public function doFeed($feedtypes, $storeId, $doAll)
+    public function doFeed($feedtypes, $storeId)
     {
         //can take a while to run the feed
         set_time_limit(0);
-        Mage::log($feedtypes);
         $feedFilePath = $this->getFeedFilePath($storeId);
         $feedFile = $this->getFeedFile($feedFilePath);
         // Feed Start
         fwrite($feedFile, '{ "Version": 2,');
 
         foreach ($feedtypes as $feedtype) {
-
-            $progressFileName = "";
-            if ($doAll) {
-                $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName(Pureclarity_Core_Helper_Data::FEED_TYPE_ALL);
-            } else {
-                $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($feedtype);
-            }
+            $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
 
             // Initialise Progress File.
-            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, $doAll, 0, 1);
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 0, 1);
 
             // Get the feed data for the specified feed type
             switch ($feedtype) {
@@ -183,7 +176,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                     $productExportModel = Mage::getModel('pureclarity_core/productExport');
                     $productExportModel->init($storeId);
                     $feedModel = Mage::getModel('pureclarity_core/feed');
-                    $feedModel->processProductFeed($productExportModel, $progressFileName, $doAll, $feedFile);
+                    $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
                     Mage::log('product data written');
 
                     break;
@@ -222,7 +215,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
         // Ensure progress file is set to complete
         $uniqueId = 'PureClarityFeed-' . uniqid();
-        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, $doAll, 1, 1, "true", "false", $uniqueId);
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "false");
 
         Mage::log('uploading to SFTP');
         // Uploade to sftp
@@ -234,7 +227,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         Mage::log('uploaded to SFTP');
 
         // Set to uploaded
-        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, $doAll, 1, 1, "true", "true", $uniqueId);
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
 
         // Notify PC about the feed being available
         // $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
@@ -261,23 +254,23 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     // Product All feeds in one file.
     public function allFeeds($storeId)
     {
-        $this->doFeed(array('product', 'category', 'brand'), $storeId, true);
+        $this->doFeed(array('product', 'category', 'brand', 'users'), $storeId);
     }
 
     // Produce a product feed and notify PureClarity so that it can fetch it.
     public function fullProductFeed($storeId)
     {
-        $this->doFeed(array('product'), $storeId, false);
+        $this->doFeed(array('product'), $storeId);
     }
     // Produce a category feed and notify PureClarity so that it can fetch it.
     public function fullCategoryFeed($storeId)
     {
-        $this->doFeed(array('category'), $storeId, false);
+        $this->doFeed(array('category'), $storeId);
     }
     // Produce a brand feed and notify PureClarity so that it can fetch it.
     public function fullBrandFeed($storeId)
     {
-        $this->doFeed(array('brand'), $storeId, false);
+        $this->doFeed(array('brand'), $storeId);
     }
 
     public function runAllFeeds()
