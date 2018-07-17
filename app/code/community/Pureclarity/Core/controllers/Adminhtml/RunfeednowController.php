@@ -32,7 +32,6 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
     public function runselectedAction()
     {
         session_write_close();
-
         try {
             $storeId =  (int)$this->getRequest()->getParam('storeid');
             $model = Mage::getModel('pureclarity_core/cron');
@@ -47,8 +46,7 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
                 $feeds[] = 'user';
             if ($this->getRequest()->getParam('orders') == 'true')
                 $feeds[] = 'orders';
-                Mage::log($feeds);
-            $model->selectedFeeds($storeId, $feeds);
+                $model->selectedFeeds($storeId, $feeds);
         }
         catch (\Exception $e){
             $this->getResponse()
@@ -57,46 +55,6 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
             ->setHeader('Content-Type', 'text/html')
             ->setBody($e->getMessage());
         }
-
-
-
-        // # These feeds regularly report progress to a file, the file can be queried with getprogressAction()
-        // $selection = $this->getRequest()->getParam('feedtype');
-        // $storeId = (int)$this->getRequest()->getParam('storeid');
-        // $feeds = ["product", "category", "brand"];
-        // try {
-        //     if (in_array($selection, $feeds)) {
-        //         $model = Mage::getModel('pureclarity_core/cron');
-        //         switch ($selection) {
-        //             case "all":
-        //                 $model->allFeeds($storeId);
-        //                 break;
-        //             case "product":
-        //                 $model->fullProductFeed($storeId);
-        //                 break;
-        //             case "category":
-        //                 $model->fullCategoryFeed($storeId);
-        //                 break;
-        //             case "brand":
-        //                 if (!Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)){
-        //                     $this->getResponse()
-        //                         ->clearHeaders()->setHeader('HTTP/1.0', 405, true)
-        //                         ->setHeader('Content-Type', 'text/html')
-        //                         ->setBody('The brand feed for the selected store is disabled. Please enable it before running.');
-        //                 }
-        //                 else 
-        //                     $model->fullBrandFeed($storeId);
-        //                 break;
-        //         }
-        //     }
-        // }
-        // catch (\Exception $e){
-        //     $this->getResponse()
-        //         ->clearHeaders()
-        //         ->setHeader('HTTP/1.0', 409, true)
-        //         ->setHeader('Content-Type', 'text/html')
-        //         ->setBody('Conflict');
-        // }
     }
 
     public function getprogressAction(){
