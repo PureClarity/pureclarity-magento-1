@@ -333,8 +333,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     $maxPrice = $groupProduct->getMaxPrice();
                     if ($includeTax) {
                         $helper = Mage::helper('tax');
-                        $minPrice = $helper->getPrice($tmpProduct, $minPrice, true);
-                        $maxPrice = $helper->getPrice($tmpProduct, $maxPrice, true);
+                        $minPrice = $helper->getPrice($groupProduct, $minPrice, true);
+                        $maxPrice = $helper->getPrice($groupProduct, $maxPrice, true);
                     }
                 }
                 break;
@@ -429,9 +429,11 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         }
         if ($this->brandCode != null) {   
             $brandID = $product->getData($this->brandCode);
-            $productBrand = $this->brandLookup[$brandID];
-            if ($productBrand !== null) {
-                $this->addValueToDataArray($data, 'Brand', $productBrand);
+            if($brandID){
+                $productBrand = $this->brandLookup[$brandID];
+                if ($productBrand !== null) {
+                    $this->addValueToDataArray($data, 'Brand', $productBrand);
+                }
             }
         }
     }
