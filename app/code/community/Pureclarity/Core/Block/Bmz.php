@@ -1,28 +1,6 @@
 <?php
-/*****************************************************************************************
- * Magento
- * NOTICE OF LICENSE
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
- *  
- * DISCLAIMER
- * Do not edit or add to this file if you wish to upgrade Magento to newer
- * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
- *  
- * @category  PureClarity
- * @package   PureClarity_Core
- * @author    PureClarity Technologies Ltd (www.pureclarity.com)
- * @copyright Copyright (c) 2017 PureClarity Technologies Ltd
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
- *****************************************************************************************/
 
-class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
+class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Mage_Widget_Block_Interface
 {
 
     protected $debug;
@@ -30,6 +8,7 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
     protected $content;
     protected $classes;
     protected $extraAttrs;
+    protected $style = "";
 
     protected $bmzData = "";
 
@@ -38,19 +17,16 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
         return parent::_construct();
     }
 
-    protected function _toHtml()
-    {
-        if (Mage::helper('pureclarity_core')->isMerchActive()){
-            return parent::_toHtml();
-        }
-        return '';
-    }
 
     public function addBmzData($field, $value){
         $this->bmzData = $this->bmzData . $field . ':' . $value . ';';
     }
 
-    public function _beforeToHtml(){
+    protected function _toHtml()
+    {
+        if (!Mage::helper('pureclarity_core')->isMerchActive()){
+            return '';
+        }
 
         // Get some parameters
         $this->debug = Mage::helper('pureclarity_core')->isBMZDebugActive();
@@ -85,6 +61,16 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
             $extraAttrsString = ' ' . $extraAttrs;
         }
         $this->extraAttrs = $extraAttrsString;
+
+        // Buffers
+        $topBuffer = $this->getData('pc_bmz_topbuffer');
+        if ($topBuffer){
+            $this->style .= "margin-top: ". $topBuffer . "px;";
+        }
+        $bottomBuffer = $this->getData('pc_bmz_bottombuffer');
+        if ($topBuffer){
+            $this->style .= "margin-bottom: ". $bottomBuffer . "px;";
+        }
 
         // Generate debug text if needed
         $debugContent = '';
@@ -152,6 +138,8 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
         $allClassesStr = implode(" ", $allClasses);
         $allClassesStr = $this->escapeHtml($allClassesStr);
         $this->classes = $allClassesStr;
+
+        return "<div data-pureclarity='" . $this->getBmzData() . "' class='" . $this->getClasses() . "'" . $this->getExtraAttrs()  . " style='" . $this->getStyle() . "'>" .  $this->getContent() . "</div>";
     }
 
     public function getDebugMode()
@@ -181,6 +169,10 @@ class Pureclarity_Core_Block_Bmz extends Mage_Core_Block_Template
 
     public function getBmzData(){
         return $this->bmzData;
+    }
+
+    public function getStyle(){
+        return $this->style;
     }
 
 }

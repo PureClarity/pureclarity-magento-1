@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<widgets>
+  <Pureclarity_Core type="pureclarity_core/bmz">
+    <name>PureClarity BMZ</name>
+    <description>PureClarity BMZ Area</description>
+    <parameters>
+      <bmz_id>
+        <label>BMZ ID</label>
+        <visible>1</visible>
+        <required>1</required>
+        <type>text</type>
+        <description>Set the BMZ ID that references the ID in the PureClarity Admin.</description>
+      </bmz_id>
+      <pc_bmz_classes>
+        <label>CSS Custom Classes</label>
+        <visible>1</visible>
+        <type>text</type>
+        <description>[Optional] Type in a comma seperated list of additional CSS classes to add to the PureClarity BMZ.</description>
+      </pc_bmz_classes>
+      <pc_bmz_topbuffer>
+        <label>Top Buffer (px)</label>
+        <visible>1</visible>
+        <value>5</value>
+        <type>text</type>
+        <description>[Optional] Enter the number of pixels to create a buffer above the bmz.</description>
+      </pc_bmz_topbuffer>
+      <pc_bmz_bottombuffer>
+        <label>Bottom Buffer (px)</label>
+        <visible>1</visible>
+        <value>5</value>
+        <type>text</type>
+        <description>[Optional] Enter the number of pixels to create a buffer below the bmz.</description>
+      </pc_bmz_bottombuffer>
+    </parameters>
+  </Pureclarity_Core>
+</widgets>

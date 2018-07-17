@@ -4,54 +4,54 @@
 
 
     <!-- HOME PAGE - BMZs -->
-    <cms_index_index>
+    <!-- <cms_index_index>
         <reference name="content">
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp01" before="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp01" before="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>HP-01</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp02" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp02" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>HP-02</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp03" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp03" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>HP-03</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp04" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.hp04" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>HP-04</value>
                 </action>
             </block>
         </reference>
-    </cms_index_index>
+    </cms_index_index> -->
 
     <!-- Product page -->
     <catalog_product_view>
         <reference name="before_body_end">
             <block type="pureclarity_core/productview" name="pureclarity.product.view" template="pureclarity/core/product_view.phtml" />
         </reference>
-        <reference name="content">
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp01" after="-" template="pureclarity/BMZ/bmz.phtml">
+        <!-- <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp01" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>PP-01</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp02" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pp02" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>PP-02</value>
                 </action>
             </block>
-        </reference>
+        </reference> -->
     </catalog_product_view>
 
 
@@ -72,20 +72,20 @@
                 <template>pureclarity/search/search_results_products.phtml</template>
             </action>
         </reference>
-        <reference name="content">
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.sr01" before="-" template="pureclarity/BMZ/bmz.phtml">
+        <!-- <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.sr01" before="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>SR-01</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.sr02" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.sr02" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>SR-02</value>
                 </action>
             </block>
-        </reference>
+        </reference> -->
     </catalogsearch_result_index>
 
 
@@ -114,57 +114,57 @@
                 <template>pureclarity/search/category_results_products.phtml</template>
             </action>
         </reference>
-        <reference name="content">
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pl01" before="-" template="pureclarity/BMZ/bmz.phtml">
+        <!-- <reference name="content">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pl01" before="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>PL-01</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pl02" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.pl02" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>PL-02</value>
                 </action>
             </block>
-        </reference>
+        </reference> -->
     </pureclarity_core_catalog_category>
 
     <!-- Basket Page -->
-    <checkout_cart_index>
+    <!-- <checkout_cart_index>
         <reference name="content">
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.bp01" before="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.bp01" before="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>BP-01</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.bp02" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.bp02" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>BP-02</value>
                 </action>
             </block>
         </reference>
-    </checkout_cart_index>
+    </checkout_cart_index> -->
 
     <!-- Order confirmation -->
-    <checkout_onepage_success>
+    <!-- <checkout_onepage_success>
         <reference name="content">
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.oc01" before="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.oc01" before="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>OC-01</value>
                 </action>
             </block>
-            <block type="pureclarity_core/bmz" name="pureclarity.bmz.oc02" after="-" template="pureclarity/BMZ/bmz.phtml">
+            <block type="pureclarity_core/bmz" name="pureclarity.bmz.oc02" after="-">
                 <action method="setData">
                     <name>bmz_id</name>
                     <value>OC-02</value>
                 </action>
             </block>
         </reference>
-    </checkout_onepage_success>
+    </checkout_onepage_success> -->
     
 
 
