@@ -226,7 +226,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     {
         $feedFile = @fopen($feedFilePath, "w+");
         if ((!$feedFile) || !flock($feedFile, LOCK_EX | LOCK_NB)) {
-            throw new Exception("Pureclarity: Cannot open feed file for writing: " . $feedFilePath);
+            throw new Exception("Error: Cannot open feed file for writing under var/pureclarity directory. It could be locked or there maybe insufficient permissions to write to the directory. You must delete locked files and ensure PureClarity has permission to write to the var directory. File: " . $feedFilePath);
         }
         return $feedFile;
     }
