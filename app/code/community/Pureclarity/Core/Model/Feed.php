@@ -183,4 +183,78 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         return array();
         
     }
+
+    function UserFeed($progressFileName, $storeId){
+
+        $currentStore = Mage::getModel('core/store')->load($storeId);
+        try{
+        $customerCollection = Mage::getModel('customer/customer')
+            ->getCollection()
+            ->addAttributeToFilter("website_id", array("eq" => $currentStore->getWebsiteId()))
+            ->addAttributeToSelect("*");
+        } catch (\Exception $e){
+            Mage::log($e->getMessage());
+        }
+            
+        $users = '"Users":[';
+
+        $maxProgress = count($customerCollection);
+        $currentProgress = 0;   
+        $isFirst = true;
+        foreach ($customerCollection as $customer) {            
+            $data = [
+                'UserId' => $customer->getId(),
+                'Email' => $customer->getEmail(),
+                'FirstName' => $customer->getFirstname(),
+                'LastName' => $customer->getLastname()
+            ];
+            if ($customer->getPrefix()){
+                $data['Salutation'] = $customer->getPrefix();
+            }
+            if ($customer->getDob()){
+                $data['DOB'] = $customer->getDob();
+            }
+            if ($customer->getGroupId() && $customerGroups[$customer->getGroupId()]){
+                $data['Group'] = $customerGroups[$customer->getGroupId()]['label'];
+                $data['GroupId'] = $customer->getGroupId();
+            }
+            if ($customer->getGender()){
+                switch($customer->getGender()){
+                    case 1: // Male
+                        $data['Gender'] = 'M';
+                    break;
+                    case 2: // Female
+                        $data['Gender'] = 'F';
+                    break;
+                }
+            }
+
+            $address = null;
+            if ($customer->getDefaultShipping()){
+                $address = $customer->getAddresses()[$customer->getDefaultShipping()];
+            }
+            else if ($customer->getAddresses() && sizeof(array_keys($customer->getAddresses())) > 0) {
+                $address = $customer->getAddresses()[array_keys($customer->getAddresses())[0]];
+            }
+            if ($address){
+                if ($address->getCity())
+                    $data['City'] = $address->getCity();
+                if ($address->getRegion())
+                    $data['State'] = $address->getRegion();
+                if ($address->getCountry())
+                    $data['Country'] = $address->getCountry();
+            }
+
+            if (!$isFirst)
+                $users .= ',';
+            $isFirst = false;
+
+            $users .= Mage::helper('pureclarity_core')->formatFeed($data, 'json');
+
+            $currentProgress += 1;
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'user', $currentProgress, $maxProgress, "false");
+        }
+        $users .= ']';
+        return $users;
+    }
 }

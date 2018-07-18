@@ -196,7 +196,11 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                     break;
                 case 'user':
                     Mage::log("PureClarity - Processing User Feed.");
-                    fwrite($feedFile, '"Users":[]');
+                    $feedModel = Mage::getModel('pureclarity_core/feed');
+                    $feedData = $feedModel->UserFeed($progressFileName, $storeId);
+                    fwrite($feedFile, $feedData);
+                    Mage::log('user data written');
+                    
                     break;
                 default:
                     throw new \Exception("Pureclarity feed type not recognised: $feedtype");
