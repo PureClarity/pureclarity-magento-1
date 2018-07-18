@@ -29,14 +29,15 @@ class Pureclarity_Core_Helper_Sftp
 {
     const LOG_FILE = "pureclarity_sftp.log";
     
-    public function send($host, $port, $username, $password, $filename, $payload)
+    public function send($host, $port, $username, $password, $filename, $payload, $directory = null)
     {
+        $path = '/' . ($directory?$directory.'/':'') . $filename;
         try {
             $sftp = new Net_SFTP($host, $port, 10);
             if (!$sftp->login($username, $password)){
                 throw new Exception(sprintf(__("Unable to open SFTP connection as %s@%s:%s", $username, $host, $port)));
             }
-            $sftp->put("/magento-feeds/".$filename, $payload, NET_SFTP_LOCAL_FILE);
+            $sftp->put($path, $payload, NET_SFTP_LOCAL_FILE);
         } catch(Exception $e) {
             Mage::log("ERROR: Processing SFTP transfer: " . $src, null, self::LOG_FILE);
             Mage::logException($e);   
