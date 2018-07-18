@@ -157,76 +157,102 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     {
         //can take a while to run the feed
         set_time_limit(0);
-        $feedFilePath = $this->getFeedFilePath($storeId);
-        $feedFile = $this->getFeedFile($feedFilePath);
-        // Feed Start
-        fwrite($feedFile, '{ "Version": 2,');
 
-        foreach ($feedtypes as $feedtype) {
-            $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
+        $hasOrder = in_array("orders", $feedtypes);
+        $orderOnly = ($hasOrder && count($feedtypes) == 1);
 
-            // Initialise Progress File.
-            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 0, 1);
-
-            // Get the feed data for the specified feed type
-            switch ($feedtype) {
-                case 'product':
-                    Mage::log("PureClarity - Processing Product Feed.");
-                    $productExportModel = Mage::getModel('pureclarity_core/productExport');
-                    $productExportModel->init($storeId);
-                    $feedModel = Mage::getModel('pureclarity_core/feed');
-                    $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
-                    break;
-                case 'category':
-                    Mage::log("PureClarity - Processing Category Feed.");
-                    $feedModel = Mage::getModel('pureclarity_core/feed');
-                    $feedData = $feedModel->getFullCatFeed($progressFileName, $storeId);
-                    fwrite($feedFile, $feedData);
-                    break;
-                case 'brand':
-                    if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
-                        Mage::log("PureClarity - Processing Brand Feed.");
-                        $feedModel = Mage::getModel('pureclarity_core/feed');
-                        $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
-                        fwrite($feedFile, $feedData);
-                    }
-                    else {
-                        Mage::log("PureClarity - Brand Feed disabled.");
-                    }
-                    break;
-                case 'user':
-                    Mage::log("PureClarity - Processing User Feed.");
-                    $feedModel = Mage::getModel('pureclarity_core/feed');
-                    $feedData = $feedModel->UserFeed($progressFileName, $storeId);
-                    fwrite($feedFile, $feedData);
-                    Mage::log('user data written');
-                    
-                    break;
-                default:
-                    throw new \Exception("Pureclarity feed type not recognised: $feedtype");
-            }
-
-            if (end($feedtypes) !== $feedtype) {
-                fwrite($feedFile, ',');
-            }
-
+        if ($hasOrder){
+            //process separately
+            array_pop($feedtypes);
         }
 
-        fwrite($feedFile, '}');
-        fclose($feedFile);
+        if (!$orderOnly) {
+            $feedFilePath = $this->getFeedFilePath($storeId);
+            $feedFile = $this->getFeedFile($feedFilePath);
+            // Feed Start
+            fwrite($feedFile, '{ "Version": 2,');
+
+            foreach ($feedtypes as $feedtype) {
+                $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
+
+                // Initialise Progress File.
+                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 0, 1);
+
+                // Get the feed data for the specified feed type
+                switch ($feedtype) {
+                    case 'product':
+                    Mage::log("PureClarity - Processing Product Feed.");
+                        $productExportModel = Mage::getModel('pureclarity_core/productExport');
+                        $productExportModel->init($storeId);
+                        $feedModel = Mage::getModel('pureclarity_core/feed');
+                        $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
+                        Mage::log('product data written');
+                        break;
+                    case 'category':
+                        Mage::log("PureClarity - Processing Category Feed.");
+                        $feedModel = Mage::getModel('pureclarity_core/feed');
+                        $feedData = $feedModel->getFullCatFeed($progressFileName, $storeId);
+                        fwrite($feedFile, $feedData);
+                        break;
+                    case 'brand':
+                        if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
+                            Mage::log("PureClarity - Processing Brand Feed.");
+                                $feedModel = Mage::getModel('pureclarity_core/feed');
+                                $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
+                                fwrite($feedFile, $feedData);
+                        } else {
+                            Mage::log("PureClarity - Brand Feed disabled.");
+                            fwrite($feedFile, '"Brands":[]');
+                        }
+                        break;
+                    case 'user':
+                    Mage::log("PureClarity - Processing User Feed.");
+                        $feedModel = Mage::getModel('pureclarity_core/feed');
+                        $feedData = $feedModel->UserFeed($progressFileName, $storeId);
+                        fwrite($feedFile, $feedData);
+                        Mage::log('user data written');
+                        break;
+                }
+
+                if (end($feedtypes) !== $feedtype) {
+                    fwrite($feedFile, ',');
+                }
+            }
+
+            fwrite($feedFile, '}');
+            fclose($feedFile);
+        }
+
+        if ($hasOrder) {
+            Mage::log('Writing orders data');
+            $feedModel = Mage::getModel('pureclarity_core/feed');
+            $orderFilePath = $this->getOrderFilePath($storeId);
+            $feedData = $feedModel->OrderFeed($storeId, $progressFileName, $orderFilePath);
+            Mage::log('orders data written');
+        }
 
         // Ensure progress file is set to complete
-        $uniqueId = 'PureClarityFeed-' . uniqid();
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "false");
 
         Mage::log('PureClarity - uploading to SFTP...');
-        // Uploade to sftp
         $host = Mage::helper('pureclarity_core')->getSftpHost($storeId);
         $port = Mage::helper('pureclarity_core')->getSftpPort($storeId);
         $appKey = Mage::helper('pureclarity_core')->getAccessKey($storeId);
         $secretKey = Mage::helper('pureclarity_core')->getSecretKey($storeId);
-        $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath);
-        Mage::log('PureClarity - uploaded to SFTP. All done.');
+
+        if (!$orderOnly) {
+
+            $uniqueId = 'PureClarityFeed-' . uniqid() . '.json';
+            Mage::log('uploading Feed to SFTP');
+            $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath, 'magento-feeds');
+            Mage::log('PureClarity - uploaded feeds to SFTP. All done.');
+        }
+        if ($hasOrder) {
+            $uniqueId = 'PureClarityOrders-' . uniqid() . '.csv';
+            Mage::log('uploading Orders to SFTP');
+            $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $orderFilePath);
+            Mage::log('PureClarity - uploaded orders to SFTP. All done.');
+        }
 
         // Set to uploaded
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
@@ -244,7 +270,12 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
     private function getFeedFilePath($storeId)
     {
-        return Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . 'feed.json';
+        return Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . $storeId . '-feed.json';
+    }
+
+    private function getOrderFilePath($storeId)
+    {
+        return Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . $storeId . '-orders.csv';
     }
 
     // Product All feeds in one file.

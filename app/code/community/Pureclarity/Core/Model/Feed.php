@@ -3,7 +3,7 @@
 class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 {
     // Process the product feed and update the progress file, in page sizes of 20 (or other if overriden)
-    function processProductFeed($productExportModel, $progressFileName, $feedFile, $pageSize = 20)
+    public function processProductFeed($productExportModel, $progressFileName, $feedFile, $pageSize = 20)
     {
         $currentPage = 0;
         $pages = 0;
@@ -39,35 +39,35 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $currentPage, $pages, "true");
     }
 
-    function getFullCatFeed($progressFileName, $storeId) {        
+    public function getFullCatFeed($progressFileName, $storeId)
+    {
         $feedCategories = '"Categories":[';
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
             ->setStoreId($storeId)
             ->addAttributeToSelect('name')
             ->addAttributeToSelect('is_active')
             ->addUrlRewriteToResult();
-        
 
         $maxProgress = count($categoryCollection);
         $currentProgress = 0;
         $isFirst = true;
         foreach ($categoryCollection as $category) {
-            
+
             // Get image
             $firstImage = $category->getImageUrl();
-            if($firstImage != "") {
+            if ($firstImage != "") {
                 $imageURL = $firstImage;
             } else {
                 $imageURL = Mage::helper('pureclarity_core')->getCategoryPlaceholderUrl($storeId);
                 if (!$imageURL) {
                     $imageURL = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
                     if (!$imageURL) {
-                        $imageURL = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
+                        $imageURL = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
                     }
                 }
             }
             $imageURL = str_replace(array("https:", "http:"), "", $imageURL);
-            
+
             // Get Second Image
             $imageURL2 = null;
             $secondImage = $category->getData('pureclarity_secondary_image');
@@ -80,40 +80,40 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 }
             }
             $imageURL2 = str_replace(array("https:", "http:"), "", $imageURL2);
-            
+
             // Build Data
             $categoryData = array(
                 "Id" => $category->getId(),
                 "DisplayName" => $category->getName(),
                 "Image" => $imageURL,
-                "Link" => sprintf("/%s", str_replace(Mage::getUrl('',array('_secure'=>true)), '', $category->getUrl($category)))
+                "Link" => sprintf("/%s", str_replace(Mage::getUrl('', array('_secure' => true)), '', $category->getUrl($category))),
             );
 
-            
             // Check if to ignore this category in recommenders
-            if ($category->getData('pureclarity_hide_from_feed') == '1'){
-                 $categoryData["ExcludeFromRecommenders"] = true;
+            if ($category->getData('pureclarity_hide_from_feed') == '1') {
+                $categoryData["ExcludeFromRecommenders"] = true;
             }
 
             //Check if category is active
-            if (!$category->getIsActive()){
-                 $categoryData["IsActive"] = false;
+            if (!$category->getIsActive()) {
+                $categoryData["IsActive"] = false;
             }
 
-            if ($category->getLevel() > 1){
+            if ($category->getLevel() > 1) {
                 $categoryData["ParentIds"] = array($category->getParentCategory()->getId());
             }
 
-            if ($imageURL2 != null){
+            if ($imageURL2 != null) {
                 $categoryData["PCImage"] = $imageURL2;
             }
 
-            if (!$isFirst)
+            if (!$isFirst) {
                 $feedCategories .= ',';
-            
+            }
+
             $isFirst = false;
             $feedCategories .= Mage::helper('pureclarity_core')->formatFeed($categoryData, 'json');
-            
+
             $currentProgress += 1;
             Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'category', $currentProgress, $maxProgress, "false");
         }
@@ -122,10 +122,8 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         return $feedCategories;
     }
 
-
-
-
-    function getFullBrandFeed($progressFileName, $storeId){
+    public function getFullBrandFeed($progressFileName, $storeId)
+    {
         $feedBrands = '"Brands":[';        
         $brandCategoryId = Mage::helper('pureclarity_core')->getBrandParentCategory($storeId);
 
@@ -155,6 +153,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
                 if (!$isFirst)
                     $feedBrands .= ',';
+            
                 $isFirst = false;
                 $feedBrands .= Mage::helper('pureclarity_core')->formatFeed($thisBrand, 'json');
                 $currentProgress += 1;
@@ -184,69 +183,77 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         
     }
 
-    function UserFeed($progressFileName, $storeId){
+    public function UserFeed($progressFileName, $storeId)
+    {
 
         $currentStore = Mage::getModel('core/store')->load($storeId);
-        try{
-        $customerCollection = Mage::getModel('customer/customer')
-            ->getCollection()
-            ->addAttributeToFilter("website_id", array("eq" => $currentStore->getWebsiteId()))
-            ->addAttributeToSelect("*");
-        } catch (\Exception $e){
+        try {
+            $customerCollection = Mage::getModel('customer/customer')
+                ->getCollection()
+                ->addAttributeToFilter("website_id", array("eq" => $currentStore->getWebsiteId()))
+                ->addAttributeToSelect("*");
+        } catch (\Exception $e) {
             Mage::log($e->getMessage());
         }
-            
+
         $users = '"Users":[';
 
         $maxProgress = count($customerCollection);
-        $currentProgress = 0;   
+        $currentProgress = 0;
         $isFirst = true;
-        foreach ($customerCollection as $customer) {            
+        foreach ($customerCollection as $customer) {
             $data = [
                 'UserId' => $customer->getId(),
                 'Email' => $customer->getEmail(),
                 'FirstName' => $customer->getFirstname(),
-                'LastName' => $customer->getLastname()
+                'LastName' => $customer->getLastname(),
             ];
-            if ($customer->getPrefix()){
+            if ($customer->getPrefix()) {
                 $data['Salutation'] = $customer->getPrefix();
             }
-            if ($customer->getDob()){
+            if ($customer->getDob()) {
                 $data['DOB'] = $customer->getDob();
             }
-            if ($customer->getGroupId() && $customerGroups[$customer->getGroupId()]){
+            if ($customer->getGroupId() && $customerGroups[$customer->getGroupId()]) {
                 $data['Group'] = $customerGroups[$customer->getGroupId()]['label'];
                 $data['GroupId'] = $customer->getGroupId();
             }
-            if ($customer->getGender()){
-                switch($customer->getGender()){
+            if ($customer->getGender()) {
+                switch ($customer->getGender()) {
                     case 1: // Male
                         $data['Gender'] = 'M';
-                    break;
+                        break;
                     case 2: // Female
                         $data['Gender'] = 'F';
-                    break;
+                        break;
                 }
             }
 
             $address = null;
-            if ($customer->getDefaultShipping()){
+            if ($customer->getDefaultShipping()) {
                 $address = $customer->getAddresses()[$customer->getDefaultShipping()];
-            }
-            else if ($customer->getAddresses() && sizeof(array_keys($customer->getAddresses())) > 0) {
+            } else if ($customer->getAddresses() && sizeof(array_keys($customer->getAddresses())) > 0) {
                 $address = $customer->getAddresses()[array_keys($customer->getAddresses())[0]];
             }
-            if ($address){
-                if ($address->getCity())
+            if ($address) {
+                if ($address->getCity()) {
                     $data['City'] = $address->getCity();
-                if ($address->getRegion())
+                }
+
+                if ($address->getRegion()) {
                     $data['State'] = $address->getRegion();
-                if ($address->getCountry())
+                }
+
+                if ($address->getCountry()) {
                     $data['Country'] = $address->getCountry();
+                }
+
             }
 
-            if (!$isFirst)
+            if (!$isFirst) {
                 $users .= ',';
+            }
+
             $isFirst = false;
 
             $users .= Mage::helper('pureclarity_core')->formatFeed($data, 'json');
@@ -256,5 +263,92 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         }
         $users .= ']';
         return $users;
+    }
+
+    // Process the Order History feed
+    public function OrderFeed($storeId, $progressFileName, $orderFilePath)
+    {
+
+        // Open the file
+        $orderFile = @fopen($orderFilePath, "w+");
+
+        // Write the header
+        fwrite($orderFile, "OrderId,UserId,Email,DateTimeStamp,ProdCode,Quantity,UnityPrice,LinePrice" . PHP_EOL);
+
+        if ((!$orderFile) || !flock($orderFile, LOCK_EX | LOCK_NB)) {
+            throw new \Exception("Pureclarity: Cannot open orders feed file for writing (try deleting): " . $file);
+        }
+
+        // Get the collection
+        $fromDate = date('Y-m-d H:i:s', strtotime("-6 month"));
+        $toDate = date('Y-m-d H:i:s', strtotime("now"));
+
+        $orderCollection = Mage::getModel("sales/order")
+            ->getCollection()
+            ->addAttributeToFilter('store_id', $storeId)
+            ->addAttributeToFilter('created_at', array('from'=>$fromDate, 'to'=>$toDate))
+            ->addAttributeToFilter('status', array('eq' => 'complete'));
+
+        // Set size and initiate vars
+        $maxProgress = count($orderCollection);
+
+        $currentProgress = 0;
+        $counter = 0;
+        $data = "";
+
+        // Reset Progress file
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'orders', 0, 1, "false");
+
+        // Build Data
+        foreach ($orderCollection as $orderData) {
+            $order = Mage::getModel('sales/order')->loadByIncrementId($orderData->getIncrementId());
+
+            if ($order) {
+                $id = '"' . $order->getIncrementId() . '"';
+
+                $customerId = $order->getCustomerId();
+                if ($customerId) {
+                    $customerId =  '"' . $customerId . '"';
+                    $email = $order->getCustomerEmail();
+                    $date = $order->getCreatedAt();
+
+                    $orderItems = $orderData->getAllVisibleItems();
+                    foreach ($orderItems as $item) {
+                        $productId = $item->getProductId();
+                     
+                        $product = Mage::getModel('catalog/product')->load($productId);
+                        if (!$product){
+                            continue;
+                        }
+                        $sku = $product->getData('sku');
+                        if (!$sku){
+                            continue;
+                        }
+                        $quantity = $item->getQtyOrdered();
+                        $price = $item->getPriceInclTax();
+                        $linePrice = $item->getRowTotalInclTax();
+                        if ($price > 0 && $linePrice > 0) {
+                            $data .= "$id,$customerId,$email,$date,$sku,$quantity,$price,$linePrice" . PHP_EOL;
+                        }
+                    }
+                    $counter += 1;
+                }
+            }
+            // Incremement counters
+            $currentProgress += 1;
+
+            if ($counter >= 10) {
+                // Every 10, write to the file.
+                fwrite($orderFile, $data);
+                $data = "";
+                $counter = 0;
+                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'orders', $currentProgress, $maxProgress, "false");
+            }
+        }
+
+        // Final write
+        fwrite($orderFile, $data);
+        fclose($orderFile);
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'orders', 1, 1, "true");
     }
 }
