@@ -1,26 +1,4 @@
 <?php
-/*****************************************************************************************
- * Magento
- * NOTICE OF LICENSE
- * This source file is subject to the Open Software License (OSL 3.0)
- * that is bundled with this package in the file LICENSE.txt.
- * It is also available through the world-wide-web at this URL:
- * http://opensource.org/licenses/osl-3.0.php
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to license@magentocommerce.com so we can send you a copy immediately.
- *  
- * DISCLAIMER
- * Do not edit or add to this file if you wish to upgrade Magento to newer
- * versions in the future. If you wish to customize Magento for your
- * needs please refer to http://www.magentocommerce.com for more information.
- *  
- * @category  PureClarity
- * @package   PureClarity_Core
- * @author    PureClarity Technologies Ltd (www.pureclarity.com)
- * @copyright Copyright (c) 2017 PureClarity Technologies Ltd
- * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
- *****************************************************************************************/
 
 class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 {
@@ -148,65 +126,61 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
 
     function getFullBrandFeed($progressFileName, $storeId){
-        $feedBrands = '"Brands":[';
-        $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($storeId);
-        try {
-            $attribute = Mage::getSingleton('eav/config')
-                ->getAttribute(Mage_Catalog_Model_Product::ENTITY, $brandCode);
-        }
-        catch (\Exception $e){
-            return;
-        }
+        $feedBrands = '"Brands":[';        
+        $brandCategoryId = Mage::helper('pureclarity_core')->getBrandParentCategory($storeId);
 
-        $options = $attribute->setStoreId($storeId)->getSource()->getAllOptions(false);
+        if ($brandCategoryId && $brandCategoryId != "-1"){
 
-        // Find the SOLWIN image helper, if installed.
-        $solwinImageHelper = null;
-        $modules = Mage::getConfig()->getNode('modules')->children();
-        $modulesArray = (array)$modules;
+            $category = Mage::getModel('catalog/category')->load($brandCategoryId);
 
-        if(isset($modulesArray['Solwin_AttributeImage'])) {
-            $solwinImageHelper = Mage::helper('attributeimage');
-        } 
+            $subcategories = Mage::getModel('catalog/category')->getCollection()
+                ->addAttributeToSelect('name')
+                ->addAttributeToSelect('image')
+                ->addIdFilter($category->getChildren());
 
-        $maxProgress = count($options);
-        $currentProgress = 0;
-        $isFirst = true;
-        foreach($options as $opt){
-            $imageURL = null;
-            if ($solwinImageHelper != null) {
-                $id = $opt['value'];
-                $imageURL = $solwinImageHelper->getAttributeImage($id);
-                if (!$imageURL){
-                    $imageURL = Mage::helper('pureclarity_core')->getBrandPlaceholderUrl($storeId);
-                    if (!$imageURL) {
-                        $imageURL = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
-                        if (!$imageURL) {
-                            $imageURL = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
-                        }
-                    }
+            $maxProgress = count($subcategories);
+            $currentProgress = 0;
+            $isFirst = true;
+            foreach($subcategories as $subcategory) {
+                $thisBrand = array(
+                    "Id" => $subcategory->getId(),
+                    "DisplayName" =>  $subcategory->getName()
+                );
+                
+                $imageURL = $subcategory->getImageUrl();
+                if ($imageURL){
+                    $imageURL = str_replace(array("https:", "http:"), "", $imageURL);
+                    $thisBrand['Image'] = $imageURL;
                 }
-            }                                        
 
-            $thisBrand = array(
-                "Id" => sprintf("%s", $opt['value']),
-                "DisplayName" => sprintf("%s", $opt['label'])
-            );
-            if ($imageURL != null){
-                $thisBrand['Image'] = $imageURL;
+                if (!$isFirst)
+                    $feedBrands .= ',';
+                $isFirst = false;
+                $feedBrands .= Mage::helper('pureclarity_core')->formatFeed($thisBrand, 'json');
+                $currentProgress += 1;
+                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'brand', $currentProgress, $maxProgress, "false");
             }
-
-            if (!$isFirst)
-                $feedBrands .= ',';
-            
-            $isFirst = false;
-
-            $feedBrands .= Mage::helper('pureclarity_core')->formatFeed($thisBrand, 'json');
-
-            $currentProgress += 1;
-            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'brand', $currentProgress, $maxProgress, "false");
+            $feedBrands .= ']';
+            return $feedBrands;
         }
-        $feedBrands .= ']';
-        return $feedBrands;
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'brand', 1, 1);
+        return "";
+        
+    }
+
+    function BrandFeedArray($storeId){
+        $feedBrands = array();
+        $brandCategoryId = Mage::helper('pureclarity_core')->getBrandParentCategory($storeId);
+
+        if ($brandCategoryId && $brandCategoryId != "-1"){
+            $category = Mage::getModel('catalog/category')->load($brandCategoryId);
+            $subcategories = $category->getChildrenCategories();
+            foreach($subcategories as $subcategory) {
+                $feedBrands[$subcategory->getId()] = $subcategory->getName();
+            }
+            return $feedBrands;
+        }
+        return array();
+        
     }
 }

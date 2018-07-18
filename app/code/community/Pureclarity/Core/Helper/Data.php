@@ -147,9 +147,10 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return false;
     }
 
-    public function getBrandAttributeCode($storeId)
+
+    public function getBrandParentCategory($storeId)
     {
-        return Mage::getStoreConfig("pureclarity_core/general_config/brand_attribute_code", $storeId);
+        return Mage::getStoreConfig("pureclarity_core/general_config/brand_parent_category", $storeId);
     }
 
 

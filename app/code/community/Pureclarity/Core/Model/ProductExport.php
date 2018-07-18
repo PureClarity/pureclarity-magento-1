@@ -34,8 +34,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     public $attributesToInclude = array();
     public $seenProductIds = array();
     public $currentStore = null;
-    public $brandCode = '';
     public $brandLookup = array();
+    protected $categoryCollection = [];
     
     // Initialise the model ready to call the product data for the give store.
     public function init($storeId)
@@ -62,32 +62,32 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
 
 
         // Manage Brand
-        $this->brandCode = null;
         $this->brandLookup = [];
         // If brand feed is enabled, get the brands
         if(Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
-            $this->brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($this->storeId);
             $feedModel = Mage::getModel('pureclarity_core/feed');
-            $brands = $feedModel->getFullBrandFeed(null, $this->storeId)["Brands"];
-            foreach ($brands as $brand){
-                $this->brandLookup[$brand["Id"]] = $brand["Id"];
-            }
+            $this->brandLookup = $feedModel->BrandFeedArray($this->storeId);
         }
 
         // Get Attributes
         $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->getItems();
         $attributesToExclude = array("prices", "price");
-        // Brand code is included separately, so add to exclude attributes list
-        if($this->brandCode != null) {
-            $attributesToExclude[] = strtolower($this->brandCode);
-        }
 
         // Get list of attributes to include
         foreach ($attributes as $attribute){
             $code = $attribute->getAttributecode();
-            if ($attribute->getIsFilterable()!=0 && !in_array(strtolower($code), $attributesToExclude)) {
+            if (!in_array(strtolower($code), $attributesToExclude) && !empty($attribute->getFrontendLabel())) {
                 $this->attributesToInclude[] = array($code, $attribute->getFrontendLabel());
             }
+        }
+
+        // Get Category List 
+        $this->categoryCollection = [];
+        $categoryCollection = Mage::getModel('catalog/category')->getCollection()
+            ->addAttributeToSelect('name')
+            ->addFieldToFilter('is_active', array("in" => array('1')));
+        foreach($categoryCollection as $category){
+            $this->categoryCollection[$category->getId()] = $category->getName();
         }
     }
 
@@ -136,17 +136,19 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         if(!array_key_exists($product->getId(), $this->seenProductIds) || $this->seenProductIds[$product->getId()]===null) {
 
             // Set Category Ids for product
-            $categories = $product->getCategoryIds();
-            $categoryCollection = Mage::getModel('catalog/category')->getCollection()
-                ->addAttributeToSelect('name')
-                ->addAttributeToFilter('entity_id', array('in' => $categories))
-                ->addFieldToFilter('is_active', array("in" => array('1')));
-            
-            // Get a list of the category names
-            $categoryList = array();
-            foreach ($categoryCollection as $category) {
-                $categoryList[] = $category->getName();
-            }
+            $categoryIds = $product->getCategoryIds();
+
+             // Get a list of the category names
+             $categoryList = [];
+             $brandId = null;
+             foreach ($categoryIds as $id) {
+                 if (array_key_exists($id, $this->categoryCollection)){
+                     $categoryList[] = $this->categoryCollection[$id];
+                 }
+                 if (!$brandId && array_key_exists($id, $this->brandLookup)){
+                     $brandId = $id;
+                 }
+             }
 
             // Get Product Link URL
             $productUrl = str_replace(Mage::getBaseUrl(), '', $product->getUrlPath());
@@ -156,7 +158,6 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             }
 
             // Get Product Image URL
-
             $productImageUrl = '';
             if($product->getImage() && $product->getImage() != 'no_selection'){
                 $image =Mage::helper('catalog/image');
@@ -170,27 +171,38 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     $productImageUrl = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
                 if (!$productImageUrl) {
                         $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
-
                     }
                 }
             }
+            $productImageUrl = str_replace(array("https:", "http:"), "", $productImageUrl);
             
             // Set standard data
             $data = array(
                 "Sku" => $product->getData('sku'),
                 "Title" => $product->getData('name'),
-                "Description" => array(strip_tags($product->getData('description')), strip_tags($product->getShortDescription()))
+                "Description" => array(strip_tags($product->getData('description')), strip_tags($product->getShortDescription())),
+                "Link" => $productUrl,
+                "Image" => $productImageUrl,
+                "Categories" => $categoryIds,
+                "MagentoCategories" => array_values(array_unique($categoryList, SORT_STRING)),
+                "MagentoProductId" => $product->getId(),
+                "MagentoProductType" => $product->getTypeId(),
+                "InStock" => (Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getIsInStock() == 1) ? true : false
             );
 
-            // Set Other data
-            $data["Link"] = $productUrl;
-            $data["Image"] = $productImageUrl;
-            $data["Categories"] = $categories;
-            $data["MagentoCategories"] = array_values(array_unique($categoryList, SORT_STRING));
-            $data["MagentoProductId"] = $product->getId();
-            $data["MagentoProductType"] = $product->getTypeId();
-            $data["InStock"] = (Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getIsInStock() == 1) ? true : false;
-            $data["Visibility"] = $product->getVisibility();
+            // Set the visibility for PureClarity
+            $visibility = $product->getVisibility();
+            if ($visibility == Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG){
+                $data["ExcludeFromSearch"] = true;
+            }
+            else if ($visibility == Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH){
+                $data["ExcludeFromProductListing"] = true;
+            }
+
+            // Set Brand
+            if ($brandId){
+                $data["Brand"] = $brandId;
+            }
 
             // Set PureClarity Custom values
             $searchTag = $product->getData('pureclarity_search_tags');
@@ -419,23 +431,22 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             $code = $attribute[0];
             $name = $attribute[1];
             if ($product->getData($code) != null) {
-                $attrValue = $product->getAttributeText($code);
-                if (is_array($attrValue)){
-                    foreach($attrValue as $value){
-                        $this->addValueToDataArray($data, $name, $value);
+                try{
+                    $attrValue = $product->getAttributeText($code);
+                }
+                catch (Exception $e){
+                    // Unable to read attribute text
+                    continue;
+                }
+                if (!empty($attrValue)){
+                    if (is_array($attrValue)){
+                        foreach($attrValue as $value){
+                            $this->addValueToDataArray($data, $name, $value);
+                        }
                     }
-                }
-                else {
-                    $this->addValueToDataArray($data, $name, $attrValue);
-                }
-            }
-        }
-        if ($this->brandCode != null) {   
-            $brandID = $product->getData($this->brandCode);
-            if($brandID){
-                $productBrand = $this->brandLookup[$brandID];
-                if ($productBrand !== null) {
-                    $this->addValueToDataArray($data, 'Brand', $productBrand);
+                    else {
+                        $this->addValueToDataArray($data, $name, $attrValue);
+                    }
                 }
             }
         }

@@ -138,17 +138,18 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>If this is enabled the attribute name that has the brand values should be set below.</strong>]]></comment>
+                            <comment><![CDATA[<strong>If this is enabled the brand parent category value should be set below.</strong>]]></comment>
                         </brand_feed_enabled>
-                        <brand_attribute_code>
-                            <label>Brand Attribute Code</label>
-                            <frontend_type>text</frontend_type>
+                        <brand_parent_category>
+                            <label>Brand Parent Category</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>pureclarity_core/system_config_source_categories</source_model>
                             <sort_order>7</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>This must match the 'Attribute Code' of your brand attribute</strong>]]></comment>
-                        </brand_attribute_code>
+                            <comment><![CDATA[<strong>Set the parent category of the Brand Categories. First level children of the selected category will be used to build your brand feed. Products in those categories will be assigned as a specific brand.</strong>]]></comment>
+                        </brand_parent_category>
                     </fields>
                 </general_config>
                 <actions>

@@ -171,24 +171,31 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
             // Get the feed data for the specified feed type
             switch ($feedtype) {
                 case 'product':
+                    Mage::log("PureClarity - Processing Product Feed.");
                     $productExportModel = Mage::getModel('pureclarity_core/productExport');
                     $productExportModel->init($storeId);
                     $feedModel = Mage::getModel('pureclarity_core/feed');
                     $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
                     break;
                 case 'category':
+                    Mage::log("PureClarity - Processing Category Feed.");
                     $feedModel = Mage::getModel('pureclarity_core/feed');
                     $feedData = $feedModel->getFullCatFeed($progressFileName, $storeId);
                     fwrite($feedFile, $feedData);
                     break;
                 case 'brand':
-                    if (!Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
+                    if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
+                        Mage::log("PureClarity - Processing Brand Feed.");
                         $feedModel = Mage::getModel('pureclarity_core/feed');
                         $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
                         fwrite($feedFile, $feedData);
                     }
+                    else {
+                        Mage::log("PureClarity - Brand Feed disabled.");
+                    }
                     break;
                 case 'user':
+                    Mage::log("PureClarity - Processing User Feed.");
                     fwrite($feedFile, '"Users":[]');
                     break;
                 default:
@@ -208,14 +215,14 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $uniqueId = 'PureClarityFeed-' . uniqid();
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "false");
 
-        Mage::log('uploading to SFTP');
+        Mage::log('PureClarity - uploading to SFTP...');
         // Uploade to sftp
         $host = Mage::helper('pureclarity_core')->getSftpHost($storeId);
         $port = Mage::helper('pureclarity_core')->getSftpPort($storeId);
         $appKey = Mage::helper('pureclarity_core')->getAccessKey($storeId);
         $secretKey = Mage::helper('pureclarity_core')->getSecretKey($storeId);
         $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath);
-        Mage::log('uploaded to SFTP');
+        Mage::log('PureClarity - uploaded to SFTP. All done.');
 
         // Set to uploaded
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
