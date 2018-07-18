@@ -1,6 +1,8 @@
-<?php
-if(Mage::helper('pureclarity_core')->isActive(Mage::helper('pureclarity_core')->getStoreId())):
-?>
+<?php if(!Mage::helper('pureclarity_core')->isSearchActive(Mage::helper('pureclarity_core')->getStoreId())): ?>
+    <script>window["pc_disable_autocomplete"] = true;</script>
+<?php endif; ?>
+
+<?php if(Mage::helper('pureclarity_core')->isActive(Mage::helper('pureclarity_core')->getStoreId())): ?>
 <script type="text/javascript">
     (function(w, d, s, u, f) {
         w['PureClarityObject'] = f;w[f] = w[f] || function() {(w[f].q = w[f].q || []).push(arguments)}
@@ -10,5 +12,4 @@ if(Mage::helper('pureclarity_core')->isActive(Mage::helper('pureclarity_core')->
     _pc('currency', '<?php echo Mage::app()->getStore()->getCurrentCurrencyCode() ?>' );
     _pc('page_view');
 </script>
-<?php
-endif;
+<?php endif;
