@@ -186,7 +186,6 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                         $productExportModel->init($storeId);
                         $feedModel = Mage::getModel('pureclarity_core/feed');
                         $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
-                        Mage::log('product data written');
                         break;
                     case 'category':
                         Mage::log("PureClarity - Processing Category Feed.");
@@ -210,7 +209,6 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                         $feedModel = Mage::getModel('pureclarity_core/feed');
                         $feedData = $feedModel->UserFeed($progressFileName, $storeId);
                         fwrite($feedFile, $feedData);
-                        Mage::log('user data written');
                         break;
                 }
 
@@ -224,32 +222,27 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         }
 
         if ($hasOrder) {
-            Mage::log('Writing orders data');
+            Mage::log('PureClarity - Processing Order Feed.');
             $feedModel = Mage::getModel('pureclarity_core/feed');
             $orderFilePath = $this->getOrderFilePath($storeId);
             $feedData = $feedModel->OrderFeed($storeId, $progressFileName, $orderFilePath);
-            Mage::log('orders data written');
         }
 
         // Ensure progress file is set to complete
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "false");
 
-        Mage::log('PureClarity - uploading to SFTP...');
         $host = Mage::helper('pureclarity_core')->getSftpHost($storeId);
         $port = Mage::helper('pureclarity_core')->getSftpPort($storeId);
         $appKey = Mage::helper('pureclarity_core')->getAccessKey($storeId);
         $secretKey = Mage::helper('pureclarity_core')->getSecretKey($storeId);
 
         if (!$orderOnly) {
-
             $uniqueId = 'PureClarityFeed-' . uniqid() . '.json';
-            Mage::log('uploading Feed to SFTP');
             $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath, 'magento-feeds');
             Mage::log('PureClarity - uploaded feeds to SFTP. All done.');
         }
         if ($hasOrder) {
             $uniqueId = 'PureClarityOrders-' . uniqid() . '.csv';
-            Mage::log('uploading Orders to SFTP');
             $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $orderFilePath);
             Mage::log('PureClarity - uploaded orders to SFTP. All done.');
         }
