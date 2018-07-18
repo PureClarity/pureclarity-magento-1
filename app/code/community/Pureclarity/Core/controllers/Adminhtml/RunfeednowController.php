@@ -32,53 +32,53 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
     public function runselectedAction()
     {
         session_write_close();
-        # These feeds regularly report progress to a file, the file can be queried with getprogressAction()
-        $selection = $this->getRequest()->getParam('feedtype');
-        $storeId = (int)$this->getRequest()->getParam('storeid');
-        $feeds = ["product", "category", "brand"];
         try {
-            if (in_array($selection, $feeds)) {
-                $model = Mage::getModel('pureclarity_core/cron');
-                switch ($selection) {
-                    case "all":
-                        $model->allFeeds($storeId);
-                        break;
-                    case "product":
-                        $model->fullProductFeed($storeId);
-                        break;
-                    case "category":
-                        $model->fullCategoryFeed($storeId);
-                        break;
-                    case "brand":
-                        if (!Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)){
-                            $this->getResponse()
-                                ->clearHeaders()->setHeader('HTTP/1.0', 405, true)
-                                ->setHeader('Content-Type', 'text/html')
-                                ->setBody('The brand feed for the selected store is disabled. Please enable it before running.');
-                        }
-                        else 
-                            $model->fullBrandFeed($storeId);
-                        break;
-                }
-            }
+            $storeId =  (int)$this->getRequest()->getParam('storeid');
+            $model = Mage::getModel('pureclarity_core/cron');
+            $feeds = [];
+            if ($this->getRequest()->getParam('product') == 'true')
+                $feeds[] = 'product';
+            if ($this->getRequest()->getParam('category') == 'true')
+                $feeds[] = 'category';
+            if ($this->getRequest()->getParam('brand') == 'true')
+                $feeds[] = 'brand';
+            if ($this->getRequest()->getParam('user') == 'true')
+                $feeds[] = 'user';
+            if ($this->getRequest()->getParam('orders') == 'true')
+                $feeds[] = 'orders';
+                $model->selectedFeeds($storeId, $feeds);
         }
         catch (\Exception $e){
+            $this->getResponse()
+            ->clearHeaders()
+            ->setHeader('HTTP/1.0', 409, true)
+            ->setHeader('Content-Type', 'text/html')
+            ->setBody($e->getMessage());
+        }
+    }
+
+    public function getprogressAction()
+    {
+        $contents = "";
+        
+        $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
+
+        if ($progressFileName != null && file_exists($progressFileName)) {
+            $contents = file_get_contents($progressFileName);
+        }
+        try {
+            $this->getResponse()
+                ->clearHeaders()
+                ->setHeader('Content-type','application/json')
+                ->setBody($contents);
+            }
+        catch (\Exception $e){
+            Mage::log($e->getMessage());
             $this->getResponse()
                 ->clearHeaders()
                 ->setHeader('HTTP/1.0', 409, true)
                 ->setHeader('Content-Type', 'text/html')
-                ->setBody('Conflict');
+                ->setBody($e->getMessage());
         }
-    }
-
-    public function getprogressAction(){
-        $contents = "";
-        $selection = $this->getRequest()->getParam('feedtype');
-        if (in_array($selection, array("product", "category", "brand"))) {
-            $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName($selection);
-            if ($progressFileName != null && file_exists($progressFileName))
-                $contents = file_get_contents($progressFileName);
-        }
-        $this->getResponse()->setBody($contents);
     }
 }

@@ -24,10 +24,45 @@
 
 class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 {
+    // Process the product feed and update the progress file, in page sizes of 20 (or other if overriden)
+    function processProductFeed($productExportModel, $progressFileName, $feedFile, $pageSize = 20)
+    {
+        $currentPage = 0;
+        $pages = 0;
+        $feedProducts = array();
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', 0, 1);
 
-    function getFullCatFeed($progressFileName, $storeId) {
+        fwrite($feedFile, '"Products":[');
+        $firstProduct = true;
+        do {
+            $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
+            $pages = $result["Pages"];
 
-        $feedCategories = array();
+            foreach ($result["Products"] as $product) {
+                $json = Mage::helper('pureclarity_core')->formatFeed($product, 'json');
+
+                if (!$firstProduct) {
+                    fwrite($feedFile, ',');
+                }
+                fwrite($feedFile, $json);
+                $firstProduct = false;
+            }
+
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $currentPage, $pages, "false");
+            $currentPage++;
+        } while ($currentPage <= $pages);
+
+        fwrite($feedFile, ']');
+
+        // fwrite($feedFile, '],"Pages":');
+        // fwrite($feedFile, $pages);
+        // fwrite($feedFile, '}');
+
+        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'product', $currentPage, $pages, "true");
+    }
+
+    function getFullCatFeed($progressFileName, $storeId) {        
+        $feedCategories = '"Categories":[';
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
             ->setStoreId($storeId)
             ->addAttributeToSelect('name')
@@ -37,6 +72,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
         $maxProgress = count($categoryCollection);
         $currentProgress = 0;
+        $isFirst = true;
         foreach ($categoryCollection as $category) {
             
             // Get image
@@ -94,11 +130,17 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 $categoryData["PCImage"] = $imageURL2;
             }
 
-            $feedCategories[] = $categoryData;
+            if (!$isFirst)
+                $feedCategories .= ',';
+            
+            $isFirst = false;
+            $feedCategories .= Mage::helper('pureclarity_core')->formatFeed($categoryData, 'json');
             
             $currentProgress += 1;
             Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'category', $currentProgress, $maxProgress, "false");
         }
+
+        $feedCategories .= ']';
         return $feedCategories;
     }
 
@@ -106,7 +148,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
 
     function getFullBrandFeed($progressFileName, $storeId){
-        
+        $feedBrands = '"Brands":[';
         $brandCode = Mage::helper('pureclarity_core')->getBrandAttributeCode($storeId);
         try {
             $attribute = Mage::getSingleton('eav/config')
@@ -116,7 +158,6 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             return;
         }
 
-        $feedBrands = array();
         $options = $attribute->setStoreId($storeId)->getSource()->getAllOptions(false);
 
         // Find the SOLWIN image helper, if installed.
@@ -130,6 +171,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
 
         $maxProgress = count($options);
         $currentProgress = 0;
+        $isFirst = true;
         foreach($options as $opt){
             $imageURL = null;
             if ($solwinImageHelper != null) {
@@ -154,14 +196,17 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
                 $thisBrand['Image'] = $imageURL;
             }
 
-            $feedBrands[] = $thisBrand;
-                                         
+            if (!$isFirst)
+                $feedBrands .= ',';
+            
+            $isFirst = false;
+
+            $feedBrands .= Mage::helper('pureclarity_core')->formatFeed($thisBrand, 'json');
+
             $currentProgress += 1;
             Mage::helper('pureclarity_core')->setProgressFile($progressFileName, 'brand', $currentProgress, $maxProgress, "false");
         }
+        $feedBrands .= ']';
         return $feedBrands;
     }
-
-
-
 }
