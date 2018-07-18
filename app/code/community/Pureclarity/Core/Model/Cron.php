@@ -171,30 +171,21 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
             // Get the feed data for the specified feed type
             switch ($feedtype) {
                 case 'product':
-                    Mage::log('Writing product data');
-
                     $productExportModel = Mage::getModel('pureclarity_core/productExport');
                     $productExportModel->init($storeId);
                     $feedModel = Mage::getModel('pureclarity_core/feed');
                     $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
-                    Mage::log('product data written');
-
                     break;
                 case 'category':
-                    Mage::log('Writing category data');
                     $feedModel = Mage::getModel('pureclarity_core/feed');
                     $feedData = $feedModel->getFullCatFeed($progressFileName, $storeId);
                     fwrite($feedFile, $feedData);
-                    Mage::log('category data written');
                     break;
                 case 'brand':
-                    Mage::log('Writing brand data');
                     if (!Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
                         $feedModel = Mage::getModel('pureclarity_core/feed');
                         $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
                         fwrite($feedFile, $feedData);
-                        Mage::log('brand data written');
-
                     }
                     break;
                 case 'user':
@@ -228,12 +219,6 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
 
         // Set to uploaded
         Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
-
-        // Notify PC about the feed being available
-        // $url = Mage::helper('pureclarity_core')->getFeedNotificationEndpoint($storeId, $this->getStoreUrlNoTrailingSlash(), $feedtype);
-        // $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
-        // $body = Mage::helper('pureclarity_core')->getFeedBody($storeId);
-        // $response = $this->soapHelper->request($url, $useSSL, $body);
     }
 
     // Get and open file for the feed
@@ -241,7 +226,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
     {
         $feedFile = @fopen($feedFilePath, "w+");
         if ((!$feedFile) || !flock($feedFile, LOCK_EX | LOCK_NB)) {
-            throw new Exception("Pureclarity: Cannot open feed file for writing: " . $file);
+            throw new Exception("Pureclarity: Cannot open feed file for writing: " . $feedFilePath);
         }
         return $feedFile;
     }
