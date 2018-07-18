@@ -209,6 +209,10 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             
             if ($product->getData('pureclarity_onoffer') == '1')
                  $data["OnOffer"] = true;
+            
+            $promoMessage = $product->getData('pureclarity_promo_message');
+            if ($promoMessage != null && $promoMessage != '')
+                 $data["PromoMessage"] = $promoMessage;
 
             // Add attributes
             $this->setAttributes($product, $data);

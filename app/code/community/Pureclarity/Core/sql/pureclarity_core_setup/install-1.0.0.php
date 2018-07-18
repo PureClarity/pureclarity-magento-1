@@ -177,5 +177,21 @@ $installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_overla
     'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
 ));
 
+// Add attribute for Promo Message
+$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_promo_message', array(
+    'group'         => 'PureClarity',
+    'input'         => 'text',
+    'type'          => 'text',
+    'label'         => 'Promotion Message',
+    'backend'       => '',
+    'visible'       => 1,
+    'required'      => 0,
+    'user_defined'  => 1,
+    'default'       => '',
+    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+    'visible_on_front' => true
+));
+
+
 
 $installer->endSetup();
