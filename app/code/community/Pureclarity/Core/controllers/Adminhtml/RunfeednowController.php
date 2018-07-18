@@ -46,7 +46,8 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
                 $feeds[] = 'user';
             if ($this->getRequest()->getParam('orders') == 'true')
                 $feeds[] = 'orders';
-                $model->selectedFeeds($storeId, $feeds);
+            
+            $model->selectedFeeds($storeId, $feeds);
         }
         catch (\Exception $e){
             $this->getResponse()
