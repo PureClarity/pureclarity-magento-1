@@ -161,7 +161,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $hasOrder = in_array("orders", $feedtypes);
         $orderOnly = ($hasOrder && count($feedtypes) == 1);
 
-        if ($hasOrder){
+        if ($hasOrder) {
             //process separately
             array_pop($feedtypes);
         }
@@ -181,7 +181,7 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                 // Get the feed data for the specified feed type
                 switch ($feedtype) {
                     case 'product':
-                    Mage::log("PureClarity - Processing Product Feed.");
+                        Mage::log("PureClarity - Processing Product Feed.");
                         $productExportModel = Mage::getModel('pureclarity_core/productExport');
                         $productExportModel->init($storeId);
                         $feedModel = Mage::getModel('pureclarity_core/feed');
@@ -196,16 +196,16 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                     case 'brand':
                         if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
                             Mage::log("PureClarity - Processing Brand Feed.");
-                                $feedModel = Mage::getModel('pureclarity_core/feed');
-                                $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
-                                fwrite($feedFile, $feedData);
+                            $feedModel = Mage::getModel('pureclarity_core/feed');
+                            $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
+                            fwrite($feedFile, $feedData);
                         } else {
                             Mage::log("PureClarity - Brand Feed disabled.");
                             fwrite($feedFile, '"Brands":[]');
                         }
                         break;
                     case 'user':
-                    Mage::log("PureClarity - Processing User Feed.");
+                        Mage::log("PureClarity - Processing User Feed.");
                         $feedModel = Mage::getModel('pureclarity_core/feed');
                         $feedData = $feedModel->UserFeed($progressFileName, $storeId);
                         fwrite($feedFile, $feedData);
@@ -236,19 +236,30 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $appKey = Mage::helper('pureclarity_core')->getAccessKey($storeId);
         $secretKey = Mage::helper('pureclarity_core')->getSecretKey($storeId);
 
+        $error = false;
         if (!$orderOnly) {
             $uniqueId = 'PureClarityFeed-' . uniqid() . '.json';
-            $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath, 'magento-feeds');
-            Mage::log('PureClarity - uploaded feeds to SFTP. All done.');
+            if ($this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath, 'magento-feeds')) {
+                Mage::log('PureClarity - uploaded feeds to SFTP. All done.');
+            } else {
+                $error = true;
+                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedFilePath, 1, 1, "true", "false", "Failed to upload to PureClarity SFTP server. Check your Credentials and try again.");
+            }
         }
         if ($hasOrder) {
             $uniqueId = 'PureClarityOrders-' . uniqid() . '.csv';
-            $this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $orderFilePath);
-            Mage::log('PureClarity - uploaded orders to SFTP. All done.');
+            if ($this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $orderFilePath)) {
+                Mage::log('PureClarity - uploaded orders to SFTP. All done.');
+            } else {
+                $error = true;
+                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $orderFilePath, 1, 1, "true", "false", "Failed to upload to PureClarity SFTP server. Check your Credentials and try again.");
+            }
         }
 
-        // Set to uploaded
-        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
+        if (!$error) {
+            // Set to uploaded
+            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
+        }
     }
 
     // Get and open file for the feed

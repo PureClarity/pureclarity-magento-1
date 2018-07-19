@@ -38,10 +38,14 @@ class Pureclarity_Core_Helper_Sftp
                 throw new Exception(sprintf(__("Unable to open SFTP connection as %s@%s:%s", $username, $host, $port)));
             }
             $sftp->put($path, $payload, NET_SFTP_LOCAL_FILE);
+            $sftp->disconnect();
+            return true;
         } catch(Exception $e) {
             Mage::log("ERROR: Processing SFTP transfer: " . $src, null, self::LOG_FILE);
-            Mage::logException($e);   
+            Mage::logException($e);
+            $sftp->disconnect();
+            return false;
         }
-        $sftp->disconnect();
+        
     }
 }
