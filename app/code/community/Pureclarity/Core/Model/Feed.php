@@ -202,6 +202,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         $currentProgress = 0;
         $isFirst = true;
         foreach ($customerCollection as $customer) {
+
             $data = [
                 'UserId' => $customer->getId(),
                 'Email' => $customer->getEmail(),
