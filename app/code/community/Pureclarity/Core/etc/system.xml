@@ -216,15 +216,6 @@
                             <show_in_store>1</show_in_store>
                             <comment><![CDATA[<strong>Leave this blank to use the magento default placeholder</strong>]]></comment>
                         </placeholder_category_secondary>
-                        <placeholder_brand>
-                            <label>Brand image placeholder</label>
-                            <frontend_type>text</frontend_type>
-                            <sort_order>4</sort_order>
-                            <show_in_default>1</show_in_default>
-                            <show_in_website>1</show_in_website>
-                            <show_in_store>1</show_in_store>
-                            <comment><![CDATA[<strong>Leave this blank to use the magento default placeholder</strong>]]></comment>
-                        </placeholder_brand>
                     </fields>
                 </placeholders>
                 <advanced>
