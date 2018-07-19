@@ -276,7 +276,7 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
         fwrite($orderFile, "OrderId,UserId,Email,DateTimeStamp,ProdCode,Quantity,UnityPrice,LinePrice" . PHP_EOL);
 
         if ((!$orderFile) || !flock($orderFile, LOCK_EX | LOCK_NB)) {
-            throw new \Exception("Pureclarity: Cannot open orders feed file for writing (try deleting): " . $file);
+            throw new Exception("Error: Cannot open feed file for writing under var/pureclarity directory. It could be locked or there maybe insufficient permissions to write to the directory. You must delete locked files and ensure PureClarity has permission to write to the var directory. File: " . $orderFilePath);
         }
 
         // Get the collection
