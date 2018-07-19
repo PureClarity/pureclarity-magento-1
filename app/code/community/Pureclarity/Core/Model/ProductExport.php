@@ -102,6 +102,7 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                                               Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH));
         $products = Mage::getModel('pureclarity_core/product')->getCollection()
             ->setStoreId($this->storeId)
+            ->addStoreFilter($this->storeId)
             ->addUrlRewrite()
             ->addAttributeToSelect('*')
             ->addAttributeToFilter("status", array("eq" => Mage_Catalog_Model_Product_Status::STATUS_ENABLED))
