@@ -81,6 +81,10 @@ class Pureclarity_Core_Model_Feed extends Mage_Core_Model_Abstract
             }
             $imageURL2 = str_replace(array("https:", "http:"), "", $imageURL2);
 
+            if (!$category->getName()){
+                continue;
+            }
+
             // Build Data
             $categoryData = array(
                 "Id" => $category->getId(),
