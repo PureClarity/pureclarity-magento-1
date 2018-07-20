@@ -152,10 +152,9 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
              }
 
             // Get Product Link URL
-            $productUrl = str_replace(Mage::getBaseUrl(), '', $product->getData('url_key') . '.html' );
-            $productUrl = str_replace(Mage::getUrl('', array('_secure' => true)), '', $productUrl);
-            if (substr($productUrl, 0, 1) != '/') {
-                $productUrl = '/' . $productUrl;
+            $productUrl = $product->setStoreId($this->storeId)->getUrlModel()->getUrl($product, $urlParams);
+            if ($productUrl){
+                $productUrl = str_replace(array("https:", "http:"), "", $productUrl);
             }
 
             // Get Product Image URL
