@@ -102,12 +102,12 @@
 
                 manageProgressResponse: function(response){
                     if (response && response.error){
-                        this.message("ERROR: Sorry but an error occured. " + response.error);
+                        this.message("ERROR: Sorry but an error occurred. " + response.error);
                         this.isComplete = true;
                         this.resetState();
                     }
                     else if (response && response.isUploaded){
-                        this.message("SUCCESS: Data feed sucessfully submitted to PureClarity.")
+                        this.message("SUCCESS: Data feed successfully submitted to PureClarity.")
                         this.resetState();
                     }
                     else{
