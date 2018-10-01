@@ -205,9 +205,21 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             }
 
             // Set PureClarity Custom values
-            $searchTag = $product->getData('pureclarity_search_tags');
-            if ($searchTag != null && $searchTag != '')
-                 $data["SearchTags"] = array($searchTag);
+            $searchTagString = $product->getData('pureclarity_search_tags');
+            if (!empty($searchTagString)){
+                $searchTags = explode(",", $searchTagString);
+                if(count($searchTags)){
+                    foreach ($searchTags as $key => &$searchTag) {
+                        $searchTag = trim($searchTag);
+                        if(empty($searchTag)){
+                            unset($searchTags[$key]);
+                        }
+                    }
+                    if(count($searchTags)){
+                        $data["SearchTags"] = array_values($searchTags);
+                    }
+                }
+            }
 
             $overlayImage = $product->getData('pureclarity_overlay_image');
             if ($overlayImage != "")
