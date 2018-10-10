@@ -23,18 +23,37 @@
  *****************************************************************************************/
 
 /**
- * PureClarity Cron Model
+ * Controls running of PureClarity feeds
  */
-class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
+class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
 {
-    const DELTA_LOG = 'pureclarity_delta.log';
     protected $soapHelper;
     protected $sftpHelper;
 
-    public function _construct()
+    const DELTA_LOG = 'pureclarity_delta.log';
+
+    public function __construct()
     {
         $this->soapHelper = Mage::helper('pureclarity_core/soap');
         $this->sftpHelper = Mage::helper('pureclarity_core/sftp');
+        parent::__construct();
+    }
+
+    public function runAllFeeds()
+    {
+        Mage::log("In runAllFeeds");
+        // Loop round each store and create feed
+        foreach (Mage::app()->getWebsites() as $website) {
+            foreach ($website->getGroups() as $group) {
+                $stores = $group->getStores();
+                foreach ($stores as $store) {
+                    // Only generate feeds when feed notification is active
+                    if (! $this->coreHelper->isFeedNotificationActive($store->getId())) {
+                        $this->allFeeds($store->getId());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -42,38 +61,54 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
      */
     public function deltaFeed($observerObject, $peakModeOnly = false)
     {
+
+        Mage::log("In deltaFeed");
+
         // create a unique token until we get a response from PureClarity
         $uniqueId = 'PureClarity' . uniqid();
-        $requests = array();
+        $requests = [];
 
         // Loop round each store and process Deltas
         foreach (Mage::app()->getWebsites() as $website) {
             foreach ($website->getGroups() as $group) {
                 foreach ($group->getStores() as $store) {
 
+                    Mage::log("Processing for store id " . $store->getId());
+
                     // Check we're allowed to do it for this store
-                    if (Mage::helper('pureclarity_core')->isDeltaNotificationActive($store->getId()) || $peakModeOnly) {
+                    if ($this->coreHelper->isDeltaNotificationActive($store->getId()) || $peakModeOnly) {
 
-                        $deleteProducts = $feedProducts = array();
+                        $deleteProducts = [];
+                        $feedProducts = [];
 
+                        Mage::log("Getting delta feed collection for store");
                         // get deltaFeed Collection for store
-                        $storeIds = array('in' => array(Mage_Catalog_Model_Abstract::DEFAULT_STORE_ID, $store->getId()));
-                        $collection = Mage::getModel('pureclarity_core/productFeed')
+                        $storeIds = [
+                            'in' => [
+                                Mage_Catalog_Model_Abstract::DEFAULT_STORE_ID, 
+                                $store->getId()
+                            ]
+                        ];
+                        $deltaProducts = Mage::getModel('pureclarity_core/productFeed')
                             ->getCollection()
-                            ->addFieldToFilter('status_id', array('eq' => 0))
+                            ->addFieldToFilter('status_id', [
+                                    'eq' => 0
+                                ])
                             ->addFieldToFilter('store_id', $storeIds);
 
+                        Mage::log("We have " . $deltaProducts->count() . " products to process");
+
                         // Check we have something
-                        if ($collection->count() > 0) {
+                        if ($deltaProducts->count() > 0) {
 
-                            $deltaIds = array();
+                            $deltaIds = [];
 
-                            // park these so that another process doesn't pick them up, also
-                            // create a hash to get last value (in case product been edited multiple times)
-                            $productHash = array();
-                            foreach ($collection as $deltaProduct) {
+                            // Park these so that another process doesn't pick them up, also
+                            // create a hash to get last value (in case product has been edited multiple times)
+                            $productHash = [];
+                            foreach ($deltaProducts as $deltaProduct) {
                                 $deltaIds[] = $deltaProduct->getProductId();
-                                if (!$peakModeOnly) {
+                                if (! $peakModeOnly) {
                                     $deltaProduct->setStatusId(3)->setToken($uniqueId)->save();
                                 }
 
@@ -90,54 +125,79 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
                                     ->setStoreId($store->getId())
                                     ->load($deltaProduct->getProductId());
 
-                                // Is deleted?
-                                $deleted = $product->getData('status') == Mage_Catalog_Model_Product_Status::STATUS_DISABLED ||
-                                $product->getVisibility() == Mage_Catalog_Model_Product_Visibility::VISIBILITY_NOT_VISIBLE;
+                                // Is product deleted, or otherwise no longer visible?
+                                $isDeleted = (
+                                        $product->getData('status') == Mage_Catalog_Model_Product_Status::STATUS_DISABLED 
+                                        || $product->getVisibility() == Mage_Catalog_Model_Product_Visibility::VISIBILITY_NOT_VISIBLE
+                                    );
 
                                 // Check product is loaded
                                 if ($product != null) {
                                     // Check if deleted or if product is no longer visible
-                                    if ($deleted == true) {
+                                    if ($isDeleted) {
                                         $deleteProducts[] = $product->getSku();
-                                    } else {
+                                    } 
+                                    else {
+
                                         // Get data from product exporter
-                                        $data = $productExportModel->processProduct($product, count($feedProducts) + 1);
+                                        $data = $productExportModel->getProductData($product, count($feedProducts) + 1);
                                         if ($data != null) {
                                             $feedProducts[] = $data;
                                         }
-
                                     }
                                     //if we've changed the sku - make sure old one gets deleted
                                     if ($deltaProduct->getOldsku() != $product->getSku()) {
                                         $deleteProducts[] = $deltaProduct->getOldsku();
                                     }
-                                }
+
+                                    //find all products where this is a variant, and call getProductData() on them
+                                    Mage::log("About to look for parent product ids");
+                                    Mage::log("Type id=" . $product->getTypeId());
+                                    $parentProductIds = Mage::getResourceSingleton('catalog/product_type_configurable')
+                                        ->getParentIdsByChild($product->getId());
+                                    Mage::log("Product id " . $product->getId() . " has " . count($parentProductIds) . " parent products");
+                                    foreach ($parentProductIds as $parentProductId) {
+                                        $parentProduct = Mage::getModel('catalog/product')
+                                            ->setStoreId($store->getId())
+                                            ->load($parentProductId);
+                                        if ($parentProduct != null) {
+                                            Mage::log("Parent product: got product for id " . $parentProduct->getId() );
+                                            $data = $productExportModel->getProductData($parentProduct, count($feedProducts) + 1);
+                                            if ($data != null) {
+                                                $feedProducts[] = $data;
+                                            }
+                                        }
+                                    }
+                                }   
                             }
 
-                            $request = array(
-                                'AppKey' => Mage::helper('pureclarity_core')->getAccessKey($store->getId()),
-                                'Secret' => Mage::helper('pureclarity_core')->getSecretKey($store->getId()),
+                            $request = [
+                                'AppKey' => $this->coreHelper->getAccessKey($store->getId()),
+                                'Secret' => $this->coreHelper->getSecretKey($store->getId()),
                                 'Products' => $feedProducts,
                                 'DeleteProducts' => $deleteProducts,
                                 'Format' => 'magentoplugin1.0.0',
-                            );
+                            ];
+                            Mage::log("About to send request: " . print_r($request, true));
                             $requests[] = $request;
 
-                            if (!$peakModeOnly) {
-                                $body = Mage::helper('pureclarity_core')->formatFeed($request, 'json');
+                            if (! $peakModeOnly) {
+                                $body = $this->coreHelper->formatFeed($request, 'json');
 
-                                $url = Mage::helper('pureclarity_core')->getDeltaEndpoint($store->getId());
-                                $useSSL = Mage::helper('pureclarity_core')->useSSL($store->getId());
+                                $url = $this->coreHelper->getDeltaEndpoint($store->getId());
+                                $useSSL = $this->coreHelper->useSSL($store->getId());
 
-                                $response = $this->soapHelper->request($url, $useSSL, $body);
-                                $response = json_decode($response);
-                                if (!is_object($response)) {
+                                $jsonResponse = $this->soapHelper->request($url, $useSSL, $body);
+                                Mage::log("Response:\n" . $jsonResponse);
+                                $response = json_decode($jsonResponse);
+                                if (! is_object($response)) {
                                     Mage::log('DELTA Issue from PC - ' . var_export($deltaIds, true), null, self::DELTA_LOG);
                                 }
-                                foreach ($collection as $deltaProduct) {
+                                foreach ($deltaProducts as $deltaProduct) {
                                     $deltaProduct->delete();
                                 }
                             }
+
                             $productExportModel = null;
                         }
                     }
@@ -152,114 +212,47 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         $this->doFeed($feeds, $storeId);
     }
 
-    // Produce a feed and notify PureClarity so that it can fetch it.
-    public function doFeed($feedtypes, $storeId)
+    /**
+     * Produce a feed and POST to PureClarity.
+     * @param $feedTypes array
+     * @param $storeId integer
+     */ 
+    public function doFeed($feedTypes, $storeId)
     {
         //can take a while to run the feed
         set_time_limit(0);
 
-        $hasOrder = in_array("orders", $feedtypes);
-        $orderOnly = ($hasOrder && count($feedtypes) == 1);
-
-        if ($hasOrder) {
-            //process separately
-            array_pop($feedtypes);
+        $feedModel = Mage::getModel('pureclarity_core/feed')
+            ->initialise($storeId);
+        if(! $feedModel){
+            return false;
         }
 
-        if (!$orderOnly) {
-            $feedFilePath = $this->getFeedFilePath($storeId);
-            $feedFile = $this->getFeedFile($feedFilePath);
-            // Feed Start
-            fwrite($feedFile, '{ "Version": 2,');
-
-            foreach ($feedtypes as $feedtype) {
-                $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
-
-                // Initialise Progress File.
-                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 0, 1);
-
-                // Get the feed data for the specified feed type
-                switch ($feedtype) {
-                    case 'product':
-                        Mage::log("PureClarity - Processing Product Feed.");
-                        $productExportModel = Mage::getModel('pureclarity_core/productExport');
-                        $productExportModel->init($storeId);
-                        $feedModel = Mage::getModel('pureclarity_core/feed');
-                        $feedModel->processProductFeed($productExportModel, $progressFileName, $feedFile);
-                        break;
-                    case 'category':
-                        Mage::log("PureClarity - Processing Category Feed.");
-                        $feedModel = Mage::getModel('pureclarity_core/feed');
-                        $feedData = $feedModel->getFullCatFeed($progressFileName, $storeId);
-                        fwrite($feedFile, $feedData);
-                        break;
-                    case 'brand':
-                        if (Mage::helper('pureclarity_core')->isBrandFeedEnabled($storeId)) {
-                            Mage::log("PureClarity - Processing Brand Feed.");
-                            $feedModel = Mage::getModel('pureclarity_core/feed');
-                            $feedData = $feedModel->getFullBrandFeed($progressFileName, $storeId);
-                            fwrite($feedFile, $feedData);
-                        } else {
-                            Mage::log("PureClarity - Brand Feed disabled.");
-                            fwrite($feedFile, '"Brands":[]');
-                        }
-                        break;
-                    case 'user':
-                        Mage::log("PureClarity - Processing User Feed.");
-                        $feedModel = Mage::getModel('pureclarity_core/feed');
-                        $feedData = $feedModel->UserFeed($progressFileName, $storeId);
-                        fwrite($feedFile, $feedData);
-                        break;
-                }
-
-                if (end($feedtypes) !== $feedtype) {
-                    fwrite($feedFile, ',');
-                }
-            }
-
-            fwrite($feedFile, '}');
-            fclose($feedFile);
-        }
-
-        if ($hasOrder) {
-            Mage::log('PureClarity - Processing Order Feed.');
-            $feedModel = Mage::getModel('pureclarity_core/feed');
-            $orderFilePath = $this->getOrderFilePath($storeId);
-            $feedData = $feedModel->OrderFeed($storeId, $progressFileName, $orderFilePath);
-        }
-
-        // Ensure progress file is set to complete
-        Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "false");
-
-        $host = Mage::helper('pureclarity_core')->getSftpHost($storeId);
-        $port = Mage::helper('pureclarity_core')->getSftpPort($storeId);
-        $appKey = Mage::helper('pureclarity_core')->getAccessKey($storeId);
-        $secretKey = Mage::helper('pureclarity_core')->getSecretKey($storeId);
-
-        $error = false;
-        if (!$orderOnly) {
-            $uniqueId = 'PureClarityFeed-' . uniqid() . '.json';
-            if ($this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $feedFilePath, 'magento-feeds')) {
-                Mage::log('PureClarity - uploaded feeds to SFTP. All done.');
-            } else {
-                $error = true;
-                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedFilePath, 1, 1, "true", "false", "Failed to upload to PureClarity SFTP server. Check your Credentials and try again.");
-            }
-        }
-        if ($hasOrder) {
-            $uniqueId = 'PureClarityOrders-' . uniqid() . '.csv';
-            if ($this->sftpHelper->send($host, $port, $appKey, $secretKey, $uniqueId, $orderFilePath)) {
-                Mage::log('PureClarity - uploaded orders to SFTP. All done.');
-            } else {
-                $error = true;
-                Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $orderFilePath, 1, 1, "true", "false", "Failed to upload to PureClarity SFTP server. Check your Credentials and try again.");
+        foreach ($feedTypes as $feedType) {
+            switch ($feedType) {
+                case Pureclarity_Core_Model_Feed::FEED_TYPE_PRODUCT:
+                    $feedModel->sendProducts();
+                    break;
+                case Pureclarity_Core_Model_Feed::FEED_TYPE_CATEGORY:
+                    $feedModel->sendCategories();
+                    break;
+                case Pureclarity_Core_Model_Feed::FEED_TYPE_BRAND:
+                    if ($this->coreHelper->isBrandFeedEnabled($storeId)) {
+                        $feedModel->sendBrands();
+                    } 
+                    break;
+                case Pureclarity_Core_Model_Feed::FEED_TYPE_USER:
+                    $feedModel->sendUsers();
+                    break;
+                case Pureclarity_Core_Model_Feed::FEED_TYPE_ORDER:
+                    $feedModel->sendOrders();
+                    break;
+                default:
+                    throw new Exception("PureClarity feed type not recognised: {$feedType}");
             }
         }
 
-        if (!$error) {
-            // Set to uploaded
-            Mage::helper('pureclarity_core')->setProgressFile($progressFileName, $feedtype, 1, 1, "true", "true");
-        }
+        $feedModel->checkSuccess();
     }
 
     // Get and open file for the feed
@@ -282,42 +275,39 @@ class Pureclarity_Core_Model_Cron extends Mage_Core_Model_Abstract
         return Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS . $storeId . '-orders.csv';
     }
 
-    // Product All feeds in one file.
+    // Produce all feeds in one file.
     public function allFeeds($storeId)
     {
-        $this->doFeed(array('product', 'category', 'brand', 'users'), $storeId);
+        $this->doFeed([
+            Pureclarity_Core_Model_Feed::FEED_TYPE_PRODUCT, 
+            Pureclarity_Core_Model_Feed::FEED_TYPE_CATEGORY, 
+            Pureclarity_Core_Model_Feed::FEED_TYPE_BRAND, 
+            Pureclarity_Core_Model_Feed::FEED_TYPE_USER
+        ], $storeId);
     }
 
     // Produce a product feed and notify PureClarity so that it can fetch it.
     public function fullProductFeed($storeId)
     {
-        $this->doFeed(array('product'), $storeId);
+        $this->doFeed([
+                Pureclarity_Core_Model_Feed::FEED_TYPE_PRODUCT
+            ], $storeId);
     }
+
     // Produce a category feed and notify PureClarity so that it can fetch it.
     public function fullCategoryFeed($storeId)
     {
-        $this->doFeed(array('category'), $storeId);
+        $this->doFeed([
+                Pureclarity_Core_Model_Feed::FEED_TYPE_CATEGORY
+            ], $storeId);
     }
+
     // Produce a brand feed and notify PureClarity so that it can fetch it.
     public function fullBrandFeed($storeId)
     {
-        $this->doFeed(array('brand'), $storeId);
-    }
-
-    public function runAllFeeds()
-    {
-        // Loop round each store and create feed
-        foreach (Mage::app()->getWebsites() as $website) {
-            foreach ($website->getGroups() as $group) {
-                $stores = $group->getStores();
-                foreach ($stores as $store) {
-                    // Only generate feeds when feed notification is active
-                    if (!Mage::helper('pureclarity_core')->isFeedNotificationActive($store->getId())) {
-                        allFeeds($store->getId());
-                    }
-                }
-            }
-        }
+        $this->doFeed([
+                Pureclarity_Core_Model_Feed::FEED_TYPE_BRAND
+            ], $storeId);
     }
 
     // Helper functions

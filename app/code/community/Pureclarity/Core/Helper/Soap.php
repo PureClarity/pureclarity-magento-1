@@ -24,9 +24,13 @@
 
 class Pureclarity_Core_Helper_Soap
 {
-    
+    protected $coreHelper;
+
     const LOG_FILE = "pureclarity_soap.log";
-    
+
+    public function __construct(){
+        $this->coreHelper = Mage::helper('pureclarity_core');
+    }
 
     public function request($url, $useSSL, $payload = null)
     {
@@ -42,7 +46,11 @@ class Pureclarity_Core_Helper_Soap
         if ($payload != null){
             curl_setopt($soap_do, CURLOPT_POST, true);
             curl_setopt($soap_do, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($soap_do, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Content-Length: ' . strlen($payload)));
+            curl_setopt($soap_do, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json', 
+                    'Content-Length: ' . strlen($payload)
+                ]
+            );
         }
         else {
             curl_setopt($soap_do, CURLOPT_POST, false);
@@ -51,7 +59,7 @@ class Pureclarity_Core_Helper_Soap
         curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
         curl_setopt($soap_do, CURLOPT_VERBOSE, true);
 
-        if (!$result = curl_exec($soap_do)) {
+        if (! $result = curl_exec($soap_do)) {
             Mage::log('ERROR: ' . curl_error($soap_do), null, self::LOG_FILE);
         }
 
@@ -59,16 +67,15 @@ class Pureclarity_Core_Helper_Soap
 
         Mage::log("------------------ REQUEST ------------------", null, self::LOG_FILE);
         Mage::log(print_r($url, true), null, self::LOG_FILE);
-        if ($payload != null)
+        if ($payload != null){
             Mage::log(print_r($payload, true), null, self::LOG_FILE);
+        }
         Mage::log("------------------ RESPONSE ------------------", null, self::LOG_FILE);
         Mage::log(print_r($result, true), null, self::LOG_FILE);
         Mage::log("------------------ END PRODUCT DELTA ------------------", null, self::LOG_FILE);
 
         return $result;
     }
-
-
 
     /**
      * Makes a GET request to PureClarity for MOTO Orders
@@ -79,7 +86,6 @@ class Pureclarity_Core_Helper_Soap
      */
     public function motoOrderGetRequest($storeId, $order = null, $orderItems = null)
     {
-
         $additional = '';
 
         if ($order == null) {
@@ -106,9 +112,8 @@ class Pureclarity_Core_Helper_Soap
             $i++;
         }
 
-
-        $url = Mage::helper('pureclarity_core')->getMotoEndpoint($storeId);
-        $useSSL = Mage::helper('pureclarity_core')->useSSL($storeId);
+        $url = $this->coreHelper->getMotoEndpoint($storeId);
+        $useSSL = $this->coreHelper->useSSL($storeId);
 
         $soap_do = curl_init();
         curl_setopt($soap_do, CURLOPT_URL, $url . $additional);
@@ -123,7 +128,7 @@ class Pureclarity_Core_Helper_Soap
         curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
         curl_setopt($soap_do, CURLOPT_VERBOSE, true);
 
-        if (!$result = curl_exec($soap_do)) {
+        if (! $result = curl_exec($soap_do)) {
             Mage::log('ERROR: ' . curl_error($soap_do), null, self::LOG_FILE);
         }
 
@@ -137,7 +142,6 @@ class Pureclarity_Core_Helper_Soap
         Mage::log("------------------ END SOAP TRANSACTION ------------------", null, self::LOG_FILE);
 
         return $result;
-
     }
 
 }

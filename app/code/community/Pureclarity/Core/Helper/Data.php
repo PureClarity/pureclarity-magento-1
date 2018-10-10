@@ -25,51 +25,55 @@
 /**
 * PureClarity Product Export Module
 */
-class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
-
-
+class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract 
+{
     // ENDPOINTS
     protected $scriptUrl = '//pcs.pureclarity.net';
-    protected $regions = array( 1 => "api-eu-w-1.pureclarity.net",
-                                2 => "api-eu-w-2.pureclarity.net",
-                                3 => "api-eu-c-1.pureclarity.net",
-                                4 => "api-us-e-1.pureclarity.net",
-                                5 => "api-us-e-2.pureclarity.net",
-                                6 => "api-us-w-1.pureclarity.net",
-                                7 => "api-us-w-2.pureclarity.net",
-                                8 => "api-ap-s-1.pureclarity.net",
-                                9 => "api-ap-ne-1.pureclarity.net",
-                                10 => "api-ap-ne-2.pureclarity.net",
-                                11 => "api-ap-se-1.pureclarity.net",
-                                12 => "api-ap-se-2.pureclarity.net",
-                                13 => "api-ca-c-1.pureclarity.net",
-                                14 => "api-sa-e-1.pureclarity.net");
+    protected $regions = [
+        1 => "api-eu-w-1.pureclarity.net",
+        2 => "api-eu-w-2.pureclarity.net",
+        3 => "api-eu-c-1.pureclarity.net",
+        4 => "api-us-e-1.pureclarity.net",
+        5 => "api-us-e-2.pureclarity.net",
+        6 => "api-us-w-1.pureclarity.net",
+        7 => "api-us-w-2.pureclarity.net",
+        8 => "api-ap-s-1.pureclarity.net",
+        9 => "api-ap-ne-1.pureclarity.net",
+        10 => "api-ap-ne-2.pureclarity.net",
+        11 => "api-ap-se-1.pureclarity.net",
+        12 => "api-ap-se-2.pureclarity.net",
+        13 => "api-ca-c-1.pureclarity.net",
+        14 => "api-sa-e-1.pureclarity.net"
+    ];
 
-    protected $sftpRegions = array(1 => "sftp-eu-w-1.pureclarity.net",
-                                2 => "sftp-eu-w-2.pureclarity.net",
-                                3 => "sftp-eu-c-1.pureclarity.net",
-                                4 => "sftp-us-e-1.pureclarity.net",
-                                5 => "sftp-us-e-2.pureclarity.net",
-                                6 => "sftp-us-w-1.pureclarity.net",
-                                7 => "sftp-us-w-2.pureclarity.net",
-                                8 => "sftp-ap-s-1.pureclarity.net",
-                                9 => "sftp-ap-ne-1.pureclarity.net",
-                                10 => "sftp-ap-ne-2.pureclarity.net",
-                                11 => "sftp-ap-se-1.pureclarity.net",
-                                12 => "sftp-ap-se-2.pureclarity.net",
-                                13 => "sftp-ca-c-1.pureclarity.net",
-                                14 => "sftp-sa-e-1.pureclarity.net");
+    protected $sftpRegions = [
+        1 => "sftp-eu-w-1.pureclarity.net",
+        2 => "sftp-eu-w-2.pureclarity.net",
+        3 => "sftp-eu-c-1.pureclarity.net",
+        4 => "sftp-us-e-1.pureclarity.net",
+        5 => "sftp-us-e-2.pureclarity.net",
+        6 => "sftp-us-w-1.pureclarity.net",
+        7 => "sftp-us-w-2.pureclarity.net",
+        8 => "sftp-ap-s-1.pureclarity.net",
+        9 => "sftp-ap-ne-1.pureclarity.net",
+        10 => "sftp-ap-ne-2.pureclarity.net",
+        11 => "sftp-ap-se-1.pureclarity.net",
+        12 => "sftp-ap-se-2.pureclarity.net",
+        13 => "sftp-ca-c-1.pureclarity.net",
+        14 => "sftp-sa-e-1.pureclarity.net"
+    ];
 
+    const PLACEHOLDER_UPLOAD_DIR = "pureclarity";
     const PROGRESS_FILE_BASE_NAME = 'pureclarity-feed-progress-';
     const PURECLARITY_EXPORT_URL = 'pureclarity/export/feed?storeid={storeid}&type={type}';
-
 
     // Environment Variables
     public function isActive($storeId)
     {
         $accessKey = $this->getAccessKey($storeId);
-        if ($accessKey != null && $accessKey != "")
+        if (! empty($accessKey)){
             return Mage::getStoreConfig("pureclarity_core/environment/active", $storeId);
+        }
         return false;
     }
 
@@ -97,7 +101,6 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $region;
     }
 
-    
     // General Config 
     public function isSearchActive($storeId = null)
     {
@@ -147,7 +150,6 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return false;
     }
 
-
     public function getBrandParentCategory($storeId)
     {
         return Mage::getStoreConfig("pureclarity_core/general_config/brand_parent_category", $storeId);
@@ -181,8 +183,6 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     {
         return Mage::getStoreConfig("pureclarity_core/advanced/bmz_debug", $this->getStoreId($storeId));
     }
-
-
 
     // END POINTS
     public function getHost($storeId){
@@ -223,6 +223,19 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $this->getHost($storeId) . '/api/track?appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
     }
 
+    public function getFeedBaseUrl($storeId)
+    {
+        $url = getenv('PURECLARITY_FEED_HOST');
+        $port = getenv('PURECLARITY_FEED_PORT');
+        if (empty($url)){
+            $url = $this->sftpRegions[$this->getRegion($storeId)];
+        }
+        if (! empty($port)){
+            $url = $url . ":" . $port;
+        }
+        return $url . "/";
+    }
+
     public function getFeedNotificationEndpoint($storeId, $websiteDomain, $feedType){
         $returnUrl = $websiteDomain . '/' . self::PURECLARITY_EXPORT_URL;
         $returnUrl = str_replace('{storeid}', $storeId, $returnUrl);
@@ -238,8 +251,6 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     public static function getFileNameForFeed($feedtype, $storeCode){
         return $storeCode . '-' . $feedType . '.json';
     }
-
-
 
     // MISC/HELPER METHODS
     public function getScriptUrl()
@@ -263,7 +274,6 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
         return $storeId;
     }
 
-    const PLACEHOLDER_UPLOAD_DIR = "pureclarity";
     public function getPlaceholderDir(){
         return Mage::getBaseDir('media') . DS . self::PLACEHOLDER_UPLOAD_DIR . DS;
     }
@@ -294,11 +304,10 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract {
     public static function setProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete = "false", $isUploaded = "false", $error = ""){
         if ($progressFileName != null){
             $progressFile = fopen($progressFileName, "w");
-            fwrite($progressFile, "{\"name\":\"$feedName\",\"cur\":$currentPage,\"max\":$pages,\"isComplete\":$isComplete,\"isUploaded\":$isUploaded,\"error\":\"$error\"}" );
+            fwrite($progressFile, "{\"name\":\"{$feedName}\",\"cur\":{$currentPage},\"max\":{$pages},\"isComplete\":{$isComplete},\"isUploaded\":{$isUploaded},\"error\":\"{$error}\"}" );
             fclose($progressFile);
         }
     }
-
 
     public function getOrder()
     {

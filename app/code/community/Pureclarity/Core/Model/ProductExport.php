@@ -25,23 +25,25 @@
 /**
 * PureClarity Product Export Module
 */
-class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
+class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 {
 
     public $storeId = null;
     public $baseCurrencyCode = nulls;
-    public $currenciesToProcess = array();
-    public $attributesToInclude = array();
-    public $seenProductIds = array();
+    public $currenciesToProcess = [];
+    public $attributesToInclude = [];
+    public $seenProductIds = [];
     public $currentStore = null;
-    public $brandLookup = array();
+    public $brandLookup = [];
     protected $categoryCollection = [];
-    
-    // Initialise the model ready to call the product data for the give store.
-    public function init($storeId)
+
+    /**
+     * Initialise the model ready to set the data for the given store.
+     */
+    public function init($storeId = null)
     {
-        // Use this store, if not passed in.
         $this->storeId = $storeId;
+        // Use this store, if not passed in.
         if (is_null($this->storeId)) {
             $this->storeId = Mage::app()->getStore()->getId();
         }
@@ -55,29 +57,34 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $currencyRates = $currencyModel->getCurrencyRates($this->baseCurrencyCode, array_values($currencies));
         $this->currenciesToProcess[] = $this->baseCurrencyCode;
         foreach($currencies as $currency){
-            if ($currency != $this->baseCurrencyCode && $currencyRates[$currency]){
+            if ($currency != $this->baseCurrencyCode && ! empty($currencyRates[$currency])){
                 $this->currenciesToProcess[] = $currency;
             }
         }
 
-
         // Manage Brand
         $this->brandLookup = [];
         // If brand feed is enabled, get the brands
-        if(Mage::helper('pureclarity_core')->isBrandFeedEnabled($this->storeId)) {
+        if($this->coreHelper->isBrandFeedEnabled($this->storeId)) {
             $feedModel = Mage::getModel('pureclarity_core/feed');
-            $this->brandLookup = $feedModel->BrandFeedArray($this->storeId);
+            $this->brandLookup = $feedModel->getBrandFeedArray($this->storeId);
         }
 
         // Get Attributes
         $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->getItems();
-        $attributesToExclude = array("prices", "price");
+        $attributesToExclude = [
+            "prices",
+            "price"
+        ];
 
         // Get list of attributes to include
         foreach ($attributes as $attribute){
             $code = $attribute->getAttributecode();
-            if (!in_array(strtolower($code), $attributesToExclude) && !empty($attribute->getFrontendLabel())) {
-                $this->attributesToInclude[] = array($code, $attribute->getFrontendLabel());
+            if (! in_array(strtolower($code), $attributesToExclude) && ! empty($attribute->getFrontendLabel())) {
+                $this->attributesToInclude[] = [
+                    $code, 
+                    $attribute->getFrontendLabel()
+                ];
             }
         }
 
@@ -85,7 +92,12 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $this->categoryCollection = [];
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
             ->addAttributeToSelect('name')
-            ->addFieldToFilter('is_active', array("in" => array('1')));
+            ->addFieldToFilter('is_active', [
+                    "in" => [
+                        '1'
+                    ]
+                ]
+            );
         foreach($categoryCollection as $category){
             $this->categoryCollection[$category->getId()] = $category->getName();
         }
@@ -93,120 +105,142 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
 
 
     
-    // Get the full product feed for the given page and size
+    /**
+     * Get the full product feed for the given page and size
+     */
     public function getFullProductFeed($pageSize = 1000000, $currentPage = 1)
     {
         // Get product collection
-        $validVisiblity = array('in' => array(Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH, 
-                                              Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG, 
-                                              Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH));
+        $validVisibility = [
+            'in' => [
+                Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH, 
+                Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG, 
+                Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH
+            ]
+        ];
         $products = Mage::getModel('pureclarity_core/product')->getCollection()
             ->setStoreId($this->storeId)
             ->addStoreFilter($this->storeId)
             ->addUrlRewrite()
             ->addAttributeToSelect('*')
-            ->addAttributeToFilter("status", array("eq" => Mage_Catalog_Model_Product_Status::STATUS_ENABLED))
-            ->addFieldToFilter('visibility', $validVisiblity)
+            ->addAttributeToFilter("status", [
+                    "eq" => Mage_Catalog_Model_Product_Status::STATUS_ENABLED
+                ]
+            )
+            ->addFieldToFilter('visibility', $validVisibility)
             ->setPageSize($pageSize)
             ->setCurPage($currentPage);
             
         // Get pages
         $pages = $products->getLastPageNumber();
         if ($currentPage > $pages) {
-            $products = array();
+            $products = [];
         }
         
         // Loop through products
-        $feedProducts = array();
+        $feedProducts = [];
         foreach($products as $product) {
-            $data = $this->processProduct($product, count($feedProducts)+($pageSize * $currentPage)+1);
+            $data = $this->getProductData($product, count($feedProducts) + ($pageSize * $currentPage) + 1);
             if ($data != null)
                 $feedProducts[] = $data;
         }
         
-        return  array(
+        return  [
             "Pages" => $pages,
             "Products" => $feedProducts
-        );
+        ];
     }
 
-    // Gets the data for a product.
-    public function processProduct(&$product, $index)
+    /**
+     * Returns the product data
+     * @return array
+     */
+    public function getProductData(&$product, $index)
     {
         // Check hash that we've not already seen this product
-        if(!array_key_exists($product->getId(), $this->seenProductIds) || $this->seenProductIds[$product->getId()]===null) {
-
+        if(! array_key_exists($product->getId(), $this->seenProductIds) 
+            || $this->seenProductIds[$product->getId()]===null) {
             // Set Category Ids for product
             $categoryIds = $product->getCategoryIds();
 
-             // Get a list of the category names
-             $categoryList = [];
-             $brandId = null;
-             foreach ($categoryIds as $id) {
-                 if (array_key_exists($id, $this->categoryCollection)){
-                     $categoryList[] = $this->categoryCollection[$id];
-                 }
-                 if (!$brandId && array_key_exists($id, $this->brandLookup)){
-                     $brandId = $id;
-                 }
-             }
-
-            // Get Product Link URL
-            $productUrl = $product->setStoreId($this->storeId)->getUrlModel()->getUrl($product, $urlParams);
-            if ($productUrl){
-                $productUrl = str_replace(array("https:", "http:"), "", $productUrl);
+            // Get a list of the category names
+            $categoryList = [];
+            $brandId = null;
+            foreach ($categoryIds as $id) {
+                if (array_key_exists($id, $this->categoryCollection)){
+                    $categoryList[] = $this->categoryCollection[$id];
+                }
+                if (! $brandId && array_key_exists($id, $this->brandLookup)){
+                    $brandId = $id;
+                }
             }
-
+            // Get Product Link URL
+            $urlParams = [
+                '_nosid' => true,
+                // '_scope' => $this->storeId // not relevant for Magento 1 (M2 plugin only, keeping here but commenting out to avoid future query)
+            ];
+            $productUrl = $product->setStoreId($this->storeId)
+                ->getUrlModel()
+                ->getUrl($product, $urlParams);
+            if ($productUrl){
+                $productUrl = $this->removeUrlProtocol($productUrl);
+            }
             // Get Product Image URL
             $productImageUrl = '';
             if($product->getImage() && $product->getImage() != 'no_selection'){
-                $image =Mage::helper('catalog/image');
+                $image = Mage::helper('catalog/image');
                 $image->init($product, 'image');
                 $image->resize(250);
                 $productImageUrl = $image->__toString();
             }
             else{
-                $productImageUrl = Mage::helper('pureclarity_core')->getProductPlaceholderUrl($this->storeId);
-                if (!$productImageUrl) {
-                    $productImageUrl = $this->getSkinUrl('images/pureclarity_core/PCPlaceholder250x250.jpg');
-                if (!$productImageUrl) {
-                        $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)."frontend/base/default/images/pureclarity_core/PCPlaceholder250x250.jpg";
+                $productImageUrl = $this->coreHelper->getProductPlaceholderUrl($this->storeId);
+                if (! $productImageUrl) {
+                    $productImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                    if (! $productImageUrl) {
+                        $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
                     }
                 }
             }
-            $productImageUrl = str_replace(array("https:", "http:"), "", $productImageUrl);
-            
+            $productImageUrl = $this->removeUrlProtocol($productImageUrl);
             // Set standard data
-            $data = array(
+            $isInStock = Mage::getModel('cataloginventory/stock_item')
+                ->loadByProduct($product)
+                ->getIsInStock();
+            $data = [
+                "_index" => $index,
+                "Id" => $product->getId(),
                 "Sku" => $product->getData('sku'),
                 "Title" => $product->getData('name'),
-                "Description" => array(strip_tags($product->getData('description')), strip_tags($product->getShortDescription())),
+                "Description" => [
+                        strip_tags($product->getData('description')),
+                        strip_tags($product->getShortDescription())
+                    ],
                 "Link" => $productUrl,
                 "Image" => $productImageUrl,
                 "Categories" => $categoryIds,
-                "MagentoCategories" => array_values(array_unique($categoryList, SORT_STRING)),
                 "MagentoProductId" => $product->getId(),
+                "MagentoCategories" => array_values(array_unique($categoryList, SORT_STRING)),
                 "MagentoProductType" => $product->getTypeId(),
-                "InStock" => (Mage::getModel('cataloginventory/stock_item')->loadByProduct($product)->getIsInStock() == 1) ? true : false
-            );
-
-            // Set the visibility for PureClarity
-            $visibility = $product->getVisibility();
-            if ($visibility == Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG){
-                $data["ExcludeFromSearch"] = true;
-            }
-            else if ($visibility == Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH){
-                $data["ExcludeFromProductListing"] = true;
+                "InStock" => $isInStock,
+            ];
+            // Set visibility
+            switch ($product->getVisibility()) {
+                case Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG:
+                    $data["ExcludeFromSearch"] = true;
+                    break;
+                case Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH:
+                    $data["ExcludeFromProductListing"] = true;
+                    break;
             }
 
             // Set Brand
             if ($brandId){
                 $data["Brand"] = $brandId;
             }
-
             // Set PureClarity Custom values
             $searchTagString = $product->getData('pureclarity_search_tags');
-            if (!empty($searchTagString)){
+            if (! empty($searchTagString)){
                 $searchTags = explode(",", $searchTagString);
                 if(count($searchTags)){
                     foreach ($searchTags as $key => &$searchTag) {
@@ -220,51 +254,62 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     }
                 }
             }
-
             $overlayImage = $product->getData('pureclarity_overlay_image');
-            if ($overlayImage != "")
-                $data["ImageOverlay"] = Mage::helper('pureclarity_core')->getPlaceholderUrl() . $overlayImage;
+            if ($overlayImage != "") {
+                $data["ImageOverlay"] = $this->coreHelper->getPlaceholderUrl() . $overlayImage;
+            }
 
-            if ($product->getData('pureclarity_exc_rec') == '1')
-                 $data["ExcludeFromRecommenders"] = true;
+            if ($product->getData('pureclarity_exc_rec') == '1') {
+                $data["ExcludeFromRecommenders"] = true;
+            }
         
-            if ($product->getData('pureclarity_newarrival') == '1')
-                 $data["NewArrival"] = true;
+            if ($product->getData('pureclarity_newarrival') == '1') {
+                $data["NewArrival"] = true;
+            }
             
-            if ($product->getData('pureclarity_onoffer') == '1')
-                 $data["OnOffer"] = true;
+            if ($product->getData('pureclarity_onoffer') == '1') {
+                $data["OnOffer"] = true;
+            }
             
             $promoMessage = $product->getData('pureclarity_promo_message');
-            if ($promoMessage != null && $promoMessage != '')
-                 $data["PromoMessage"] = $promoMessage;
-
+            if ($promoMessage != null && $promoMessage != ''){
+                $data["PromoMessage"] = $promoMessage;
+            }
             // Add attributes
             $this->setAttributes($product, $data);
-
             // Look for child products in Configurable, Grouped or Bundled products
-            $childProducts = array();
+            $childProducts = [];
             switch ($product->getTypeId()) {
                 case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
-                    $childIds = Mage::getModel('catalog/product_type_configurable')->getChildrenIds($product->getId());
+                    $childIds = Mage::getModel('catalog/product_type_configurable')
+                        ->getChildrenIds($product->getId());
                     if (count($childIds[0]) > 0){
-                        $childProducts = Mage::getModel('pureclarity_core/product')->getCollection()
+                        $childProducts = Mage::getModel('pureclarity_core/product')
+                            ->getCollection()
                             ->addAttributeToSelect('*')
-                            ->addFieldToFilter('entity_id', array('in'=> $childIds[0]));
-                    }else{
+                            ->addFieldToFilter('entity_id', [
+                                    'in' => $childIds[0]
+                                ]
+                            );
+                    }
+                    else{
                         //configurable with no children - exlude from feed
                         return null;
                     }
                     break;
                 case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
-                    $childProducts = $product->getTypeInstance(true)->getAssociatedProducts($product);
+                    $childProducts = $product->getTypeInstance(true)
+                        ->getAssociatedProducts($product);
                     break;
                 case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
-                    $childProducts = $product->getTypeInstance(true)->getSelectionsCollection($product->getTypeInstance(true)->getOptionsIds($product), $product);
+                    $childProducts = $product->getTypeInstance(true)
+                        ->getSelectionsCollection(
+                                $product->getTypeInstance(true)->getOptionsIds($product), 
+                                $product
+                            );
                     break;
             }
-
-            // Process any child products
-            $this->childProducts($childProducts, $data);
+            $this->processChildProducts($childProducts, $data);
 
             // Set prices
             $this->setProductPrices($product, $data, $childProducts);
@@ -279,8 +324,9 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         return null;
     }
 
-    protected function childProducts($products, &$data){
-        foreach($products as $product){
+    protected function processChildProducts($childProducts, &$data)
+    {
+        foreach($childProducts as $product){
             $this->setProductData($product, $data);
             $this->setAttributes($product, $data);
         }
@@ -293,15 +339,19 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getData('description')));
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getShortDescription()));
         $searchTag = $product->getData('pureclarity_search_tags');
-        if ($searchTag != null && $searchTag != '')
+        if (! empty($searchTag)){
             $this->addValueToDataArray($data, 'SearchTags', $searchTag);
+        }
     }
 
-    protected function addValueToDataArray(&$data, $key, $value){
-
-        if (!array_key_exists($key,$data)){
+    protected function addValueToDataArray(&$data, $key, $value)
+    {
+        if (! array_key_exists($key, $data)){
             $data[$key][] = $value;
-        }else if ($value !== null && (!is_array($data[$key]) || !in_array($value, $data[$key]))){
+        }
+        elseif ($value !== null 
+                && (! is_array($data[$key]) || ! in_array($value, $data[$key]))
+            ) {
             $data[$key][] = $value;
         }
     }
@@ -309,32 +359,34 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
     protected function setProductPrices($product, &$data, &$childProducts = null)
     {
         // TODO - Get Customer Group Prices
-        $groupPrices = $product->getData('group_price');
+        // $groupPrices = $product->getData('group_price');
 
         $basePrices = $this->getProductPrice($product, false, true, $childProducts);
         $baseFinalPrices = $this->getProductPrice($product, true, true, $childProducts);
         foreach($this->currenciesToProcess as $currency){
             // Process currency for min price
             $minPrice = $this->convertCurrency($basePrices['min'], $currency);
-            $this->addValueToDataArray($data, 'Prices', number_format($minPrice, 2, '.', '').' '.$currency);
+            $this->addValueToDataArray($data, 'Prices', number_format($minPrice, 2, '.', '') . ' ' . $currency);
             $minFinalPrice = $this->convertCurrency($baseFinalPrices['min'], $currency);
             if ($minFinalPrice !== null && $minFinalPrice < $minPrice){
-                $this->addValueToDataArray($data, 'SalePrices', number_format($minFinalPrice, 2,'.', '').' '.$currency);
+                $this->addValueToDataArray($data, 'SalePrices', number_format($minFinalPrice, 2, '.', '') . ' ' . $currency);
             }
             // Process currency for max price if it's different to min price
             $maxPrice = $this->convertCurrency($basePrices['max'], $currency);
-            if ($minPrice<$maxPrice){
-                $this->addValueToDataArray($data, 'Prices', number_format($maxPrice, 2, '.', '').' '.$currency);
+            if ($minPrice < $maxPrice){
+                $this->addValueToDataArray($data, 'Prices', number_format($maxPrice, 2, '.', '') . ' ' . $currency);
                 $maxFinalPrice = $this->convertCurrency($baseFinalPrices['max'], $currency);
                 if ($maxFinalPrice !== null && $maxFinalPrice < $maxPrice){
-                    $this->addValueToDataArray($data, 'SalePrices', number_format($maxFinalPrice, 2,'.', '').' '.$currency);
+                    $this->addValueToDataArray($data, 'SalePrices', number_format($maxFinalPrice, 2,'.', '') . ' ' . $currency);
                 }
             }
         }
     }
 
      protected function convertCurrency($price, $to){
-        if ($to === $this->baseCurrencyCode) return $price;
+        if ($to === $this->baseCurrencyCode){
+            return $price;
+        }
         return Mage::helper('directory')->currencyConvert($price, $this->baseCurrencyCode, $to);
     }
 
@@ -359,15 +411,15 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                     $minPrice = $groupProduct->getMinimalPrice();
                     $maxPrice = $groupProduct->getMaxPrice();
                     if ($includeTax) {
-                        $helper = Mage::helper('tax');
-                        $minPrice = $helper->getPrice($groupProduct, $minPrice, true);
-                        $maxPrice = $helper->getPrice($groupProduct, $maxPrice, true);
+                        $taxHelper = Mage::helper('tax');
+                        $minPrice = $taxHelper->getPrice($groupProduct, $minPrice, true);
+                        $maxPrice = $taxHelper->getPrice($groupProduct, $maxPrice, true);
                     }
                 }
                 break;
             case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
                 $price = $this->getDefaultFromProduct($product,$getFinalPrice,$includeTax);
-                if (!$price) {
+                if (! $price) {
                     $associatedProducts = ($childProducts !== null) ? 
                                           $childProducts : 
                                           Mage::getModel('catalog/product_type_configurable')
@@ -378,10 +430,10 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                         $productModel = Mage::getModel('catalog/product')->load($associatedProduct->getId());
                         $variationPrices = $this->getProductPrice($productModel, $getFinalPrice, true);
                         
-                        if (!$lowestPrice || $variationPrices['min'] < $lowestPrice) {
+                        if (! $lowestPrice || $variationPrices['min'] < $lowestPrice) {
                             $lowestPrice = $variationPrices['min'];
                         }
-                        if (!$highestPrice || $variationPrices['max'] > $highestPrice){
+                        if (! $highestPrice || $variationPrices['max'] > $highestPrice){
                             $highestPrice = $variationPrices['max'];
                         }
                     }
@@ -391,7 +443,8 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 else {
                     $minPrice = $price;
                     $maxPrice = $price;
-                    $attributes = $product->getTypeInstance(true)->getConfigurableAttributes($product);
+                    $attributes = $product->getTypeInstance(true)
+                        ->getConfigurableAttributes($product);
                     $maxOptionPrice = 0;
                     foreach($attributes as $attribute) {
                         $attributePrices = $attribute->getPrices();
@@ -399,19 +452,19 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                             foreach($attributePrices as $attributePrice){
                                 if (isset($attributePrice['pricing_value']) && isset($attributePrice['is_percent'])){
                                     if ($attributePrice['is_percent']) {
-                                        $priceValue = $price * $attributePrice['pricing_value'] / 100;
+                                        $pricingValue = ($price * $attributePrice['pricing_value'] / 100);
                                     }
                                     else {
-                                        $priceValue = $attributePrice['pricing_value'];
+                                        $pricingValue = $attributePrice['pricing_value'];
                                     }
-                                    $priceValue = $this->convertPrice($priceValue, true);
+                                    $priceValue = $this->convertPrice($pricingValue, true);
                                     if ($priceValue > $maxOptionPrice)
                                         $maxOptionPrice = $priceValue;
                                 }
                             }
                         }
                     }
-                    if ($maxOptionPrice>0){
+                    if ($maxOptionPrice > 0) {
                         $product->setConfigurablePrice($maxOptionPrice);
                         $configurablePrice = $product->getConfigurablePrice();
                         $maxPrice = $maxPrice + $configurablePrice;
@@ -419,19 +472,21 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
                 }
                 break;
             default:
-                $minPrice = $this->getDefaultFromProduct($product,$getFinalPrice,$includeTax);
+                $minPrice = $this->getDefaultFromProduct($product, $getFinalPrice, $includeTax);
                 $maxPrice = $minPrice;
                 break;
         }
-        return array('min' => $minPrice, 'max' => $maxPrice);
+        return [
+                'min' => $minPrice,
+                'max' => $maxPrice
+            ];
     }
 
     protected function getDefaultFromProduct(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true) 
     {
-        $price = $getFinalPrice ? $product->getFinalPrice() : $product->getPrice();
+        $price = ($getFinalPrice ? $product->getFinalPrice() : $product->getPrice());
         if ($includeTax) {
-            $helper = Mage::helper('tax');
-            $price = $helper->getPrice($product, $price, true);
+            $price = Mage::helper('tax')->getPrice($product, $price, true);
         }
         return $price;
     }
@@ -444,15 +499,17 @@ class Pureclarity_Core_Model_ProductExport extends Mage_Core_Model_Abstract
             $name = $attribute[1];
             if ($product->getData($code) != null) {
                 try{
-                    $attrValue = $product->getAttributeText($code);
+                    if($code != 'media_gallery'){ //otherwise causes error as it's array not text
+                        $attrValue = $product->getAttributeText($code);
+                    }
                 }
                 catch (Exception $e){
                     // Unable to read attribute text
                     continue;
                 }
-                if (!empty($attrValue)){
-                    if (is_array($attrValue)){
-                        foreach($attrValue as $value){
+                if (! empty($attrValue)) {
+                    if (is_array($attrValue)) {
+                        foreach($attrValue as $value) {
                             $this->addValueToDataArray($data, $name, $value);
                         }
                     }
