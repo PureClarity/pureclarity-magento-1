@@ -499,7 +499,20 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             $name = $attribute[1];
             if ($product->getData($code) != null) {
                 try{
-                    if($code != 'media_gallery'){ //otherwise causes error as it's array not text
+                    if(is_array($product->getData($code))){
+                        if($code == 'media_gallery'){
+                            $galleryImages = $product->getData($code)['images'];
+                            $attrValue = [];
+                            $media_base_url = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+                            foreach($galleryImages as $galleryImage){
+                                $attrValue[] = $this->removeUrlProtocol( $media_base_url . 'catalog/product' . $galleryImage['file'] );
+                            }
+                        }
+                        else{
+                            Mage::log("Unrecognized array attribute: {$code}");
+                        }
+                    }
+                    else{
                         $attrValue = $product->getAttributeText($code);
                     }
                 }
