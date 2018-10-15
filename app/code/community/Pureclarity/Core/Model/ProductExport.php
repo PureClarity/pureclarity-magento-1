@@ -358,9 +358,6 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function setProductPrices($product, &$data, &$childProducts = null)
     {
-        // TODO - Get Customer Group Prices
-        // $groupPrices = $product->getData('group_price');
-
         $basePrices = $this->getProductPrice($product, false, true, $childProducts);
         $baseFinalPrices = $this->getProductPrice($product, true, true, $childProducts);
         foreach($this->currenciesToProcess as $currency){
