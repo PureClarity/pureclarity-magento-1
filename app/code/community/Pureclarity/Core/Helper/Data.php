@@ -30,37 +30,37 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     // ENDPOINTS
     protected $scriptUrl = '//pcs.pureclarity.net';
     protected $regions = [
-        1 => "api-eu-w-1.pureclarity.net",
-        2 => "api-eu-w-2.pureclarity.net",
-        3 => "api-eu-c-1.pureclarity.net",
-        4 => "api-us-e-1.pureclarity.net",
-        5 => "api-us-e-2.pureclarity.net",
-        6 => "api-us-w-1.pureclarity.net",
-        7 => "api-us-w-2.pureclarity.net",
-        8 => "api-ap-s-1.pureclarity.net",
-        9 => "api-ap-ne-1.pureclarity.net",
-        10 => "api-ap-ne-2.pureclarity.net",
-        11 => "api-ap-se-1.pureclarity.net",
-        12 => "api-ap-se-2.pureclarity.net",
-        13 => "api-ca-c-1.pureclarity.net",
-        14 => "api-sa-e-1.pureclarity.net"
+        1 => "https://api-eu-w-1.pureclarity.net",
+        2 => "https://api-eu-w-2.pureclarity.net",
+        3 => "https://api-eu-c-1.pureclarity.net",
+        4 => "https://api-us-e-1.pureclarity.net",
+        5 => "https://api-us-e-2.pureclarity.net",
+        6 => "https://api-us-w-1.pureclarity.net",
+        7 => "https://api-us-w-2.pureclarity.net",
+        8 => "https://api-ap-s-1.pureclarity.net",
+        9 => "https://api-ap-ne-1.pureclarity.net",
+        10 => "https://api-ap-ne-2.pureclarity.net",
+        11 => "https://api-ap-se-1.pureclarity.net",
+        12 => "https://api-ap-se-2.pureclarity.net",
+        13 => "https://api-ca-c-1.pureclarity.net",
+        14 => "https://api-sa-e-1.pureclarity.net"
     ];
 
     protected $sftpRegions = [
-        1 => "sftp-eu-w-1.pureclarity.net",
-        2 => "sftp-eu-w-2.pureclarity.net",
-        3 => "sftp-eu-c-1.pureclarity.net",
-        4 => "sftp-us-e-1.pureclarity.net",
-        5 => "sftp-us-e-2.pureclarity.net",
-        6 => "sftp-us-w-1.pureclarity.net",
-        7 => "sftp-us-w-2.pureclarity.net",
-        8 => "sftp-ap-s-1.pureclarity.net",
-        9 => "sftp-ap-ne-1.pureclarity.net",
-        10 => "sftp-ap-ne-2.pureclarity.net",
-        11 => "sftp-ap-se-1.pureclarity.net",
-        12 => "sftp-ap-se-2.pureclarity.net",
-        13 => "sftp-ca-c-1.pureclarity.net",
-        14 => "sftp-sa-e-1.pureclarity.net"
+        1 => "https://sftp-eu-w-1.pureclarity.net",
+        2 => "https://sftp-eu-w-2.pureclarity.net",
+        3 => "https://sftp-eu-c-1.pureclarity.net",
+        4 => "https://sftp-us-e-1.pureclarity.net",
+        5 => "https://sftp-us-e-2.pureclarity.net",
+        6 => "https://sftp-us-w-1.pureclarity.net",
+        7 => "https://sftp-us-w-2.pureclarity.net",
+        8 => "https://sftp-ap-s-1.pureclarity.net",
+        9 => "https://sftp-ap-ne-1.pureclarity.net",
+        10 => "https://sftp-ap-ne-2.pureclarity.net",
+        11 => "https://sftp-ap-se-1.pureclarity.net",
+        12 => "https://sftp-ap-se-2.pureclarity.net",
+        13 => "https://sftp-ca-c-1.pureclarity.net",
+        14 => "https://sftp-sa-e-1.pureclarity.net"
     ];
 
     const PLACEHOLDER_UPLOAD_DIR = "pureclarity";
