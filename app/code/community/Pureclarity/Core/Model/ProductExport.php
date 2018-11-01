@@ -42,64 +42,88 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
      */
     public function init($storeId = null)
     {
-        $this->storeId = $storeId;
-        // Use this store, if not passed in.
-        if (is_null($this->storeId)) {
-            $this->storeId = Mage::app()->getStore()->getId();
-        }
-        
-        $this->currentStore = Mage::getModel('core/store')->load($this->storeId);
+        try{
+            $this->storeId = $storeId;
+            // Use this store, if not passed in.
+            if (is_null($this->storeId)) {
+                Mage::log("PureClarity: In ProductExport->init(): store id is null, so getting from existing store");
+                $this->storeId = Mage::app()->getStore()->getId();
+                Mage::log("PureClarity: In ProductExport->init(): store id is now " . $this->storeId);
 
-        // Set Currency list
-        $currencyModel = Mage::getModel('directory/currency'); 
-        $this->baseCurrencyCode = Mage::app()->getBaseCurrencyCode();
-        $currencies = $currencyModel->getConfigAllowCurrencies();
-        $currencyRates = $currencyModel->getCurrencyRates($this->baseCurrencyCode, array_values($currencies));
-        $this->currenciesToProcess[] = $this->baseCurrencyCode;
-        foreach($currencies as $currency){
-            if ($currency != $this->baseCurrencyCode && ! empty($currencyRates[$currency])){
-                $this->currenciesToProcess[] = $currency;
             }
-        }
+            
+            $this->currentStore = Mage::getModel('core/store')->load($this->storeId);
+            Mage::log("PureClarity: In ProductExport->init(): set the currentStore");
 
-        // Manage Brand
-        $this->brandLookup = [];
-        // If brand feed is enabled, get the brands
-        if($this->coreHelper->isBrandFeedEnabled($this->storeId)) {
-            $feedModel = Mage::getModel('pureclarity_core/feed');
-            $this->brandLookup = $feedModel->getBrandFeedArray($this->storeId);
-        }
+            // Set Currency list
+            $currencyModel = Mage::getModel('directory/currency'); 
+            $this->baseCurrencyCode = Mage::app()->getBaseCurrencyCode();
+            Mage::log("PureClarity: In ProductExport->init(): baseCurrencyCode is " . $this->baseCurrencyCode);
+            $currencies = $currencyModel->getConfigAllowCurrencies();
+            Mage::log("PureClarity: In ProductExport->init(): got currencies: " . print_r($currencies, true));
+            $currencyRates = $currencyModel->getCurrencyRates($this->baseCurrencyCode, array_values($currencies));
+            Mage::log("PureClarity: In ProductExport->init(): got currencyRates: " . print_r($currencyRates, true));
 
-        // Get Attributes
-        $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->getItems();
-        $attributesToExclude = [
-            "prices",
-            "price"
-        ];
-
-        // Get list of attributes to include
-        foreach ($attributes as $attribute){
-            $code = $attribute->getAttributecode();
-            if (! in_array(strtolower($code), $attributesToExclude) && ! empty($attribute->getFrontendLabel())) {
-                $this->attributesToInclude[] = [
-                    $code, 
-                    $attribute->getFrontendLabel()
-                ];
+            $this->currenciesToProcess[] = $this->baseCurrencyCode;
+            foreach($currencies as $currency){
+                Mage::log("PureClarity: In ProductExport->init(): processing currency: " . $currency);
+                if ($currency != $this->baseCurrencyCode && isset($currencyRates[$currency]) && ! empty($currencyRates[$currency])){
+                    $this->currenciesToProcess[] = $currency;
+                }
             }
-        }
+            Mage::log("PureClarity: In ProductExport->init(): currenciesToProcess: " . print_r($this->currenciesToProcess, true));
 
-        // Get Category List 
-        $this->categoryCollection = [];
-        $categoryCollection = Mage::getModel('catalog/category')->getCollection()
-            ->addAttributeToSelect('name')
-            ->addFieldToFilter('is_active', [
-                    "in" => [
-                        '1'
+            // Manage Brand
+            $this->brandLookup = [];
+            // If brand feed is enabled, get the brands
+            if($this->coreHelper->isBrandFeedEnabled($this->storeId)) {
+                Mage::log("PureClarity: In ProductExport->init(): brand feed is enabled");
+                $feedModel = Mage::getModel('pureclarity_core/feed');
+                $this->brandLookup = $feedModel->getBrandFeedArray($this->storeId);
+                Mage::log("PureClarity: In ProductExport->init(): got the brand feed array");
+            }
+            else{
+                Mage::log("PureClarity: In ProductExport->init(): brand feed not enabled");
+            }
+
+            // Get Attributes
+            $attributes = Mage::getResourceModel('catalog/product_attribute_collection')->getItems();
+            $attributesToExclude = [
+                "prices",
+                "price"
+            ];
+            Mage::log("PureClarity: In ProductExport->init(): about to get list of attributes to include");
+
+            // Get list of attributes to include
+            foreach ($attributes as $attribute){
+                $code = $attribute->getAttributecode();
+                if (! in_array(strtolower($code), $attributesToExclude) && ! empty($attribute->getFrontendLabel())) {
+                    $this->attributesToInclude[] = [
+                        $code, 
+                        $attribute->getFrontendLabel()
+                    ];
+                }
+            }
+            Mage::log("PureClarity: In ProductExport->init(): got list of attributes to include");
+
+            // Get Category List 
+            $this->categoryCollection = [];
+            $categoryCollection = Mage::getModel('catalog/category')->getCollection()
+                ->addAttributeToSelect('name')
+                ->addFieldToFilter('is_active', [
+                        "in" => [
+                            '1'
+                        ]
                     ]
-                ]
-            );
-        foreach($categoryCollection as $category){
-            $this->categoryCollection[$category->getId()] = $category->getName();
+                );
+            Mage::log("PureClarity: In ProductExport->init(): got magento category collection");
+            foreach($categoryCollection as $category){
+                $this->categoryCollection[$category->getId()] = $category->getName();
+            }
+            Mage::log("PureClarity: In ProductExport->init(): set category array");
+        }
+        catch(\Exception $e){
+            Mage::log("PureClarity: In ProductExport->init(): Exception: " . $e->getMessage());
         }
     }
 

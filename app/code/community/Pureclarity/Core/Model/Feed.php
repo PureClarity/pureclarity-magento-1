@@ -26,51 +26,58 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
      */
     function sendProducts($pageSize = 1)
     {
-        if(! $this->isInitialised()){
-            return false;
-        }
+        try{
+            if(! $this->isInitialised()){
+                return false;
+            }
 
-        $this->start(self::FEED_TYPE_PRODUCT);
+            $this->start(self::FEED_TYPE_PRODUCT);
 
-        Mage::log("PureClarity: In Feed->sendProducts()");
-        $productExportModel = Mage::getModel('pureclarity_core/productExport');
-        $productExportModel->init($this->storeId);
-        Mage::log("PureClarity: Initialised ProductExport");
+            Mage::log("PureClarity: In Feed->sendProducts()");
+            $productExportModel = Mage::getModel('pureclarity_core/productExport');
+            Mage::log("PureClarity: In Feed->sendProducts(): Got the product export model, about to initialise");
+            Mage::log("PureClarity: In Feed->sendProducts(): Store id is " . $this->storeId);
+            $productExportModel->init($this->storeId);
+            Mage::log("PureClarity: In Feed->sendProducts(): Initialised ProductExport");
 
-        $currentPage = 0;
-        $pages = 0;
-        $feedProducts = [];
-        $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, 0, 1);
-        Mage::log("PureClarity: Set progress");
+            $currentPage = 0;
+            $pages = 0;
+            $feedProducts = [];
+            $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, 0, 1);
+            Mage::log("PureClarity: Set progress");
 
-        // loop through products, POSTing string for each page as it loops through
-        $isFirst = true;
-        do {
-            $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
-            Mage::log("PureClarity: Got result from product export model");
+            // loop through products, POSTing string for each page as it loops through
+            $isFirst = true;
+            do {
+                $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
+                Mage::log("PureClarity: Got result from product export model");
 
-            $pages = $result["Pages"];
+                $pages = $result["Pages"];
 
-            $json = ($isFirst ? ',"Products":[' : "");
-            foreach ($result["Products"] as $product) 
-            {
-                if (! $isFirst ){ 
-                    $json .= ',';
+                $json = ($isFirst ? ',"Products":[' : "");
+                foreach ($result["Products"] as $product) 
+                {
+                    if (! $isFirst ){ 
+                        $json .= ',';
+                    }
+                    $isFirst = false;
+                    $json .= $this->coreHelper->formatFeed($product, 'json');
                 }
-                $isFirst = false;
-                $json .= $this->coreHelper->formatFeed($product, 'json');
-            }
-            if(($currentPage) >= $pages ){
-                $json .= ']';
-            }
-            $parameters = $this->getParameters($json, self::FEED_TYPE_PRODUCT);
-            $this->send("feed-append", $parameters);
+                if(($currentPage) >= $pages ){
+                    $json .= ']';
+                }
+                $parameters = $this->getParameters($json, self::FEED_TYPE_PRODUCT);
+                $this->send("feed-append", $parameters);
 
-            $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, $currentPage, $pages);
-            $currentPage++;
-        } while ($currentPage <= $pages);
-        $this->end(self::FEED_TYPE_PRODUCT);
-        Mage::log("PureClarity: Finished sending product data");
+                $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, $currentPage, $pages);
+                $currentPage++;
+            } while ($currentPage <= $pages);
+            $this->end(self::FEED_TYPE_PRODUCT);
+            Mage::log("PureClarity: Finished sending product data");
+        }
+        catch(\Exception $e){
+            Mage::log("PureClarity: In Feed->sendProducts(): Exception caught: " . $e->getMessage());
+        }
     }
 
     public function sendCategories()
@@ -248,16 +255,19 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
     function getBrandFeedArray($storeId)
     {
+        Mage::log("PureClarity: In Feed->getBrandFeedArray()");
         $feedBrands = [];
         $brandCategoryId = $this->coreHelper->getBrandParentCategory($storeId);
 
         if ($brandCategoryId && $brandCategoryId != "-1"){
+            Mage::log("PureClarity: In Feed->getBrandFeedArray(): got brandCategoryId " . $brandCategoryId);
             $category = Mage::getModel('catalog/category')->load($brandCategoryId);
             $subcategories = $category->getChildrenCategories();
             foreach ($subcategories as $subcategory) {
                 $feedBrands[$subcategory->getId()] = $subcategory->getName();
             }
         }
+        Mage::log("PureClarity: In Feed->getBrandFeedArray(): about to return brands array");
         return $feedBrands;
     }
 
