@@ -97,7 +97,8 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             // Get list of attributes to include
             foreach ($attributes as $attribute){
                 $code = $attribute->getAttributecode();
-                if (! in_array(strtolower($code), $attributesToExclude) && ! empty($attribute->getFrontendLabel())) {
+                $label = $attribute->getFrontendLabel(); // required for empty() use below @php5.4
+                if (! in_array(strtolower($code), $attributesToExclude) && ! empty($label)) {
                     $this->attributesToInclude[] = [
                         $code, 
                         $attribute->getFrontendLabel()
