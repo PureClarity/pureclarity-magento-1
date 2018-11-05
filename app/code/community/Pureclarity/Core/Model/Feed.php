@@ -21,10 +21,10 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
     /**
      * Process the product feed and update the progress file, in page sizes 
-     * of 1 by default to ensure fits POST size
+     * of 100 by default
      * @param $pageSize integer
      */
-    function sendProducts($pageSize = 1)
+    function sendProducts($pageSize = 100)
     {
         try{
             if(! $this->isInitialised()){
@@ -53,10 +53,10 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 Mage::log("PureClarity: Got result from product export model");
 
                 $pages = $result["Pages"];
+                Mage::log("PureClarity: {$pages} pages");
 
                 $json = ($isFirst ? ',"Products":[' : "");
-                foreach ($result["Products"] as $product) 
-                {
+                foreach ($result["Products"] as $product){
                     if (! $isFirst ){ 
                         $json .= ',';
                     }
