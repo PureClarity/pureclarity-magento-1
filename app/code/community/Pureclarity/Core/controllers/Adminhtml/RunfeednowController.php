@@ -73,12 +73,15 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
         if ($progressFileName != null && file_exists($progressFileName)) {
             $contents = file_get_contents($progressFileName);
         }
+        if(empty($contents)){
+            $contents = "{}";
+        }
         try {
             $this->getResponse()
                 ->clearHeaders()
-                ->setHeader('Content-type','application/json')
+                ->setHeader('Content-type', 'application/json')
                 ->setBody($contents);
-            }
+        }
         catch (\Exception $e){
             Mage::log($e->getMessage());
             $this->getResponse()

@@ -127,14 +127,13 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             Mage::log("PureClarity: In ProductExport->init(): Exception: " . $e->getMessage());
         }
     }
-
-
     
     /**
      * Get the full product feed for the given page and size
      */
     public function getFullProductFeed($pageSize = 1000000, $currentPage = 1)
     {
+        Mage::log("PureClarity: In ProductExport->getFullProductFeed(), page size {$pageSize}, current page {$currentPage}");
         // Get product collection
         $validVisibility = [
             'in' => [
@@ -155,7 +154,8 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             ->addFieldToFilter('visibility', $validVisibility)
             ->setPageSize($pageSize)
             ->setCurPage($currentPage);
-            
+        Mage::log("PureClarity: In ProductExport->getFullProductFeed(): got product collection");
+
         // Get pages
         $pages = $products->getLastPageNumber();
         if ($currentPage > $pages) {
@@ -182,175 +182,193 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
      */
     public function getProductData(&$product, $index)
     {
-        // Check hash that we've not already seen this product
-        if(! array_key_exists($product->getId(), $this->seenProductIds) 
-            || $this->seenProductIds[$product->getId()]===null) {
-            // Set Category Ids for product
-            $categoryIds = $product->getCategoryIds();
+        try{
+            Mage::log("PureClarity: In ProductExport->getProductData()");
+            Mage::log("PureClarity: In ProductExport->getProductData(): product id " . $product->getId());
+            // Check hash that we've not already seen this product
+            if(! array_key_exists($product->getId(), $this->seenProductIds) 
+                || $this->seenProductIds[$product->getId()]===null) {
+                // Set Category Ids for product
+                $categoryIds = $product->getCategoryIds();
 
-            // Get a list of the category names
-            $categoryList = [];
-            $brandId = null;
-            foreach ($categoryIds as $id) {
-                if (array_key_exists($id, $this->categoryCollection)){
-                    $categoryList[] = $this->categoryCollection[$id];
-                }
-                if (! $brandId && array_key_exists($id, $this->brandLookup)){
-                    $brandId = $id;
-                }
-            }
-            // Get Product Link URL
-            $urlParams = [
-                '_nosid' => true,
-                // '_scope' => $this->storeId // not relevant for Magento 1 (M2 plugin only, keeping here but commenting out to avoid future query)
-            ];
-            $productUrl = $product->setStoreId($this->storeId)
-                ->getUrlModel()
-                ->getUrl($product, $urlParams);
-            if ($productUrl){
-                $productUrl = $this->removeUrlProtocol($productUrl);
-            }
-            // Get Product Image URL
-            $productImageUrl = '';
-            if($product->getImage() && $product->getImage() != 'no_selection'){
-                $image = Mage::helper('catalog/image');
-                $image->init($product, 'image');
-                $image->resize(250);
-                $productImageUrl = $image->__toString();
-            }
-            else{
-                $productImageUrl = $this->coreHelper->getProductPlaceholderUrl($this->storeId);
-                if (! $productImageUrl) {
-                    $productImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
-                    if (! $productImageUrl) {
-                        $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
+                // Get a list of the category names
+                Mage::log("PureClarity: In ProductExport->getProductData(): getting list of category names");
+                $categoryList = [];
+                $brandId = null;
+                foreach ($categoryIds as $id) {
+                    if (array_key_exists($id, $this->categoryCollection)){
+                        $categoryList[] = $this->categoryCollection[$id];
+                    }
+                    if (! $brandId && array_key_exists($id, $this->brandLookup)){
+                        $brandId = $id;
                     }
                 }
-            }
-            $productImageUrl = $this->removeUrlProtocol($productImageUrl);
-            // Set standard data
-            $isInStock = Mage::getModel('cataloginventory/stock_item')
-                ->loadByProduct($product)
-                ->getIsInStock();
-            $data = [
-                "_index" => $index,
-                "Id" => $product->getId(),
-                "Sku" => $product->getData('sku'),
-                "Title" => $product->getData('name'),
-                "Description" => [
-                        strip_tags($product->getData('description')),
-                        strip_tags($product->getShortDescription())
-                    ],
-                "Link" => $productUrl,
-                "Image" => $productImageUrl,
-                "Categories" => $categoryIds,
-                "MagentoProductId" => $product->getId(),
-                "MagentoCategories" => array_values(array_unique($categoryList, SORT_STRING)),
-                "MagentoProductType" => $product->getTypeId(),
-                "InStock" => $isInStock,
-            ];
-            // Set visibility
-            switch ($product->getVisibility()) {
-                case Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG:
-                    $data["ExcludeFromSearch"] = true;
-                    break;
-                case Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH:
-                    $data["ExcludeFromProductListing"] = true;
-                    break;
-            }
-
-            // Set Brand
-            if ($brandId){
-                $data["Brand"] = $brandId;
-            }
-            // Set PureClarity Custom values
-            $searchTagString = $product->getData('pureclarity_search_tags');
-            if (! empty($searchTagString)){
-                $searchTags = explode(",", $searchTagString);
-                if(count($searchTags)){
-                    foreach ($searchTags as $key => &$searchTag) {
-                        $searchTag = trim($searchTag);
-                        if(empty($searchTag)){
-                            unset($searchTags[$key]);
+                // Get Product Link URL
+                Mage::log("PureClarity: In ProductExport->getProductData(): getting product link url");
+                $urlParams = [
+                    '_nosid' => true,
+                    // '_scope' => $this->storeId // not relevant for Magento 1 (M2 plugin only, keeping here but commenting out to avoid future query)
+                ];
+                $productUrl = $product->setStoreId($this->storeId)
+                    ->getUrlModel()
+                    ->getUrl($product, $urlParams);
+                if ($productUrl){
+                    $productUrl = $this->removeUrlProtocol($productUrl);
+                }
+                // Get Product Image URL
+                Mage::log("PureClarity: In ProductExport->getProductData(): getting product image url");
+                $productImageUrl = '';
+                if($product->getImage() && $product->getImage() != 'no_selection'){
+                    $image = Mage::helper('catalog/image');
+                    $image->init($product, 'image');
+                    $image->resize(250);
+                    $productImageUrl = $image->__toString();
+                }
+                else{
+                    $productImageUrl = $this->coreHelper->getProductPlaceholderUrl($this->storeId);
+                    if (! $productImageUrl) {
+                        $productImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                        if (! $productImageUrl) {
+                            $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
                         }
                     }
+                }
+                $productImageUrl = $this->removeUrlProtocol($productImageUrl);
+
+                // Set standard data
+                Mage::log("PureClarity: In ProductExport->getProductData(): setting standard data");
+                $isInStock = Mage::getModel('cataloginventory/stock_item')
+                    ->loadByProduct($product)
+                    ->getIsInStock();
+                $data = [
+                    "_index" => $index,
+                    "Id" => $product->getId(),
+                    "Sku" => $product->getData('sku'),
+                    "Title" => $product->getData('name'),
+                    "Description" => [
+                            strip_tags($product->getData('description')),
+                            strip_tags($product->getShortDescription())
+                        ],
+                    "Link" => $productUrl,
+                    "Image" => $productImageUrl,
+                    "Categories" => $categoryIds,
+                    "MagentoProductId" => $product->getId(),
+                    "MagentoCategories" => array_values(array_unique($categoryList, SORT_STRING)),
+                    "MagentoProductType" => $product->getTypeId(),
+                    "InStock" => $isInStock,
+                ];
+
+                // Set visibility
+                Mage::log("PureClarity: In ProductExport->getProductData(): set visibility");
+                switch ($product->getVisibility()) {
+                    case Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG:
+                        $data["ExcludeFromSearch"] = true;
+                        break;
+                    case Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_SEARCH:
+                        $data["ExcludeFromProductListing"] = true;
+                        break;
+                }
+
+                // Set Brand
+                if ($brandId){
+                    $data["Brand"] = $brandId;
+                }
+
+                // Set PureClarity Custom values
+                Mage::log("PureClarity: In ProductExport->getProductData(): set custom values");
+                $searchTagString = $product->getData('pureclarity_search_tags');
+                if (! empty($searchTagString)){
+                    $searchTags = explode(",", $searchTagString);
                     if(count($searchTags)){
-                        $data["SearchTags"] = array_values($searchTags);
+                        foreach ($searchTags as $key => &$searchTag) {
+                            $searchTag = trim($searchTag);
+                            if(empty($searchTag)){
+                                unset($searchTags[$key]);
+                            }
+                        }
+                        if(count($searchTags)){
+                            $data["SearchTags"] = array_values($searchTags);
+                        }
                     }
                 }
-            }
-            $overlayImage = $product->getData('pureclarity_overlay_image');
-            if ($overlayImage != "") {
-                $data["ImageOverlay"] = $this->coreHelper->getPlaceholderUrl() . $overlayImage;
-            }
+                $overlayImage = $product->getData('pureclarity_overlay_image');
+                if ($overlayImage != "") {
+                    $data["ImageOverlay"] = $this->coreHelper->getPlaceholderUrl() . $overlayImage;
+                }
 
-            if ($product->getData('pureclarity_exc_rec') == '1') {
-                $data["ExcludeFromRecommenders"] = true;
-            }
-        
-            if ($product->getData('pureclarity_newarrival') == '1') {
-                $data["NewArrival"] = true;
-            }
+                if ($product->getData('pureclarity_exc_rec') == '1') {
+                    $data["ExcludeFromRecommenders"] = true;
+                }
             
-            if ($product->getData('pureclarity_onoffer') == '1') {
-                $data["OnOffer"] = true;
-            }
-            
-            $promoMessage = $product->getData('pureclarity_promo_message');
-            if ($promoMessage != null && $promoMessage != ''){
-                $data["PromoMessage"] = $promoMessage;
-            }
-            // Add attributes
-            $this->setAttributes($product, $data);
-            // Look for child products in Configurable, Grouped or Bundled products
-            $childProducts = [];
-            switch ($product->getTypeId()) {
-                case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
-                    $childIds = Mage::getModel('catalog/product_type_configurable')
-                        ->getChildrenIds($product->getId());
-                    if (count($childIds[0]) > 0){
-                        $childProducts = Mage::getModel('pureclarity_core/product')
-                            ->getCollection()
-                            ->addAttributeToSelect('*')
-                            ->addFieldToFilter('entity_id', [
-                                    'in' => $childIds[0]
-                                ]
-                            );
-                    }
-                    else{
-                        //configurable with no children - exlude from feed
-                        return null;
-                    }
-                    break;
-                case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
-                    $childProducts = $product->getTypeInstance(true)
-                        ->getAssociatedProducts($product);
-                    break;
-                case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
-                    $childProducts = $product->getTypeInstance(true)
-                        ->getSelectionsCollection(
-                                $product->getTypeInstance(true)->getOptionsIds($product), 
-                                $product
-                            );
-                    break;
-            }
-            $this->processChildProducts($childProducts, $data);
+                if ($product->getData('pureclarity_newarrival') == '1') {
+                    $data["NewArrival"] = true;
+                }
+                
+                if ($product->getData('pureclarity_onoffer') == '1') {
+                    $data["OnOffer"] = true;
+                }
+                
+                $promoMessage = $product->getData('pureclarity_promo_message');
+                if ($promoMessage != null && $promoMessage != ''){
+                    $data["PromoMessage"] = $promoMessage;
+                }
+                // Add attributes
+                $this->setAttributes($product, $data);
+                // Look for child products in Configurable, Grouped or Bundled products
+                $childProducts = [];
+                switch ($product->getTypeId()) {
+                    case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
+                        $childIds = Mage::getModel('catalog/product_type_configurable')
+                            ->getChildrenIds($product->getId());
+                        if (count($childIds[0]) > 0){
+                            $childProducts = Mage::getModel('pureclarity_core/product')
+                                ->getCollection()
+                                ->addAttributeToSelect('*')
+                                ->addFieldToFilter('entity_id', [
+                                        'in' => $childIds[0]
+                                    ]
+                                );
+                        }
+                        else{
+                            //configurable with no children - exclude from feed
+                            return null;
+                        }
+                        break;
+                    case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
+                        $childProducts = $product->getTypeInstance(true)
+                            ->getAssociatedProducts($product);
+                        break;
+                    case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
+                        $childProducts = $product->getTypeInstance(true)
+                            ->getSelectionsCollection(
+                                    $product->getTypeInstance(true)->getOptionsIds($product), 
+                                    $product
+                                );
+                        break;
+                }
+                $this->processChildProducts($childProducts, $data);
 
-            // Set prices
-            $this->setProductPrices($product, $data, $childProducts);
+                // Set prices
+                $this->setProductPrices($product, $data, $childProducts);
 
-            // Add to hash to make sure we don't get dupes
-            $this->seenProductIds[$product->getId()] = true;
+                // Add to hash to make sure we don't get dupes
+                $this->seenProductIds[$product->getId()] = true;
 
-            // Add to feed array
-            return $data;
+                // Add to feed array
+                Mage::log("PureClarity: In ProductExport->getProductData(): returning data");
+                return $data;
+            }
+
+            return null;
         }
-
-        return null;
+        catch(\Exception $e){
+            Mage::log("PureClarity: In ProductExport->getProductData(): Error: " . $e->getMessage());
+        }
     }
 
     protected function processChildProducts($childProducts, &$data)
     {
+        Mage::log("PureClarity: In ProductExport->processChildProducts()");
         foreach($childProducts as $product){
             $this->setProductData($product, $data);
             $this->setAttributes($product, $data);
@@ -359,6 +377,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function setProductData($product, &$data)
     {
+        Mage::log("PureClarity: In ProductExport->setProductData()");
         $this->addValueToDataArray($data, 'AssociatedSkus', $product->getData('sku'));
         $this->addValueToDataArray($data, 'AssociatedTitles', $product->getData('name'));
         $this->addValueToDataArray($data, 'Description', strip_tags($product->getData('description')));
@@ -371,6 +390,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function addValueToDataArray(&$data, $key, $value)
     {
+        Mage::log("PureClarity: In ProductExport->addValueToDataArray() " . $key);
         if (! array_key_exists($key, $data)){
             $data[$key][] = $value;
         }
@@ -383,6 +403,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function setProductPrices($product, &$data, &$childProducts = null)
     {
+        Mage::log("PureClarity: In ProductExport->setProductPrices()");
         $basePrices = $this->getProductPrice($product, false, true, $childProducts);
         $baseFinalPrices = $this->getProductPrice($product, true, true, $childProducts);
         foreach($this->currenciesToProcess as $currency){
@@ -406,6 +427,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
     }
 
      protected function convertCurrency($price, $to){
+        Mage::log("PureClarity: In ProductExport->convertCurrency()");
         if ($to === $this->baseCurrencyCode){
             return $price;
         }
@@ -413,6 +435,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
     }
 
      protected function getProductPrice(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true, &$childProducts = null) {
+        Mage::log("PureClarity: In ProductExport->getProductPrice()");
         $minPrice = 0;
         $maxPrice = 0;
         switch ($product->getTypeId()) {
@@ -506,6 +529,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function getDefaultFromProduct(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true) 
     {
+        Mage::log("PureClarity: In ProductExport->getDefaultFromProduct()");
         $price = ($getFinalPrice ? $product->getFinalPrice() : $product->getPrice());
         if ($includeTax) {
             $price = Mage::helper('tax')->getPrice($product, $price, true);
@@ -516,6 +540,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function setAttributes(Mage_Catalog_Model_Product $product, &$data)
     {  
+        Mage::log("PureClarity: In ProductExport->setAttributes()");
         foreach ($this->attributesToInclude as $attribute) {
             $code = $attribute[0];
             $name = $attribute[1];
@@ -558,6 +583,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
     protected function convertPrice($price, $round = false)
     {
+        Mage::log("PureClarity: In ProductExport->convertPrice()");
         if (empty($price)) {
             return 0;
         }

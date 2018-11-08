@@ -40,7 +40,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             $productExportModel->init($this->storeId);
             Mage::log("PureClarity: In Feed->sendProducts(): Initialised ProductExport");
 
-            $currentPage = 0;
+            $currentPage = 1;
             $pages = 0;
             $feedProducts = [];
             $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, 0, 1);

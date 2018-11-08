@@ -18,9 +18,12 @@ class Pureclarity_Core_Model_Model extends Mage_Core_Model_Abstract
      * @param $url string
      */
     protected function removeUrlProtocol($url){
-        return str_replace([
-                "https:", 
-                "http:"
-            ], "", $url);
+        if(!empty($url) && is_string($url)){
+            $url = str_replace([
+                    "https:", 
+                    "http:"
+                ], "", $url);
+        }
+        return $url;
     }
 }
