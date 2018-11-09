@@ -66,46 +66,45 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
 
         // create a unique token until we get a response from PureClarity
         $uniqueId = 'PureClarity' . uniqid();
-        $requests = [];
+        $requests = array();
 
         // Loop round each store and process Deltas
         foreach (Mage::app()->getWebsites() as $website) {
             foreach ($website->getGroups() as $group) {
                 foreach ($group->getStores() as $store) {
-
                     Mage::log("Processing for store id " . $store->getId());
 
                     // Check we're allowed to do it for this store
                     if ($this->coreHelper->isDeltaNotificationActive($store->getId()) || $peakModeOnly) {
-
-                        $deleteProducts = [];
-                        $feedProducts = [];
+                        $deleteProducts = array();
+                        $feedProducts = array();
 
                         Mage::log("Getting delta feed collection for store");
                         // get deltaFeed Collection for store
-                        $storeIds = [
-                            'in' => [
+                        $storeIds = array(
+                            'in' => array(
                                 Mage_Catalog_Model_Abstract::DEFAULT_STORE_ID, 
                                 $store->getId()
-                            ]
-                        ];
+                            )
+                        );
                         $deltaProducts = Mage::getModel('pureclarity_core/productFeed')
                             ->getCollection()
-                            ->addFieldToFilter('status_id', [
+                            ->addFieldToFilter(
+                                'status_id', array(
                                     'eq' => 0
-                                ])
+                                )
+                            )
                             ->addFieldToFilter('store_id', $storeIds);
 
                         Mage::log("We have " . $deltaProducts->count() . " products to process");
 
                         // Check we have something
                         if ($deltaProducts->count() > 0) {
-
-                            $deltaIds = [];
+                            $deltaIds = array();
 
                             // Park these so that another process doesn't pick them up, also
                             // create a hash to get last value (in case product has been edited multiple times)
-                            $productHash = [];
+                            $productHash = array();
                             foreach ($deltaProducts as $deltaProduct) {
                                 $deltaIds[] = $deltaProduct->getProductId();
                                 if (! $peakModeOnly) {
@@ -119,7 +118,6 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                             $productExportModel->init($store->getId());
                             // load products
                             foreach ($productHash as $deltaProduct) {
-
                                 // Get product for this store
                                 $product = Mage::getModel('catalog/product')
                                     ->setStoreId($store->getId())
@@ -138,13 +136,13 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                                         $deleteProducts[] = $product->getSku();
                                     } 
                                     else {
-
                                         // Get data from product exporter
                                         $data = $productExportModel->getProductData($product, count($feedProducts) + 1);
                                         if ($data != null) {
                                             $feedProducts[] = $data;
                                         }
                                     }
+
                                     //if we've changed the sku - make sure old one gets deleted
                                     if ($deltaProduct->getOldsku() != $product->getSku()) {
                                         $deleteProducts[] = $deltaProduct->getOldsku();
@@ -161,7 +159,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                                             ->setStoreId($store->getId())
                                             ->load($parentProductId);
                                         if ($parentProduct != null) {
-                                            Mage::log("Parent product: got product for id " . $parentProduct->getId() );
+                                            Mage::log("Parent product: got product for id " . $parentProduct->getId());
                                             $data = $productExportModel->getProductData($parentProduct, count($feedProducts) + 1);
                                             if ($data != null) {
                                                 $feedProducts[] = $data;
@@ -171,13 +169,13 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                                 }   
                             }
 
-                            $request = [
+                            $request = array(
                                 'AppKey' => $this->coreHelper->getAccessKey($store->getId()),
                                 'Secret' => $this->coreHelper->getSecretKey($store->getId()),
                                 'Products' => $feedProducts,
                                 'DeleteProducts' => $deleteProducts,
                                 'Format' => 'magentoplugin1.0.0',
-                            ];
+                            );
                             Mage::log("About to send request: " . print_r($request, true));
                             $requests[] = $request;
 
@@ -193,6 +191,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                                 if (! is_object($response)) {
                                     Mage::log('DELTA Issue from PC - ' . var_export($deltaIds, true), null, self::DELTA_LOG);
                                 }
+
                                 foreach ($deltaProducts as $deltaProduct) {
                                     $deltaProduct->delete();
                                 }
@@ -204,6 +203,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                 }
             }
         }
+
         return $requests;
     }
 
@@ -219,6 +219,9 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
      */ 
     public function doFeed($feedTypes, $storeId)
     {
+        Mage::log("PureClarity: In Cron->doFeed()");
+        $this->coreHelper->setProgressFile($this->progressFileName, 'N/A', 0, 0);
+
         //can take a while to run the feed
         set_time_limit(0);
 
@@ -229,6 +232,8 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
         }
 
         foreach ($feedTypes as $feedType) {
+            Mage::log("PureClarity: In Cron->doFeed(): " .  $feedType);
+
             switch ($feedType) {
                 case Pureclarity_Core_Model_Feed::FEED_TYPE_PRODUCT:
                     $feedModel->sendProducts();
@@ -252,6 +257,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
             }
         }
 
+        Mage::log("PureClarity: In Cron->doFeed(): about to call checkSuccess()");
         $feedModel->checkSuccess();
     }
 
@@ -262,6 +268,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
         if ((!$feedFile) || !flock($feedFile, LOCK_EX | LOCK_NB)) {
             throw new Exception("Error: Cannot open feed file for writing under var/pureclarity directory. It could be locked or there maybe insufficient permissions to write to the directory. You must delete locked files and ensure PureClarity has permission to write to the var directory. File: " . $feedFilePath);
         }
+
         return $feedFile;
     }
 
@@ -278,36 +285,44 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
     // Produce all feeds in one file.
     public function allFeeds($storeId)
     {
-        $this->doFeed([
+        $this->doFeed(
+            array(
             Pureclarity_Core_Model_Feed::FEED_TYPE_PRODUCT, 
             Pureclarity_Core_Model_Feed::FEED_TYPE_CATEGORY, 
             Pureclarity_Core_Model_Feed::FEED_TYPE_BRAND, 
             Pureclarity_Core_Model_Feed::FEED_TYPE_USER
-        ], $storeId);
+            ), $storeId
+        );
     }
 
     // Produce a product feed and notify PureClarity so that it can fetch it.
     public function fullProductFeed($storeId)
     {
-        $this->doFeed([
+        $this->doFeed(
+            array(
                 Pureclarity_Core_Model_Feed::FEED_TYPE_PRODUCT
-            ], $storeId);
+            ), $storeId
+        );
     }
 
     // Produce a category feed and notify PureClarity so that it can fetch it.
     public function fullCategoryFeed($storeId)
     {
-        $this->doFeed([
+        $this->doFeed(
+            array(
                 Pureclarity_Core_Model_Feed::FEED_TYPE_CATEGORY
-            ], $storeId);
+            ), $storeId
+        );
     }
 
     // Produce a brand feed and notify PureClarity so that it can fetch it.
     public function fullBrandFeed($storeId)
     {
-        $this->doFeed([
+        $this->doFeed(
+            array(
                 Pureclarity_Core_Model_Feed::FEED_TYPE_BRAND
-            ], $storeId);
+            ), $storeId
+        );
     }
 
     // Helper functions
@@ -317,6 +332,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
         if (substr($storeUrl, -1, strlen($storeUrl)) == '/') {
             $storeUrl = substr($storeUrl, 0, strlen($storeUrl) - 1);
         }
+
         return $storeUrl;
     }
 

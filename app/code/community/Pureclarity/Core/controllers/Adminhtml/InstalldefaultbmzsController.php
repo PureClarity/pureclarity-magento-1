@@ -57,6 +57,7 @@ class Pureclarity_Core_Adminhtml_InstallDefaultBMZsController extends Mage_Admin
                 $result .= $e->getMessage();
             }
         }
+
         Mage::app()->getResponse()->setBody($result);
     }
 }

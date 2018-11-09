@@ -3,16 +3,16 @@
 class Pureclarity_Core_Model_System_Config_Source_Categories
 {
 
-    protected $categories = [
-        [
+    protected $categories = array(
+        array(
             "label" => "  ",
             "value" => "-1"
-        ]
-    ];
+        )
+    );
 
     public function buildCategories()
     {
-        $rootCategories = [];
+        $rootCategories = array();
         Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
         foreach (Mage::app()->getWebsites() as $website) {
             foreach ($website->getGroups() as $group) {
@@ -27,14 +27,15 @@ class Pureclarity_Core_Model_System_Config_Source_Categories
         }
     }
 
-    function GetSubGategories($id, $prefix = '') {
+    function GetSubGategories($id, $prefix = '') 
+    {
 
         $category = Mage::getModel('catalog/category')->load($id);
         $label = $prefix . $category->getName();
-        $this->categories[] = [
+        $this->categories[] = array(
             "value" => $category->getId(),
             "label" => $label
-        ];
+        );
         $subcategories = $category->getChildrenCategories();
         foreach($subcategories as $subcategory) {
             $this->GetSubGategories($subcategory->getId(), $label . ' -> ');

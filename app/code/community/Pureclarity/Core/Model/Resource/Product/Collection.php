@@ -28,9 +28,11 @@
 */
 class PureClarity_Core_Model_Resource_Product_Collection extends Mage_Catalog_Model_Resource_Product_Collection
 {
-    public function getModelName() {
+    public function getModelName() 
+    {
         return "pureclarity_core/product";
     }
+    
     public function isEnabledFlat()
     {
         return false;

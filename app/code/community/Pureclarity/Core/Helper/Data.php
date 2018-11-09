@@ -25,11 +25,11 @@
 /**
 * PureClarity Product Export Module
 */
-class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract 
+class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
 {
     // ENDPOINTS
     protected $scriptUrl = '//pcs.pureclarity.net';
-    protected $regions = [
+    protected $regions = array(
         1 => "https://api-eu-w-1.pureclarity.net",
         2 => "https://api-eu-w-2.pureclarity.net",
         3 => "https://api-eu-c-1.pureclarity.net",
@@ -44,9 +44,9 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         12 => "https://api-ap-se-2.pureclarity.net",
         13 => "https://api-ca-c-1.pureclarity.net",
         14 => "https://api-sa-e-1.pureclarity.net"
-    ];
+    );
 
-    protected $sftpRegions = [
+    protected $sftpRegions = array(
         1 => "https://sftp-eu-w-1.pureclarity.net",
         2 => "https://sftp-eu-w-2.pureclarity.net",
         3 => "https://sftp-eu-c-1.pureclarity.net",
@@ -61,7 +61,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         12 => "https://sftp-ap-se-2.pureclarity.net",
         13 => "https://sftp-ca-c-1.pureclarity.net",
         14 => "https://sftp-sa-e-1.pureclarity.net"
-    ];
+    );
 
     const PLACEHOLDER_UPLOAD_DIR = "pureclarity";
     const PROGRESS_FILE_BASE_NAME = 'pureclarity-feed-progress-';
@@ -71,9 +71,10 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     public function isActive($storeId)
     {
         $accessKey = $this->getAccessKey($storeId);
-        if (! empty($accessKey)){
+        if (! empty($accessKey)) {
             return Mage::getStoreConfig("pureclarity_core/environment/active", $storeId);
         }
+
         return false;
     }
 
@@ -104,49 +105,55 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     // General Config 
     public function isSearchActive($storeId = null)
     {
-        if ($this->isActive($this->getStoreId($storeId))){
+        if ($this->isActive($this->getStoreId($storeId))) {
             return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $this->getStoreId($storeId));
         }
+
         return false;
     }
 
     public function isProdListingActive($storeId = null)
     {
-        if ($this->isActive($this->getStoreId($storeId))){
+        if ($this->isActive($this->getStoreId($storeId))) {
             return Mage::getStoreConfig("pureclarity_core/general_config/prodlisting_active", $this->getStoreId($storeId));
         }
+
         return false;
     }
 
     public function isMerchActive($storeId = null)
     {
-        if ($this->isActive($this->getStoreId($storeId))){
+        if ($this->isActive($this->getStoreId($storeId))) {
             return Mage::getStoreConfig("pureclarity_core/general_config/merch_active", $this->getStoreId($storeId));
         }
+
         return false;
     }
 
     public function isFeedNotificationActive($storeId)
     {
-        if ($this->isActive($storeId)){
+        if ($this->isActive($storeId)) {
             return Mage::getStoreConfig("pureclarity_core/general_config/notify_feed", $storeId);
         }
+
         return false;
     }
 
     public function isDeltaNotificationActive($storeId)
     {
-        if ($this->isActive($storeId)){
+        if ($this->isActive($storeId)) {
             return Mage::getStoreConfig("pureclarity_core/general_config/delta_feed", $storeId);
         }
+
         return false;
     }
 
     public function isBrandFeedEnabled($storeId)
     {
-        if ($this->isActive($storeId)){
+        if ($this->isActive($storeId)) {
             return Mage::getStoreConfig("pureclarity_core/general_config/brand_feed_enabled", $storeId);
         }
+
         return false;
     }
 
@@ -185,7 +192,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     // END POINTS
-    public function getHost($storeId){
+    public function getHost($storeId)
+    {
         $pureclarityHostEnv = getenv('PURECLARITY_MAGENTO_HOST');
         if ($pureclarityHostEnv != null && $pureclarityHostEnv != '')
             return $pureclarityHostEnv;
@@ -193,7 +201,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         return $this->regions[$region];
     }
 
-    public function getSftpHost($storeId){
+    public function getSftpHost($storeId)
+    {
         $pureclarityHostEnv = getenv('PURECLARITY_SFTP_HOST');
         if ($pureclarityHostEnv != null && $pureclarityHostEnv != '')
             return $pureclarityHostEnv;
@@ -201,25 +210,29 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         return $this->sftpRegions[$region];
     }
 
-    public function getSftpPort($storeId){
+    public function getSftpPort($storeId)
+    {
         $pureclarityHostEnv = getenv('PURECLARITY_SFTP_PORT');
         if ($pureclarityHostEnv != null && $pureclarityHostEnv != '')
             return intval($pureclarityHostEnv);
         return 2222;
     }
 
-    public function useSSL($storeId){
+    public function useSSL($storeId)
+    {
         $pureclarityHostEnv = getenv('PURECLARITY_MAGENTO_USESSL');
         if ($pureclarityHostEnv != null && strtolower($pureclarityHostEnv) == 'false')
             return false;
         return true;
     }
 
-    public function getDeltaEndpoint($storeid){
+    public function getDeltaEndpoint($storeid)
+    {
         return $this->getHost($storeId) . '/api/productdelta';
     }
 
-    public function getMotoEndpoint($storeid){
+    public function getMotoEndpoint($storeid)
+    {
         return $this->getHost($storeId) . '/api/track?appid=' . $this->getAccessKey($storeId) . '&evt=moto_order_track';
     }
 
@@ -227,28 +240,33 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     {
         $url = getenv('PURECLARITY_FEED_HOST');
         $port = getenv('PURECLARITY_FEED_PORT');
-        if (empty($url)){
+        if (empty($url)) {
             $url = $this->sftpRegions[$this->getRegion($storeId)];
         }
-        if (! empty($port)){
+
+        if (! empty($port)) {
             $url = $url . ":" . $port;
         }
+
         return $url . "/";
     }
 
-    public function getFeedNotificationEndpoint($storeId, $websiteDomain, $feedType){
+    public function getFeedNotificationEndpoint($storeId, $websiteDomain, $feedType)
+    {
         $returnUrl = $websiteDomain . '/' . self::PURECLARITY_EXPORT_URL;
         $returnUrl = str_replace('{storeid}', $storeId, $returnUrl);
         $returnUrl = str_replace('{type}', $feedType, $returnUrl);
         return $this->getHost($storeId) . '/api/productfeed?appkey=' . $this->getAccessKey($storeId) . '&url='. urlencode($returnUrl) . '&feedtype=magentoplugin1.0.0';
     }
 
-    public function getFeedBody($storeId){
+    public function getFeedBody($storeId)
+    {
         $body = array("AccessKey" => $this->getAccessKey($storeId), "SecretKey" => $this->getSecretKey($storeId));
         return Mage::helper('pureclarity_core')->formatFeed($body);
     }
 
-    public static function getFileNameForFeed($feedtype, $storeCode){
+    public static function getFileNameForFeed($feedtype, $storeCode)
+    {
         return $storeCode . '-' . $feedType . '.json';
     }
 
@@ -271,13 +289,16 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         if (is_null($storeId)) {
             $storeId = Mage::app()->getStore()->getId();
         }
+
         return $storeId;
     }
 
-    public function getPlaceholderDir(){
+    public function getPlaceholderDir()
+    {
         return Mage::getBaseDir('media') . DS . self::PLACEHOLDER_UPLOAD_DIR . DS;
     }
-    public function getPlaceholderUrl(){
+    public function getPlaceholderUrl()
+    {
         //return Mage::getBaseUrl('media', array('_secure'=>true)) . '/' . self::PLACEHOLDER_UPLOAD_DIR . '/';
         return '/media/' . self::PLACEHOLDER_UPLOAD_DIR . '/';
     }
@@ -290,21 +311,24 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     
-    public static function getPureClarityBaseDir(){
+    public static function getPureClarityBaseDir()
+    {
         $varDir = Mage::getBaseDir('var') . DS . 'pureclarity';
         $fileIo = new Varien_Io_File();
         $fileIo->mkdir($varDir);
         return $varDir;
     }
 
-    public static function getProgressFileName(){
+    public static function getProgressFileName()
+    {
         return self::getPureClarityBaseDir() . DS . self::PROGRESS_FILE_BASE_NAME . 'all.json';
     }
 
-    public static function setProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete = "false", $isUploaded = "false", $error = ""){
-        if ($progressFileName != null){
+    public static function setProgressFile($progressFileName, $feedName, $currentPage, $pages, $isComplete = "false", $isUploaded = "false", $error = "")
+    {
+        if ($progressFileName != null) {
             $progressFile = fopen($progressFileName, "w");
-            fwrite($progressFile, "{\"name\":\"{$feedName}\",\"cur\":{$currentPage},\"max\":{$pages},\"isComplete\":{$isComplete},\"isUploaded\":{$isUploaded},\"error\":\"{$error}\"}" );
+            fwrite($progressFile, "{\"name\":\"{$feedName}\",\"cur\":{$currentPage},\"max\":{$pages},\"isComplete\":{$isComplete},\"isUploaded\":{$isUploaded},\"error\":\"{$error}\"}");
             fclose($progressFile);
         }
     }
@@ -313,13 +337,13 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     {
         $order = $this->getOrderObject();
 
-        if (!$order){
+        if (!$order) {
             throw new \Exception("Pureclarity: unable to get order");
         }
 
         $address = $order->getShippingAddress();
 
-        if (!$address){
+        if (!$address) {
             throw new \Exception("Pureclarity: unable to get order address");
         }
 
@@ -339,7 +363,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         if (!$order)
             $order = $this->getOrderObject();
 
-        if (!$order){
+        if (!$order) {
             throw new \Exception("Pureclarity: unable to get order");
         }
 
@@ -348,8 +372,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         $orderItems = $order->getAllItems();
 
         // process parents
-        foreach($orderItems as $item) {
-            if (!$item->getParentItemId()){
+        foreach ($orderItems as $item) {
+            if (!$item->getParentItemId()) {
                 $product = Mage::getModel('catalog/product')->load($item->getProductId());
                 $items[$item->getId()] = array(
                     'sku' => $product->getSku(),
@@ -360,9 +384,9 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         // Process child products
-        foreach($orderItems as $item) {
+        foreach ($orderItems as $item) {
             $parentId = $item->getParentItemId();
-            if ($parentId != null && $items[$parentId] != null){
+            if ($parentId != null && $items[$parentId] != null) {
                 $items[$parentId]['associatedproducts'][] = array(
                         'sku' => $item->getProduct()->getSku(),
                         'qty' => $item->getQtyOrdered()
@@ -371,21 +395,22 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         // Build output information
-        foreach($items as $item){
+        foreach ($items as $item) {
             $orderObject = array(
                 'orderid'       => $order->getIncrementId(),
                 'sku'           => $item['sku'],
                 'qty'           => $item['qty'],
                 'unitprice'     => $item['unitPrice']
             );
-            if ($item['associatedproducts']){
+            if ($item['associatedproducts']) {
                 $associatedIndex = 1;
-                foreach($item['associatedproducts'] as $associated){
+                foreach ($item['associatedproducts'] as $associated) {
                     $orderObject['associatedproduct' . $associatedIndex . '_sku'] = $associated['sku'];
                     $orderObject['associatedproduct' . $associatedIndex . '_qty'] = $associated['qty'];
-                    $associatedIndex += 1;
+                    $associatedIndex++;
                 }
             }
+
             $orderInformation[] = $orderObject;
         }
 
@@ -397,10 +422,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         switch ($feedFormat) {
             case 'json':
                 return json_encode($feed);
-                break;
             case 'jsonpretty':
                 return json_encode($feed, JSON_PRETTY_PRINT);
-                break;
         }
     }
 

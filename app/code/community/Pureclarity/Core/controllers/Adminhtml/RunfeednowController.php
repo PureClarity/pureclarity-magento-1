@@ -24,6 +24,7 @@
 
 class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Controller_Action
 {
+
     /**
      * Install the default BMZs
      *
@@ -34,11 +35,9 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
         session_write_close();
         try {
             Mage::log("PureClarity: In Pureclarity_Core_Adminhtml_RunFeedNowController->runselectedAction()");
-            Mage::log("PureClarity: In Pureclarity_Core_Adminhtml_RunFeedNowController->runselectedAction(): storeid parameter value:");
-            Mage::log($this->getRequest()->getParam('storeid'));
             $storeId =  (int)$this->getRequest()->getParam('storeid');
             $model = Mage::getModel('pureclarity_core/cron');
-            $feeds = [];
+            $feeds = array();
             if ($this->getRequest()->getParam('product') == 'true')
                 $feeds[] = 'product';
             if ($this->getRequest()->getParam('category') == 'true')
@@ -49,10 +48,6 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
                 $feeds[] = 'user';
             if ($this->getRequest()->getParam('orders') == 'true')
                 $feeds[] = 'orders';
-            Mage::log("PureClarity: In Pureclarity_Core_Adminhtml_RunFeedNowController->runselectedAction(): about to run selected feeds with storeId:");
-            Mage::log($storeId);
-            Mage::log("PureClarity: In Pureclarity_Core_Adminhtml_RunFeedNowController->runselectedAction(): and feeds:");
-            Mage::log(print_r($feeds, true));
             $model->selectedFeeds($storeId, $feeds);
         }
         catch (\Exception $e){
@@ -72,10 +67,15 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
 
         if ($progressFileName != null && file_exists($progressFileName)) {
             $contents = file_get_contents($progressFileName);
+            Mage::log("In getprogressAction(): " . $contents);
+             $progressFile = fopen($progressFileName, "r");
+             fclose($progressFile);
         }
+
         if(empty($contents)){
             $contents = "{}";
         }
+
         try {
             $this->getResponse()
                 ->clearHeaders()
