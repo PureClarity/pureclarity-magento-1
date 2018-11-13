@@ -50,6 +50,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
             // loop through products, POSTing string for each page as it loops through
             $isFirst = true;
+            
             do {
                 $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
                 Mage::log("PureClarity: Got result from product export model");
@@ -67,16 +68,16 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                     $json .= $this->coreHelper->formatFeed($product, 'json');
                 }
 
-                if ($currentPage >= $pages) {
-                    $json .= ']';
-                }
-
                 $parameters = $this->getParameters($json, self::FEED_TYPE_PRODUCT);
                 $this->send("feed-append", $parameters);
 
                 $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, $currentPage, $pages);
                 $currentPage++;
             } while ($currentPage <= $pages);
+        
+            $hasSentItemData = (! $isFirst);
+            $this->endFeedAppend(self::FEED_TYPE_PRODUCT, $hasSentItemData);
+            
             $this->end(self::FEED_TYPE_PRODUCT);
             Mage::log("PureClarity: Finished sending product data");
         }
@@ -105,6 +106,9 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         Mage::log("There are {$maxProgress} categories");
 
         foreach ($categoryCollection as $category) {
+            
+            $currentProgress++;
+
             if (! $category->getName()) {
                 continue;
             }
@@ -188,16 +192,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
             $feedCategories .= $this->coreHelper->formatFeed($categoryData, 'json');
 
-            $currentProgress++;
-            if ($currentProgress >= $maxProgress) {
-                $feedCategories .= ']';
-            }
-
             $parameters = $this->getParameters($feedCategories, self::FEED_TYPE_CATEGORY);
             $this->send("feed-append", $parameters);
 
             $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_CATEGORY, $currentProgress, $maxProgress);
         }
+        
+        $hasSentItemData = (! $isFirst);
+        $this->endFeedAppend(self::FEED_TYPE_CATEGORY, $hasSentItemData);
 
         Mage::log("In Feed.php->sendCategories(): about to call end()");
         $this->end(self::FEED_TYPE_CATEGORY);
@@ -251,15 +253,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $feedBrands .= $this->coreHelper->formatFeed($thisBrand, 'json');
                 $currentProgress++;
 
-                if ($currentProgress >= $maxProgress) {
-                    $feedBrands .= ']';
-                }
-
                 $parameters = $this->getParameters($feedBrands, self::FEED_TYPE_BRAND);
                 $this->send("feed-append", $parameters);
 
                 $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_BRAND, $currentProgress, $maxProgress);
             }
+        
+            $hasSentItemData = (! $isFirst);
+            $this->endFeedAppend(self::FEED_TYPE_BRAND, $hasSentItemData);
         }
         else{
             $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_BRAND, 1, 1);
@@ -391,15 +392,15 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             $users .= $this->coreHelper->formatFeed($data, 'json');
 
             $currentProgress++;
-            if ($currentProgress >= $maxProgress) {
-                $users .= ']';
-            }
 
             $parameters = $this->getParameters($users, self::FEED_TYPE_USER);
             $this->send("feed-append", $parameters);
 
             $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_USER, $currentProgress, $maxProgress);
         }
+
+        $hasSentItemData = (! $isFirst);
+        $this->endFeedAppend(self::FEED_TYPE_USER, $hasSentItemData);
 
         $this->end(self::FEED_TYPE_USER);
     }
@@ -442,7 +443,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         $currentProgress = 0;
         $counter = 0;
         $data = "";
-        $isFirst = true;
 
         Mage::log("PureClarity: {$maxProgress} items");
 
@@ -518,7 +518,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             $startJson = '{"Version": 2';
         }
 
-        $parameters = $this->getParameters($startJson, $feedType);
+        $parameters = $this->getParameters($startJson, $feedType, true);
         $this->send("feed-create", $parameters);
         Mage::log("PureClarity: Started feed");
     }
@@ -535,6 +535,18 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         $this->send("feed-close", $this->getParameters($data, $feedType));
         // Ensure progress file is set to complete
         $this->coreHelper->setProgressFile($this->progressFileName, 'N/A', 1, 1, "true", "false");
+    }
+
+
+    protected function endFeedAppend($feedType, $hasSentItemData){
+
+        /*
+         * Close the array if we've had at least one user
+         */    
+        if($hasSentItemData){
+            $parameters = $this->getParameters(']', $feedType);
+            $this->send("feed-append", $parameters);
+        }
     }
 
     /**
@@ -597,7 +609,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
      * @param $data string
      * @param $feedType string One of Feed::FEED_TYPE... constants
      */
-    protected function getParameters($data, $feedType)
+    protected function getParameters($data, $feedType, $debugData = false)
     {
         if (! $this->isInitialised()) {
             return false;
@@ -608,8 +620,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             "secretKey" => $this->secretKey,
             "feedName" => $feedType . "-" . $this->getUniqueId()
         );
+
         if (! empty($data)) {
             $parameters["payLoad"] = $data;
+        }
+
+        if($debugData) {
+            $parameters["php"] = phpversion();
+            $parameters["browser"] = $_SERVER['HTTP_USER_AGENT'];
         }
 
         return $parameters;
