@@ -42,7 +42,7 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
             // Set product data
             $product = Mage::registry("current_product");
             if ($product != null) {
-                $this->addBmzData('sku', $product->getSku());
+                $this->addBmzData('productid', $product->getId());
             }
 
             // Set category data

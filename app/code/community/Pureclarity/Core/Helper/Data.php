@@ -105,18 +105,19 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     // General Config 
     public function isMerchActive($storeId = null)
     {
-        if ($this->isActive($this->getStoreId($storeId))) {
-            return Mage::getStoreConfig("pureclarity_core/general_config/merch_active", $this->getStoreId($storeId));
-        }
+        // if ($this->isActive($this->getStoreId($storeId))) {
+        //     return Mage::getStoreConfig("pureclarity_core/general_config/merch_active", $this->getStoreId($storeId));
+        // }
 
-        return false;
+        // return false;
+        return true;
     }
 
     public function isSearchActive($storeId = null)
     {
-        if ($this->isActive($this->getStoreId($storeId))) {
-            return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $this->getStoreId($storeId));
-        }
+        // if ($this->isActive($this->getStoreId($storeId))) {
+        //     return Mage::getStoreConfig("pureclarity_core/general_config/search_active", $this->getStoreId($storeId));
+        // }
 
         return false;
     }

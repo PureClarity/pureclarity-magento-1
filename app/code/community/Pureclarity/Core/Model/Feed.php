@@ -97,6 +97,8 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             ->setStoreId($this->storeId)
             ->addAttributeToSelect('name')
             ->addAttributeToSelect('is_active')
+            ->addAttributeToSelect('pureclarity_secondary_image')
+            ->addAttributeToSelect('pureclarity_hide_from_feed')
             ->addUrlRewriteToResult();
 
         $maxProgress = count($categoryCollection);
@@ -117,42 +119,42 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
 
             // Get first image
-            $firstImage = $category->getImageUrl();
-            if ($firstImage != "") {
-                $imageUrl = $firstImage;
+            $categoryImage = $category->getImageUrl();
+            if ($categoryImage != "") {
+                $categoryImageUrl = $categoryImage;
             } 
             else {
-                $imageUrl = $this->coreHelper->getCategoryPlaceholderUrl($this->storeId);
-                if (! $imageUrl) {
-                    $imageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
-                    if (! $imageUrl) {
-                        $imageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
+                $categoryImageUrl = $this->coreHelper->getCategoryPlaceholderUrl($this->storeId);
+                if (! $categoryImageUrl) {
+                    $categoryImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                    if (! $categoryImageUrl) {
+                        $categoryImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
                     }
                 }
             }
 
-            $imageUrl = $this->removeUrlProtocol($imageUrl);
+            $categoryImageUrl = $this->removeUrlProtocol($categoryImageUrl);
 
-            // Get second image
-            $imageUrl2 = null;
-            $secondImage = $category->getData('pureclarity_secondary_image');
-            if ($secondImage != "") {
-                $imageUrl2 = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $secondImage);
+            // Get override image
+            $overrideImageUrl = null;
+            $overrideImage = $category->getData('pureclarity_secondary_image');
+            Mage::log("Override image: " . $overrideImage);
+            if ($overrideImage != "") {
+                $overrideImageUrl = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $overrideImage);
             } 
             else {
-                $imageUrl2 = $this->coreHelper->getSecondaryCategoryPlaceholderUrl($this->storeId);
-                if (! $imageUrl2) {
-                    $imageUrl2 = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                $overrideImageUrl = $this->coreHelper->getSecondaryCategoryPlaceholderUrl($this->storeId);
+                if (! $overrideImageUrl) {
+                    $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
                 }
             }
-
-            $imageUrl2 = $this->removeUrlProtocol($imageUrl2);
+            $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
 
             // Build data
             $categoryData = array(
                 "Id" => $category->getId(),
                 "DisplayName" => $category->getName(),
-                "Image" => $imageUrl,
+                "Image" => $categoryImageUrl,
                 "Link" => sprintf(
                     "/%s", str_replace(
                         Mage::getUrl(
@@ -180,8 +182,8 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $categoryData["IsActive"] = false;
             }
 
-            if ($imageURL2 != null) {
-                $categoryData["PCImage"] = $imageURL2;
+            if ($overrideImageUrl != null) {
+                $categoryData["OverrideImage"] = $overrideImageUrl;
             }
 
             if (! $isFirst) {
@@ -218,39 +220,60 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
         Mage::log("PureClarity: In Feed->sendBrands()");
 
-        $brandCategoryId = $this->coreHelper->getBrandParentCategory($this->storeId);
+        $brandParentCategoryId = $this->coreHelper->getBrandParentCategory($this->storeId);
 
-        if ($brandCategoryId && $brandCategoryId != "-1") {
-            $category = Mage::getModel('catalog/category')->load($brandCategoryId);
+        if ($brandParentCategoryId && $brandParentCategoryId != "-1") {
+            $brandParentCategory = Mage::getModel('catalog/category')->load($brandParentCategoryId);
 
-            $subcategories = Mage::getModel('catalog/category')->getCollection()
+            $brands = Mage::getModel('catalog/category')->getCollection()
                 ->addAttributeToSelect('name')
                 ->addAttributeToSelect('image')
-                ->addIdFilter($category->getChildren());
+                ->addIdFilter($brandParentCategory->getChildren());
 
-            $maxProgress = count($subcategories);
+            $maxProgress = count($brands);
             $currentProgress = 0;
             $isFirst = true;
 
-            foreach($subcategories as $subcategory) {
+            foreach($brands as $brand) {
                 $feedBrands = ($isFirst ? ',"Brands":[' : "");
                 
-                $thisBrand = array(
-                    "Id" => $subcategory->getId(),
-                    "DisplayName" =>  $subcategory->getName()
+                $brandData = array(
+                    "Id" => $brand->getId(),
+                    "DisplayName" =>  $brand->getName()
                 );
                 
-                $imageUrl = $subcategory->getImageUrl();
+                $imageUrl = $brand->getImageUrl();
                 if ($imageUrl) {
-                    $thisBrand['Image'] = $this->removeUrlProtocol($imageUrl);
+                    $brandData['Image'] = $this->removeUrlProtocol($imageUrl);
                 }
+
+                // Get override image
+                $overrideImageUrl = null;
+                $overrideImage = $brand->getData('pureclarity_secondary_image');
+                Mage::log("Override image: " . $overrideImage);
+                if ($overrideImage != "") {
+                    $overrideImageUrl = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $overrideImage);
+                } 
+                else {
+                    $overrideImageUrl = $this->coreHelper->getSecondaryCategoryPlaceholderUrl($this->storeId);
+                    if (! $overrideImageUrl) {
+                        $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                    }
+                }
+                $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
+
+                if ($overrideImageUrl != null) {
+                    $categoryData["OverrideImage"] = $overrideImageUrl;
+                }
+
+                $brandData["Link"] = $this->removeUrlProtocol($brand->getUrl($brand));
 
                 if (! $isFirst) {
                     $feedBrands .= ',';
                 }
 
                 $isFirst = false;
-                $feedBrands .= $this->coreHelper->formatFeed($thisBrand, 'json');
+                $feedBrands .= $this->coreHelper->formatFeed($brandData, 'json');
                 $currentProgress++;
 
                 $parameters = $this->getParameters($feedBrands, self::FEED_TYPE_BRAND);
@@ -273,14 +296,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
     {
         Mage::log("PureClarity: In Feed->getBrandFeedArray()");
         $feedBrands = array();
-        $brandCategoryId = $this->coreHelper->getBrandParentCategory($storeId);
+        $brandParentCategoryId = $this->coreHelper->getBrandParentCategory($storeId);
 
-        if ($brandCategoryId && $brandCategoryId != "-1") {
-            Mage::log("PureClarity: In Feed->getBrandFeedArray(): got brandCategoryId " . $brandCategoryId);
-            $category = Mage::getModel('catalog/category')->load($brandCategoryId);
-            $subcategories = $category->getChildrenCategories();
-            foreach ($subcategories as $subcategory) {
-                $feedBrands[$subcategory->getId()] = $subcategory->getName();
+        if ($brandParentCategoryId && $brandParentCategoryId != "-1") {
+            Mage::log("PureClarity: In Feed->getBrandFeedArray(): got brandParentCategoryId " . $brandParentCategoryId);
+            $brandParentCategory = Mage::getModel('catalog/category')->load($brandParentCategoryId);
+            $brands = $brandParentCategory->getChildrenCategories();
+            foreach ($brands as $brand) {
+                $feedBrands[$brand->getId()] = $brand->getName();
             }
         }
 
@@ -419,7 +442,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         Mage::log("PureClarity: In Feed->sendOrders()");
 
         // Get the collection
-        $fromDate = date('Y-m-d H:i:s', strtotime("-6 month"));
+        $fromDate = date('Y-m-d H:i:s', strtotime("-12 month"));
         $toDate = date('Y-m-d H:i:s', strtotime("now"));
         Mage::log("PureClarity: About to initialise orderCollection");
         $orderCollection = Mage::getModel("sales/order")
@@ -592,7 +615,11 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
         if (curl_errno($ch)) {
             Mage::log('PureClarity: Error: ' . curl_error($ch));
-            $this->problemFeeds[] = $parameters['feedName'];
+            $feedTypeParts = explode("-", $parameters['feedName']);
+            $feedType = $feedTypeParts[0];
+            if(! in_array($feedType, $this->problemFeeds)){
+                $this->problemFeeds[] = $feedType;
+            }
         }
 
         curl_close($ch);
@@ -696,14 +723,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         if ($problemFeedCount){
             $errorMessage = "There was a problem uploading the ";
             $counter = 1;
-            foreach($this->problemFeeds as $problemFeed) {
+            foreach ($this->problemFeeds as $problemFeed) {
                 $errorMessage .= $problemFeed;
-                if ($counter < $problemFeedCount && $problemFeedCount !== 2) {
+                if ($counter < ($problemFeedCount - 1) && $problemFeedCount !== 2) {
                     $errorMessage .= ", ";
-                }
-                elseif ($problemFeedCount >= 2) {
+                } elseif ($problemFeedCount >= 2 && $counter == ($problemFeedCount - 1)) {
                     $errorMessage .= " and ";
                 }
+                $counter++;
             }
 
             $errorMessage .= " feed" . ($problemFeedCount > 1 ? "s" : "");

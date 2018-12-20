@@ -106,7 +106,7 @@ $installer->getConnection()->createTable($ddlTable);
 // adding attribute group
 $installer->addAttributeGroup(Mage_Catalog_Model_Category::ENTITY, 'Default', 'PureClarity', 1000);
 
-// Make sure the attribute for the secondary image is added
+// Make sure the attribute for the category override image is added
 $installer->addAttribute(
     Mage_Catalog_Model_Category::ENTITY, 
     'pureclarity_secondary_image', 
@@ -115,7 +115,7 @@ $installer->addAttribute(
         'input'         => 'image',
         'type'          => 'varchar',
         'backend'       => 'catalog/category_attribute_backend_image',
-        'label'         => 'PureClarity image',
+        'label'         => 'Override image',
         'visible'       => 1,
         'required'      => 0,
         'user_defined'  => 1,
