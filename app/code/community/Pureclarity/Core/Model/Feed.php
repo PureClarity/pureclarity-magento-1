@@ -228,6 +228,8 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             $brands = Mage::getModel('catalog/category')->getCollection()
                 ->addAttributeToSelect('name')
                 ->addAttributeToSelect('image')
+                ->addAttributeToSelect('pureclarity_secondary_image')
+                ->addAttributeToSelect('pureclarity_hide_from_feed')
                 ->addIdFilter($brandParentCategory->getChildren());
 
             $maxProgress = count($brands);
@@ -263,10 +265,15 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
 
                 if ($overrideImageUrl != null) {
-                    $categoryData["OverrideImage"] = $overrideImageUrl;
+                    $brandData["OverrideImage"] = $overrideImageUrl;
                 }
 
                 $brandData["Link"] = $this->removeUrlProtocol($brand->getUrl($brand));
+
+                // Check whether to ignore this brand in recommenders
+                if ($brand->getData('pureclarity_hide_from_feed') == '1') {
+                    $brandData["ExcludeFromRecommenders"] = true;
+                }
 
                 if (! $isFirst) {
                     $feedBrands .= ',';
