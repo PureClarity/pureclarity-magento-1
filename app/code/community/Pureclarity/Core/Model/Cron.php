@@ -28,14 +28,12 @@
 class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
 {
     protected $soapHelper;
-    protected $sftpHelper;
 
     const DELTA_LOG = 'pureclarity_delta.log';
 
     public function __construct()
     {
         $this->soapHelper = Mage::helper('pureclarity_core/soap');
-        $this->sftpHelper = Mage::helper('pureclarity_core/sftp');
         parent::__construct();
     }
 
