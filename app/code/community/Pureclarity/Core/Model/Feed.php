@@ -108,7 +108,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         Mage::log("There are {$maxProgress} categories");
 
         foreach ($categoryCollection as $category) {
-            
             $currentProgress++;
 
             if (! $category->getName()) {
@@ -148,6 +147,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                     $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
                 }
             }
+
             $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
 
             // Build data
@@ -262,6 +262,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                         $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
                     }
                 }
+
                 $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
 
                 if ($overrideImageUrl != null) {
@@ -567,9 +568,8 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         $this->coreHelper->setProgressFile($this->progressFileName, 'N/A', 1, 1, "true", "false");
     }
 
-
-    protected function endFeedAppend($feedType, $hasSentItemData){
-
+    protected function endFeedAppend($feedType, $hasSentItemData)
+    {
         /*
          * Close the array if we've had at least one user
          */    
@@ -672,6 +672,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         if(is_null($this->uniqueId)){
             $this->uniqueId = uniqid();
         }
+
         return $this->uniqueId;
     }
 
@@ -737,6 +738,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 } elseif ($problemFeedCount >= 2 && $counter == ($problemFeedCount - 1)) {
                     $errorMessage .= " and ";
                 }
+
                 $counter++;
             }
 
@@ -744,7 +746,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             $errorMessage .= ". Please see error logs for more information.";
             $this->coreHelper->setProgressFile($this->progressFileName, 'N/A', 1, 1, "true", "false", $errorMessage);
         }
-        else{
+        else {
             // Set to uploaded
             $this->coreHelper->setProgressFile($this->progressFileName, 'N/A', 1, 1, "true", "true");
         }

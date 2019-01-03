@@ -35,4 +35,10 @@ class Pureclarity_Core_Adminhtml_RunFeedBoxController extends Mage_Adminhtml_Con
         $this->getLayout()->getBlock('root')->setTemplate('pureclarity/system/config/run_feed_box.phtml');
         $this->renderLayout();
     }
+
+    protected function _isAllowed()
+    {
+        return Mage::getSingleton('admin/session')
+            ->isAllowed('system/config');
+    }
 }

@@ -60,4 +60,10 @@ class Pureclarity_Core_Adminhtml_InstallDefaultBMZsController extends Mage_Admin
 
         Mage::app()->getResponse()->setBody($result);
     }
+
+    protected function _isAllowed()
+    {
+        return Mage::getSingleton('admin/session')
+            ->isAllowed('system/config');
+    }
 }
