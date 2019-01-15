@@ -34,9 +34,10 @@ class Pureclarity_Core_Helper_Sftp
         $path = '/' . ($directory?$directory.'/':'') . $filename;
         try {
             $sftp = new Net_SFTP($host, $port, 10);
-            if (!$sftp->login($username, $password)){
+            if (!$sftp->login($username, $password)) {
                 throw new Exception(sprintf(__("Unable to open SFTP connection as %s@%s:%s", $username, $host, $port)));
             }
+
             $sftp->put($path, $payload, NET_SFTP_LOCAL_FILE);
             $sftp->disconnect();
             return true;

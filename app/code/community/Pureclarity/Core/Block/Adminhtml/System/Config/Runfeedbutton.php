@@ -40,11 +40,13 @@ class Pureclarity_Core_Block_Adminhtml_System_Config_Runfeedbutton extends Mage_
     public function getButtonHtml()
     {
         $button = $this->getLayout()->createBlock('adminhtml/widget_button')
-            ->setData(array(
+            ->setData(
+                array(
                 'id' => 'PC_Admin',
                 'label' => $this->helper('adminhtml')->__('Run feed...'),
                 'onclick' => 'javascript:pureclarity_magento_run_feed(); return false;'
-            ));
+                )
+            );
 
         return $button->toHtml();
     }

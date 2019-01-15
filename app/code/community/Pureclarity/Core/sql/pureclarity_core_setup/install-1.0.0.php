@@ -35,33 +35,69 @@ if ($installer->tableExists($table)) {
 }
 
 $ddlTable = $installer->getConnection()->newTable($table);
-$ddlTable->addColumn('id', Varien_Db_Ddl_Table::TYPE_INTEGER, null, array(
-    'primary'  => true,
-    'identity' => true,
-    'unsigned' => true,
-    'nullable' => false,
-), 'Auto Increment ID')
-    ->addColumn('product_id', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, array(
+$ddlTable->addColumn(
+    'id', 
+    Varien_Db_Ddl_Table::TYPE_INTEGER, 
+    null, 
+    array(
+        'primary'  => true,
+        'identity' => true,
+        'unsigned' => true,
+        'nullable' => false,
+    ), 
+    'Auto Increment ID'
+)
+->addColumn(
+    'product_id', 
+    Varien_Db_Ddl_Table::TYPE_VARCHAR, 
+    255, 
+    array(
         'nullable' => false
-    ), 'Changed Product')
-    ->addColumn('oldsku', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, array(
+    ), 
+    'Changed Product'
+)
+->addColumn(
+    'oldsku', 
+    Varien_Db_Ddl_Table::TYPE_VARCHAR, 
+    255, 
+    array(
         'nullable' => true
-    ), 'oldsku')
-    ->addColumn('token', Varien_Db_Ddl_Table::TYPE_VARCHAR, 255, array(
+    ),
+    'oldsku'
+)
+->addColumn(
+    'token', 
+    Varien_Db_Ddl_Table::TYPE_VARCHAR, 
+    255, 
+    array(
         'nullable' => true
-    ), 'Token')
-    ->addColumn('status_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null, array(
+    ), 
+    'Token'
+)
+->addColumn(
+    'status_id', 
+    Varien_Db_Ddl_Table::TYPE_SMALLINT, 
+    null, 
+    array(
         'nullable' => true
-    ), 'Status')
-    ->addColumn('store_id', Varien_Db_Ddl_Table::TYPE_SMALLINT, null, array(
+    ), 
+    'Status'
+)
+->addColumn(
+    'store_id', 
+    Varien_Db_Ddl_Table::TYPE_SMALLINT, 
+    null, 
+    array(
         'nullable' => true
-    ), 'Store Id')
-    ->addIndex(
-        $installer->getIdxName($table, array('id')),
-        array('id'),
-        array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
-    )
-    ->setComment('PureClarity Delta Table');
+    ), 
+    'Store Id'
+)
+->addIndex(
+    $installer->getIdxName($table, array('id')),
+    array('id'),
+    array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
+)
+->setComment('PureClarity Delta Table');
 
 $installer->getConnection()->createTable($ddlTable);
 
@@ -70,127 +106,159 @@ $installer->getConnection()->createTable($ddlTable);
 // adding attribute group
 $installer->addAttributeGroup(Mage_Catalog_Model_Category::ENTITY, 'Default', 'PureClarity', 1000);
 
-// Make sure the attribute for the secondary image is added
-$installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_secondary_image', array(
-    'group'         => 'PureClarity',
-    'input'         => 'image',
-    'type'          => 'varchar',
-    'backend'       => 'catalog/category_attribute_backend_image',
-    'label'         => 'PureClarity image',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
-));
+// Make sure the attribute for the category override image is added
+$installer->addAttribute(
+    Mage_Catalog_Model_Category::ENTITY, 
+    'pureclarity_secondary_image', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'image',
+        'type'          => 'varchar',
+        'backend'       => 'catalog/category_attribute_backend_image',
+        'label'         => 'Override image',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
+    )
+);
 
 // Add attribute for hiding product from recommenders
-$installer->addAttribute(Mage_Catalog_Model_Category::ENTITY, 'pureclarity_hide_from_feed', array(
-    'group'         => 'PureClarity',
-    'input'         => 'select',
-    'type'          => 'text',
-    'backend'       => '',
-    'source'        => 'eav/entity_attribute_source_boolean',
-    'label'         => 'Exclude from recommenders',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'default'       => '0',
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-    'visible_on_front' => true
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Category::ENTITY, 
+    'pureclarity_hide_from_feed', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'select',
+        'type'          => 'text',
+        'backend'       => '',
+        'source'        => 'eav/entity_attribute_source_boolean',
+        'label'         => 'Exclude from recommenders',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'default'       => '0',
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+        'visible_on_front' => true
+    )
+);
 
 // adding attribute group
 $installer->addAttributeGroup(Mage_Catalog_Model_Product::ENTITY, 'Default', 'PureClarity', 1000);
 
 // Add attribute for Search Tags
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_search_tags', array(
-    'group'         => 'PureClarity',
-    'input'         => 'text',
-    'type'          => 'text',
-    'label'         => 'Search tags',
-    'backend'       => '',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'default'       => '',
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-    'visible_on_front' => true
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Product::ENTITY, 
+    'pureclarity_search_tags', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'text',
+        'type'          => 'text',
+        'label'         => 'Search tags',
+        'backend'       => '',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'default'       => '',
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+        'visible_on_front' => true
+    )
+);
 
 // Add attribute for exluding product from recommenders
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_exc_rec', array(
-    'group'         => 'PureClarity',
-    'input'         => 'select',
-    'type'          => 'text',
-    'label'         => 'Exclude from recommenders',
-    'backend'       => '',
-    'source'        => 'eav/entity_attribute_source_boolean',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'default'       => '0',
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-    'visible_on_front' => true
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Product::ENTITY, 
+    'pureclarity_exc_rec', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'select',
+        'type'          => 'text',
+        'label'         => 'Exclude from recommenders',
+        'backend'       => '',
+        'source'        => 'eav/entity_attribute_source_boolean',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'default'       => '0',
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+        'visible_on_front' => true
+    )
+);
 
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_newarrival', array(
-    'group'         => 'PureClarity',
-    'input'         => 'select',
-    'type'          => 'text',
-    'label'         => 'New arrival',
-    'backend'       => '',
-    'source'        => 'eav/entity_attribute_source_boolean',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'default'       => '0',
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-    'visible_on_front' => true
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Product::ENTITY, 
+    'pureclarity_newarrival', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'select',
+        'type'          => 'text',
+        'label'         => 'New arrival',
+        'backend'       => '',
+        'source'        => 'eav/entity_attribute_source_boolean',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'default'       => '0',
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+        'visible_on_front' => true
+    )
+);
 
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_onoffer', array(
-    'group'         => 'PureClarity',
-    'input'         => 'select',
-    'type'          => 'text',
-    'label'         => 'On offer',
-    'backend'       => '',
-    'source'        => 'eav/entity_attribute_source_boolean',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'default'       => '0',
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-    'visible_on_front' => true
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Product::ENTITY, 
+    'pureclarity_onoffer', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'select',
+        'type'          => 'text',
+        'label'         => 'On offer',
+        'backend'       => '',
+        'source'        => 'eav/entity_attribute_source_boolean',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'default'       => '0',
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+        'visible_on_front' => true
+    )
+);
 
 // Add option for Image Overlay
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_overlay_image', array(
-    'group'         => 'PureClarity',
-    'input'         => 'image',
-    'type'          => 'varchar',
-    'backend'       => 'pureclarity_core/product_attribute_backend_image',
-    'input_renderer'=> 'pureclarity_core/adminhtml_product_image',
-    'label'         => 'Overlay Image',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Product::ENTITY, 
+    'pureclarity_overlay_image', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'image',
+        'type'          => 'varchar',
+        'backend'       => 'pureclarity_core/product_attribute_backend_image',
+        'input_renderer'=> 'pureclarity_core/adminhtml_product_image',
+        'label'         => 'Overlay Image',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE
+    )
+);
 
 // Add attribute for Promo Message
-$installer->addAttribute(Mage_Catalog_Model_Product::ENTITY, 'pureclarity_promo_message', array(
-    'group'         => 'PureClarity',
-    'input'         => 'text',
-    'type'          => 'text',
-    'label'         => 'Promotion Message',
-    'backend'       => '',
-    'visible'       => 1,
-    'required'      => 0,
-    'user_defined'  => 1,
-    'default'       => '',
-    'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
-    'visible_on_front' => true
-));
+$installer->addAttribute(
+    Mage_Catalog_Model_Product::ENTITY, 
+    'pureclarity_promo_message', 
+    array(
+        'group'         => 'PureClarity',
+        'input'         => 'text',
+        'type'          => 'text',
+        'label'         => 'Promotion Message',
+        'backend'       => '',
+        'visible'       => 1,
+        'required'      => 0,
+        'user_defined'  => 1,
+        'default'       => '',
+        'global'        => Mage_Catalog_Model_Resource_Eav_Attribute::SCOPE_STORE,
+        'visible_on_front' => true
+    )
+);
 
 
 

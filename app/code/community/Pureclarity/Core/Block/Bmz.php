@@ -18,13 +18,14 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
     }
 
 
-    public function addBmzData($field, $value){
+    public function addBmzData($field, $value)
+    {
         $this->bmzData = $this->bmzData . $field . ':' . $value . ';';
     }
 
     protected function _toHtml()
     {
-        if (!Mage::helper('pureclarity_core')->isMerchActive()){
+        if (!Mage::helper('pureclarity_core')->isMerchActive()) {
             return '';
         }
 
@@ -32,7 +33,7 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
         $this->debug = Mage::helper('pureclarity_core')->isBMZDebugActive();
         $this->bmzId = $this->escapeHtml($this->getData('bmz_id'));
 
-        if ($this->bmzId == null or $this->bmzId == ""){
+        if ($this->bmzId == null or $this->bmzId == "") {
             Mage::log("Pureclarity BMZ block instantiated without a BMZ Id.", Zend_Log::ERR);
         }
         else {
@@ -40,16 +41,15 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
 
             // Set product data
             $product = Mage::registry("current_product");
-            if ($product != null){
-                $this->addBmzData('sku', $product->getSku());
+            if ($product != null) {
+                $this->addBmzData('productid', $product->getId());
             }
 
             // Set category data
             $category = Mage::registry('current_category');
-            if ($category != null){
+            if ($category != null) {
                 $this->addBmzData('categoryid', $category->getId());
             }
-
         }
 
         
@@ -57,24 +57,26 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
         // Generate the extra attributes string
         $extraAttrsString = '';
         $extraAttrs = $this->getData('pc_bmz_attrs');
-        if ($extraAttrs){
+        if ($extraAttrs) {
             $extraAttrsString = ' ' . $extraAttrs;
         }
+
         $this->extraAttrs = $extraAttrsString;
 
         // Buffers
         $topBuffer = $this->getData('pc_bmz_topbuffer');
-        if ($topBuffer){
+        if ($topBuffer) {
             $this->style .= "margin-top: ". $topBuffer . "px;";
         }
+
         $bottomBuffer = $this->getData('pc_bmz_bottombuffer');
-        if ($topBuffer){
+        if ($topBuffer) {
             $this->style .= "margin-bottom: ". $bottomBuffer . "px;";
         }
 
         // Generate debug text if needed
         $debugContent = '';
-        if ($this->debug){
+        if ($this->debug) {
             $debugContent = "<p>PureClarity BMZ: $this->bmzId</p>";
         }
 
@@ -82,14 +84,16 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
         $fallbackContent = $this->getData('bmz_fallback_content');
         $fallbackCmsBlock = $this->getData('bmz_fallback_cms_block');
 
-        if ($fallbackContent && $fallbackCmsBlock){
-            Mage::log("Pureclarity BMZ block '$this->bmzId' instantiated with both 'bmz_fallback_content' and ".
+        if ($fallbackContent && $fallbackCmsBlock) {
+            Mage::log(
+                "Pureclarity BMZ block '$this->bmzId' instantiated with both 'bmz_fallback_content' and ".
                 "'bmz_fallback_cms_block'. A BMZ must only have one fallback option set. ".
-                "CMS block fallback option will take priority.", Zend_Log::ERR);
+                "CMS block fallback option will take priority.", Zend_Log::ERR
+            );
         }
 
         if ($fallbackCmsBlock) {
-            if (!Mage::getModel('cms/block')->load($fallbackCmsBlock)->getIsActive()){
+            if (!Mage::getModel('cms/block')->load($fallbackCmsBlock)->getIsActive()) {
                 Mage::log("Pureclarity BMZ block '$this->bmzId' specifies a fallback CMS block that is not active.", Zend_Log::ERR);
             }
             else {
@@ -107,11 +111,11 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
 
         // Get a list of the custom classes for this BMZs div tag
         $customClasses = $this->getData('pc_bmz_classes');
-        if ($customClasses){
+        if ($customClasses) {
             $allClasses = explode(",", $customClasses);
         }
         else {
-            $allClasses = [];
+            $allClasses = array();
         }
 
         // Check for desktop-specific or mobile-specific BMZs
@@ -119,16 +123,24 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
         $isDesktop = $this->getData('pc_bmz_is_desktop_only') == "true";
 
         // Add more classes to the class list where they are needed to identify desktop-specific or mobile-specific BMZs
-        if ($isMobile  && !$isDesktop){$allClasses[] = "pureclarity_magento_mobile";}
-        if ($isDesktop && !$isMobile) {$allClasses[] = "pureclarity_magento_desktop";}
-        if ($isDesktop &&  $isMobile){
+        if ($isMobile  && !$isDesktop) {
+            $allClasses[] = "pureclarity_magento_mobile";
+        }
+
+        if ($isDesktop && !$isMobile) {
+            $allClasses[] = "pureclarity_magento_desktop";
+        }
+
+        if ($isDesktop &&  $isMobile) {
             // If this is only-desktop and only-mobile then somebody has done something wrong.
             // Give this the conflict class and produce an error message in the browser console and magento log.
             $allClasses[] = "pureclarity_magento_media_conflict";
             $content = "<script>console.error(\"Pureclarity BMZ $this->bmzId is set to desktop-only and "
                 ."mobile-only. This BMZ will be hidden.\");</script>".$content;
-            Mage::log("Pureclarity BMZ block '$this->bmzId' is set to desktop-only and mobile-only. "
-                ."This BMZ will be hidden.", Zend_Log::ERR);
+            Mage::log(
+                "Pureclarity BMZ block '$this->bmzId' is set to desktop-only and mobile-only. "
+                ."This BMZ will be hidden.", Zend_Log::ERR
+            );
         }
 
         // Content is now final
@@ -167,11 +179,13 @@ class Pureclarity_Core_Block_Bmz  extends Mage_Core_Block_Abstract implements Ma
         return $this->extraAttrs;
     }
 
-    public function getBmzData(){
+    public function getBmzData()
+    {
         return $this->bmzData;
     }
 
-    public function getStyle(){
+    public function getStyle()
+    {
         return $this->style;
     }
 

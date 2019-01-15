@@ -37,10 +37,11 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
         $result = $model->getFullProductFeed($pageSize, $currentPage);
         $formatType = 'json';
         $contentType = 'application/octet-stream';
-        if ((strnatcmp(phpversion(),'5.4.0') >= 0) && $this->getRequest()->getParam('pretty', 'false') === 'true'){
+        if ((strnatcmp(phpversion(), '5.4.0') >= 0) && $this->getRequest()->getParam('pretty', 'false') === 'true'){
             $formatType = 'jsonpretty';
             $contentType = 'text/html';
         }
+
         $json = Mage::helper('pureclarity_core')->formatFeed($result, $formatType);
         //$this->getResponse()->setHeader('Content-type', $contentType);
         $this->getResponse()->setBody($json);
@@ -55,15 +56,17 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
         $requests = $model->deltaFeed(null, true);
         $formatType = 'json';
         $contentType = 'application/octet-stream';
-        if ((strnatcmp(phpversion(),'5.4.0') >= 0) && $this->getRequest()->getParam('pretty', 'false') === 'true'){
+        if ((strnatcmp(phpversion(), '5.4.0') >= 0) && $this->getRequest()->getParam('pretty', 'false') === 'true'){
             $formatType = 'jsonpretty';
             $contentType = 'text/html';
         }
+
         $json = Mage::helper('pureclarity_core')->formatFeed($requests, $formatType);
         $this->getResponse()->setBody($json);
     }
 
-    public function feedAction(){
+    public function feedAction()
+    {
         $body = json_decode($this->getRequest()->getRawBody(), TRUE);
         $storeId = (int)$this->getRequest()->getParam('storeid', -1);
         $type =  $this->getRequest()->getParam('type', null);
@@ -77,7 +80,7 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
                     if ($feedFilePath != null){
                         $file = file_get_contents($feedFilePath);
                         if ($file != null){
-                            $this->getResponse()->clearHeaders()->setHeader('Content-type','application/json');
+                            $this->getResponse()->clearHeaders()->setHeader('Content-type', 'application/json');
                             $this->getResponse()->setBody($file);
                             return;
                         }
@@ -85,10 +88,11 @@ class PureClarity_Core_ExportController extends Mage_Core_Controller_Front_Actio
                 }
             }
             else{
-                $this->getResponse()->setHeader('HTTP/1.0','403',true);
+                $this->getResponse()->setHeader('HTTP/1.0', '403', true);
                 return;
             }
         }
-        $this->getResponse()->setHeader('HTTP/1.0','404',true);
+
+        $this->getResponse()->setHeader('HTTP/1.0', '404', true);
     }
 }

@@ -28,7 +28,8 @@ class Pureclarity_Core_Helper_Soap
 
     const LOG_FILE = "pureclarity_soap.log";
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->coreHelper = Mage::helper('pureclarity_core');
     }
 
@@ -46,10 +47,11 @@ class Pureclarity_Core_Helper_Soap
         if ($payload != null){
             curl_setopt($soap_do, CURLOPT_POST, true);
             curl_setopt($soap_do, CURLOPT_POSTFIELDS, $payload);
-            curl_setopt($soap_do, CURLOPT_HTTPHEADER, [
+            curl_setopt(
+                $soap_do, CURLOPT_HTTPHEADER, array(
                     'Content-Type: application/json', 
                     'Content-Length: ' . strlen($payload)
-                ]
+                )
             );
         }
         else {
@@ -70,6 +72,7 @@ class Pureclarity_Core_Helper_Soap
         if ($payload != null){
             Mage::log(print_r($payload, true), null, self::LOG_FILE);
         }
+
         Mage::log("------------------ RESPONSE ------------------", null, self::LOG_FILE);
         Mage::log(print_r($result, true), null, self::LOG_FILE);
         Mage::log("------------------ END PRODUCT DELTA ------------------", null, self::LOG_FILE);
@@ -109,6 +112,7 @@ class Pureclarity_Core_Helper_Soap
                     $additional .= '&' . $key . $i . '=' . $value;
                 }
             }
+
             $i++;
         }
 

@@ -27,7 +27,8 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
 
     const PURECLARITY_FEED_MOTO_ENDPOINT = '/api/track?appid={access_key}&evt=moto_order_track';
 
-    public function insertBmz(Varien_Event_Observer $observer){
+    public function insertBmz(Varien_Event_Observer $observer)
+    {
         $name = $observer->getEvent()->getBlock()->getNameInLayout();
         $block = $observer->getBlock();
         
@@ -73,10 +74,12 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         }
 
         Mage::getModel('core/session')->setPCProductToShoppingCart(
-            new Varien_Object(array(
+            new Varien_Object(
+                array(
                 'sku' => $product->getSku(),
                 'qty' => Mage::app()->getRequest()->getParam('qty', 1)
-            ))
+                )
+            )
         );
 
     }
@@ -106,9 +109,11 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         }
 
         Mage::getModel('core/session')->setPCProductRemovedShoppingCart(
-            new Varien_Object(array(
+            new Varien_Object(
+                array(
                 'sku' => $product->getSku()
-            ))
+                )
+            )
         );
 
     }
@@ -131,18 +136,21 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         $product = $event->getItem();
 
         if($product->getOrigData('qty') != $product->getData('qty')) {
-
             $info = Mage::getModel('core/session')->getPCCheckoutUpdateItems();
             if(is_array($info)) {
-                $info[] = new Varien_Object(array(
+                $info[] = new Varien_Object(
+                    array(
                     'sku' => $product->getSku(),
                     'quantity' => $product->getData('qty')
-                ));
+                    )
+                );
             } else {
-                $info = array(new Varien_Object(array(
+                $info = array(new Varien_Object(
+                    array(
                     'sku' => $product->getSku(),
                     'quantity' => $product->getData('qty')
-                )));
+                    )
+                ));
             }
 
             Mage::getModel('core/session')->setPCCheckoutUpdateItems(
@@ -174,13 +182,15 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         }
 
         Mage::getModel('core/session')->setPCCustomerLogin(
-            new Varien_Object(array(
+            new Varien_Object(
+                array(
                 'userid' => $customer->getId(),
                 'email' => $customer->getEmail(),
                 'firstname' => $customer->getFirstname(),
                 'lastname' => $customer->getLastname(),
                 'salutation' => $customer->getPrefix()
-            ))
+                )
+            )
         );
 
     }
@@ -206,9 +216,11 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         }
 
         Mage::getModel('core/session')->setPCCustomerLogout(
-            new Varien_Object(array(
+            new Varien_Object(
+                array(
                 'logout' => $customer->getId()
-            ))
+                )
+            )
         );
     }
 
@@ -219,7 +231,8 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             return;
         }
 
-        Mage::register('product_categories',
+        Mage::register(
+            'product_categories',
             $observer->getEvent()->getProduct()->getCategoryIds()
         );
     }
@@ -251,9 +264,8 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         //observer gets called multiple times - only count 1st one
         //see: https://magento.stackexchange.com/questions/84979/ce-1-9-2-custom-sales-order-save-after-observer-fires-twice
         if(!Mage::registry('pureclarity_moto_prevent_observer')){
-
             // Assign value to registry variable
-            Mage::register('pureclarity_moto_prevent_observer',true);
+            Mage::register('pureclarity_moto_prevent_observer', true);
 
             /** @var Mage_Sales_Model_Order $order */
             $order = $observer->getEvent()->getOrder();

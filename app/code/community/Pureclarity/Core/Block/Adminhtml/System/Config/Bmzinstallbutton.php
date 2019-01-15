@@ -40,11 +40,13 @@ class Pureclarity_Core_Block_Adminhtml_System_Config_BmzInstallButton extends Ma
     public function getButtonHtml()
     {
         $button = $this->getLayout()->createBlock('adminhtml/widget_button')
-            ->setData(array(
+            ->setData(
+                array(
                 'id' => 'BMZ_install_button',
                 'label' => $this->helper('adminhtml')->__('Install'),
                 'onclick' => 'javascript:pureclarity_magento_install_bmz(); return false;'
-            ));
+                )
+            );
 
         return $button->toHtml();
     }
