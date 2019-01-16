@@ -4,7 +4,7 @@
         $orderItems = Mage::helper('pureclarity_core')->getOrderItems();
     }
     catch (Exception $e){
-        exit;
+        Mage::log("PureClarity: Exception in onepage_success.phtml: " . $e->getMessage());
     }
 ?><script type="text/javascript">
     _pc('order:addTrans', {
