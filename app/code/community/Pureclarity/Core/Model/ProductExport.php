@@ -220,13 +220,19 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
                 // Get Product Image URL
                 $productImageUrl = '';
-                if($product->getImage() && $product->getImage() != 'no_selection') {
+                if ($product->getImage() && $product->getImage() != 'no_selection') {
                     $image = Mage::helper('catalog/image');
-                    $image->init($product, 'image');
-                    $image->resize(250);
-                    $productImageUrl = $image->__toString();
-                }
-                else{
+                    try {
+                        $productImage = $image->init($product, 'image');
+                        if ($productImage != null) {
+                            $image->resize(250);
+                            $productImageUrl = $image->__toString();
+                        }
+                    }
+                    catch(\Exception $e) {
+                        Mage::log("ERROR: Image File not found for product with Id: " . $product->getId());
+                    }
+                } else {
                     $productImageUrl = $this->coreHelper->getProductPlaceholderUrl($this->storeId);
                     if (! $productImageUrl) {
                         $productImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
