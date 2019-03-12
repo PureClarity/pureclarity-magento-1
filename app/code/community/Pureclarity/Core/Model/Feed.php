@@ -553,6 +553,15 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 }
             }
             
+            // check if there any leftovers to send
+            if ($counter > 0) {
+                $parameters = $this->getParameters($data, self::FEED_TYPE_ORDER);
+                $this->send("feed-append", $parameters);
+                $this->coreHelper->setProgressFile(
+                    $this->progressFileName, self::FEED_TYPE_ORDER, $currentProgress, $maxProgress
+                );
+            }
+            
             $this->end(self::FEED_TYPE_ORDER, true);
         }
         
