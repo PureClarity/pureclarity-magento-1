@@ -30,12 +30,10 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
     function sendProducts($pageSize = 100)
     {
         try{
-            if (! $this->isInitialised()){
+            if (!$this->isInitialised()) {
                 return false;
             }
-
-            $this->start(self::FEED_TYPE_PRODUCT);
-
+            
             Mage::log("PureClarity: In Feed->sendProducts()");
             $productExportModel = Mage::getModel('pureclarity_core/productExport');
             Mage::log("PureClarity: In Feed->sendProducts(): Got the product export model, about to initialise");
@@ -45,7 +43,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
             $currentPage = 1;
             $pages = 0;
-            $feedProducts = array();
             Mage::log("PureClarity: Set progress");
 
             // loop through products, POSTing string for each page as it loops through
@@ -53,7 +50,12 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             
             do {
                 $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
-                if (count($result["Products"]) > 0) {
+                
+                if (!empty($result["Products"])) {
+                    if (!$writtenProduct) {
+                        $this->start(self::FEED_TYPE_PRODUCT);
+                    }
+                    
                     Mage::log("PureClarity: Got result from product export model");
 
                     $pages = $result["Pages"];
@@ -71,17 +73,21 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
                     $parameters = $this->getParameters($json, self::FEED_TYPE_PRODUCT);
 
-                    if ($writtenProduct){
+                    if ($writtenProduct) {
                         $this->send("feed-append", $parameters);
                     }
-                    $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_PRODUCT, $currentPage, $pages);
+                    
+                    $this->coreHelper->setProgressFile(
+                        $this->progressFileName, self::FEED_TYPE_PRODUCT, $currentPage, $pages
+                    );
                 }
+                
                 $currentPage++;
             } while ($currentPage <= $pages);
         
             $this->endFeedAppend(self::FEED_TYPE_PRODUCT, $writtenProduct);
             
-            if ($writtenProduct){
+            if ($writtenProduct) {
                 $this->end(self::FEED_TYPE_PRODUCT);
             } else {
                 Mage::log("PureClarity: Could not find any product to upload");
@@ -100,7 +106,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             return false;
         }
 
-        $this->start(self::FEED_TYPE_CATEGORY);
         $categoryCollection = Mage::getModel('catalog/category')->getCollection()
             ->setStoreId($this->storeId)
             ->addAttributeToSelect('name')
@@ -112,10 +117,12 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         $maxProgress = count($categoryCollection);
         $currentProgress = 0;
         $writtenCategories = false;
-
+        
         Mage::log("There are {$maxProgress} categories");
 
-        if (count($categoryCollection) > 0) {
+        if ($maxProgress > 0) {
+            $this->start(self::FEED_TYPE_CATEGORY);
+            
             foreach ($categoryCollection as $category) {
                 $currentProgress++;
 
@@ -130,13 +137,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $categoryImage = $category->getImageUrl();
                 if ($categoryImage != "") {
                     $categoryImageUrl = $categoryImage;
-                } 
-                else {
+                } else {
                     $categoryImageUrl = $this->coreHelper->getCategoryPlaceholderUrl($this->storeId);
                     if (! $categoryImageUrl) {
                         $categoryImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
                         if (! $categoryImageUrl) {
-                            $categoryImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
+                            $categoryImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) 
+                                              . "frontend/base/default/" 
+                                              . self::PLACEHOLDER_IMAGE_URL;
                         }
                     }
                 }
@@ -149,8 +157,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 Mage::log("Override image: " . $overrideImage);
                 if ($overrideImage != "") {
                     $overrideImageUrl = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $overrideImage);
-                } 
-                else {
+                } else {
                     $overrideImageUrl = $this->coreHelper->getSecondaryCategoryPlaceholderUrl($this->storeId);
                     if (! $overrideImageUrl) {
                         $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
@@ -206,13 +213,13 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $parameters = $this->getParameters($feedCategories, self::FEED_TYPE_CATEGORY);
                 $this->send("feed-append", $parameters);
 
-                $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_CATEGORY, $currentProgress, $maxProgress);
+                $this->coreHelper->setProgressFile(
+                    $this->progressFileName, self::FEED_TYPE_CATEGORY, $currentProgress, $maxProgress
+                );
             }
-        }
-        $this->endFeedAppend(self::FEED_TYPE_CATEGORY, $writtenCategories);
-
-        Mage::log("In Feed.php->sendCategories(): about to call end()");
-        if ($writtenCategories) {
+            
+            $this->endFeedAppend(self::FEED_TYPE_CATEGORY, $writtenCategories);
+            Mage::log("In Feed.php->sendCategories(): about to call end()");
             $this->end(self::FEED_TYPE_CATEGORY);
         } else {
             Mage::log("PureClarity: Could not find any product categories to upload.");
@@ -227,8 +234,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         if (! $this->isInitialised()) {
             return false;
         }
-
-        $this->start(self::FEED_TYPE_BRAND);
 
         Mage::log("PureClarity: In Feed->sendBrands()");
 
@@ -247,76 +252,73 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             $maxProgress = count($brands);
             $currentProgress = 0;
             $writtenBrands = false;
-            if (count($brands) > 0) {
-                foreach($brands as $brand) {
-                $feedBrands = (!$writtenBrands ? ',"Brands":[' : "");
+            if ($maxProgress > 0) {
+                $this->start(self::FEED_TYPE_BRAND);
                 
-                $brandData = array(
-                    "Id" => $brand->getId(),
-                    "DisplayName" =>  $brand->getName()
-                );
-                
-                $imageUrl = $brand->getImageUrl();
-                if ($imageUrl) {
-                    $brandData['Image'] = $this->removeUrlProtocol($imageUrl);
-                }
-
-                // Get override image
-                $overrideImageUrl = null;
-                $overrideImage = $brand->getData('pureclarity_secondary_image');
-                Mage::log("Override image: " . $overrideImage);
-                if ($overrideImage != "") {
-                    $overrideImageUrl = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $overrideImage);
-                } 
-                else {
-                    $overrideImageUrl = $this->coreHelper->getSecondaryCategoryPlaceholderUrl($this->storeId);
-                    if (! $overrideImageUrl) {
-                        $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                foreach ($brands as $brand) {
+                    $feedBrands = (!$writtenBrands ? ',"Brands":[' : "");
+                    
+                    $brandData = array(
+                        "Id" => $brand->getId(),
+                        "DisplayName" =>  $brand->getName()
+                    );
+                    
+                    $imageUrl = $brand->getImageUrl();
+                    if ($imageUrl) {
+                        $brandData['Image'] = $this->removeUrlProtocol($imageUrl);
                     }
-                }
 
-                $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
+                    // Get override image
+                    $overrideImageUrl = null;
+                    $overrideImage = $brand->getData('pureclarity_secondary_image');
+                    Mage::log("Override image: " . $overrideImage);
+                    if ($overrideImage != "") {
+                        $overrideImageUrl = sprintf("%scatalog/category/%s", Mage::getBaseUrl('media'), $overrideImage);
+                    } else {
+                        $overrideImageUrl = $this->coreHelper->getSecondaryCategoryPlaceholderUrl($this->storeId);
+                        if (! $overrideImageUrl) {
+                            $overrideImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
+                        }
+                    }
 
-                if ($overrideImageUrl != null) {
-                    $brandData["OverrideImage"] = $overrideImageUrl;
-                }
+                    $overrideImageUrl = $this->removeUrlProtocol($overrideImageUrl);
 
-                $brandData["Link"] = $this->removeUrlProtocol($brand->getUrl($brand));
+                    if ($overrideImageUrl != null) {
+                        $brandData["OverrideImage"] = $overrideImageUrl;
+                    }
 
-                // Check whether to ignore this brand in recommenders
-                if ($brand->getData('pureclarity_hide_from_feed') == '1') {
-                    $brandData["ExcludeFromRecommenders"] = true;
-                }
+                    $brandData["Link"] = $this->removeUrlProtocol($brand->getUrl($brand));
 
-                if ($writtenBrands) {
-                    $feedBrands .= ',';
-                }
+                    // Check whether to ignore this brand in recommenders
+                    if ($brand->getData('pureclarity_hide_from_feed') == '1') {
+                        $brandData["ExcludeFromRecommenders"] = true;
+                    }
 
-                $writtenBrands = true;
-                $feedBrands .= $this->coreHelper->formatFeed($brandData, 'json');
-                $currentProgress++;
+                    if ($writtenBrands) {
+                        $feedBrands .= ',';
+                    }
 
-                $parameters = $this->getParameters($feedBrands, self::FEED_TYPE_BRAND);
-                
-                $this->send("feed-append", $parameters);  
-                
+                    $writtenBrands = true;
+                    $feedBrands .= $this->coreHelper->formatFeed($brandData, 'json');
+                    $currentProgress++;
 
-                $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_BRAND, $currentProgress, $maxProgress);
+                    $parameters = $this->getParameters($feedBrands, self::FEED_TYPE_BRAND);
+                    
+                    $this->send("feed-append", $parameters);  
+                    
+                    $this->coreHelper->setProgressFile(
+                        $this->progressFileName, self::FEED_TYPE_BRAND, $currentProgress, $maxProgress
+                    );
                 }
 
                 $this->endFeedAppend(self::FEED_TYPE_BRAND, $writtenBrands);
-            }  
-        }
-        else{
+                $this->end(self::FEED_TYPE_BRAND);
+            } else {
+                Mage::log("PureClarity: Could not find any brands to upload.");
+            }
+        } else {
             $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_BRAND, 1, 1);
         }
-
-        if ($writtenBrands) {
-            $this->end(self::FEED_TYPE_BRAND);
-        } else {
-            Mage::log("PureClarity: Could not find any brands to upload.");
-        }
-        
     }
 
     function getBrandFeedArray($storeId)
@@ -347,11 +349,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             return false;
         }
 
-        $this->start(self::FEED_TYPE_USER);
-
         Mage::log("PureClarity: In Feed->sendUsers()");
-        $customerGroups = Mage::getModel('customer/group')->getCollection();
-
         $currentStore = Mage::getModel('core/store')->load($this->storeId);
 
         try {
@@ -372,7 +370,9 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         $currentProgress = 0;
         $writtenCustomers = false;
         Mage::log("PureClarity: {$maxProgress} users");
-        if (count($customerCollection) > 0) {
+        if ($maxProgress > 0) {
+            $this->start(self::FEED_TYPE_USER);
+            
             foreach ($customerCollection as $customer) {
                 $users = (!$writtenCustomers ? ',"Users":[' : "");
 
@@ -414,8 +414,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $address = null;
                 if ($customer->getDefaultShipping()) {
                     $address = $customer->getAddresses()[$customer->getDefaultShipping()];
-                } 
-                elseif ($customer->getAddresses() && count(array_keys($customer->getAddresses())) > 0) {
+                } elseif ($customer->getAddresses() && count(array_keys($customer->getAddresses())) > 0) {
                     $address = $customer->getAddresses()[array_keys($customer->getAddresses())[0]];
                 }
 
@@ -450,12 +449,9 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
             }
 
             $this->endFeedAppend(self::FEED_TYPE_USER, $writtenCustomers);
-            if ($writtenCustomers){
+            if ($writtenCustomers) {
                 $this->end(self::FEED_TYPE_USER);
-            } else {
-                Mage::log("PureClarity: Could not find any users to upload.");
             }
-            
         } 
     }
 
@@ -467,8 +463,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         if (! $this->isInitialised()) {
             return false;
         }
-
-        $this->start(self::FEED_TYPE_ORDER, true);
 
         Mage::log("PureClarity: In Feed->sendOrders()");
 
@@ -490,6 +484,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                     'eq' => Mage_Sales_Model_Order::STATE_COMPLETE
                 )
             );
+            
         Mage::log("PureClarity: Initialised orderCollection");
 
         // Set size and initiate vars
@@ -497,62 +492,70 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         $currentProgress = 0;
         $counter = 0;
         $data = "";
-
+        
         Mage::log("PureClarity: {$maxProgress} items");
 
-        // Reset Progress file
-        $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_ORDER, 0, 1);
+        if ($maxProgress > 0) {
+            $this->start(self::FEED_TYPE_ORDER, true);
+            // Reset Progress file
+            $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_ORDER, 0, 1);
+            
+            // Build Data
+            foreach ($orderCollection as $orderData) {
+                $order = Mage::getModel('sales/order')
+                    ->loadByIncrementId($orderData->getIncrementId());
+                if ($order) {
+                    $id = $order->getIncrementId();
+                    $customerId = $order->getCustomerId();
+                    if ($customerId) {
+                        $email = $order->getCustomerEmail();
+                        $date = $order->getCreatedAt();
 
-        // Build Data
-        foreach ($orderCollection as $orderData) {
-            $order = Mage::getModel('sales/order')
-                ->loadByIncrementId($orderData->getIncrementId());
-            if ($order) {
-                $id = $order->getIncrementId();
-                $customerId = $order->getCustomerId();
-                if ($customerId) {
-                    $email = $order->getCustomerEmail();
-                    $date = $order->getCreatedAt();
+                        $orderItems = $orderData->getAllVisibleItems();
+                        foreach ($orderItems as $item) {
+                            $productId = $item->getProductId();
+                            $product = Mage::getModel('catalog/product')->load($productId);
+                            if (! $product) {
+                                continue;
+                            }
 
-                    $orderItems = $orderData->getAllVisibleItems();
-                    foreach ($orderItems as $item) {
-                        $productId = $item->getProductId();
-                        $product = Mage::getModel('catalog/product')->load($productId);
-                        if (! $product) {
-                            continue;
+                            $sku = $product->getData('sku');
+                            if (! $sku) {
+                                continue;
+                            }
+
+                            $quantity = $item->getQtyOrdered();
+                            $price = $item->getPriceInclTax();
+                            $linePrice = $item->getRowTotalInclTax();
+                            if ($price > 0 && $linePrice > 0) {
+                                $data .= "{$id},{$customerId},{$email},{$date},{$sku}" 
+                                      .  ",{$quantity},{$price},{$linePrice}" . PHP_EOL;
+                            }
                         }
 
-                        $sku = $product->getData('sku');
-                        if (! $sku) {
-                            continue;
-                        }
-
-                        $quantity = $item->getQtyOrdered();
-                        $price = $item->getPriceInclTax();
-                        $linePrice = $item->getRowTotalInclTax();
-                        if ($price > 0 && $linePrice > 0) {
-                            $data .= "{$id},{$customerId},{$email},{$date},{$sku},{$quantity},{$price},{$linePrice}" . PHP_EOL;
-                        }
+                        $counter ++;
                     }
+                }
 
-                    $counter ++;
+                // Increment counters
+                $currentProgress ++;
+
+                // latter to ensure something comes through, if historic orders less than 10 we'll still get a feed
+                if ($counter >= 10 || $maxProgress < 10) {
+                    // Every 10, send the data
+                    $parameters = $this->getParameters($data, self::FEED_TYPE_ORDER);
+                    $this->send("feed-append", $parameters);
+                    $data = "";
+                    $counter = 0;
+                    $this->coreHelper->setProgressFile(
+                        $this->progressFileName, self::FEED_TYPE_ORDER, $currentProgress, $maxProgress
+                    );
                 }
             }
-
-            // Increment counters
-            $currentProgress ++;
-
-            if ($counter >= 10 || $maxProgress < 10) { // latter to ensure something comes through, if historic orders less than 10 we'll still get a feed
-                // Every 10, send the data
-                $parameters = $this->getParameters($data, self::FEED_TYPE_ORDER);
-                $this->send("feed-append", $parameters);
-                $data = "";
-                $counter = 0;
-                $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_ORDER, $currentProgress, $maxProgress);
-            }
+            
+            $this->end(self::FEED_TYPE_ORDER, true);
         }
-
-        $this->end(self::FEED_TYPE_ORDER, true);
+        
         Mage::log("PureClarity: Finished sending order data");
     }
 
@@ -567,8 +570,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
         if ($feedType == self::FEED_TYPE_ORDER) {
             $startJson = "OrderId,UserId,Email,DateTimeStamp,ProdCode,Quantity,UnityPrice,LinePrice" . PHP_EOL;
-        }
-        else{
+        } else {
             $startJson = '{"Version": 2';
         }
 
@@ -596,7 +598,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         /*
          * Close the array if we've had at least one unit of data
          */    
-        if($hasSentItemData){
+        if ($hasSentItemData) {
             $parameters = $this->getParameters(']', $feedType);
             $this->send("feed-append", $parameters);
         }
@@ -615,6 +617,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         Mage::log("PureClarity: About to send data to {$url}: " . print_r($parameters, true));
 
         $postFields = http_build_query($parameters);
+        
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 5000);
