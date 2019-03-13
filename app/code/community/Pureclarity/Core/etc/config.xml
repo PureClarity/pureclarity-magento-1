@@ -175,7 +175,7 @@
             <pureclarity_core_full_feed>
                 <schedule>
                     <!-- Third hour of every day -->
-                    <cron_expr>31 11 * * *</cron_expr>
+                    <cron_expr>0 3 * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>pureclarity_core/cron::runAllFeeds</model>
