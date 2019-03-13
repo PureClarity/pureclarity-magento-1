@@ -46,7 +46,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                 $stores = $group->getStores();
                 foreach ($stores as $store) {
                     // Only generate feeds when feed notification is active
-                    if (! $this->coreHelper->isFeedNotificationActive($store->getId())) {
+                    if ($this->coreHelper->isFeedNotificationActive($store->getId())) {
                         $this->allFeeds($store->getId());
                     }
                 }
