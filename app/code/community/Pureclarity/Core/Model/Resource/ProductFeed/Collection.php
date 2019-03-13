@@ -8,7 +8,7 @@
  * @author      Douglas Radburn <douglas.radburn@purenet.co.uk>
  * @copyright   Copyright (c) 2016 Purenet http://www.purenet.co.uk
  */
-class Pureclarity_Core_Model_Resource_ProductFeed_Collection extends Mage_Core_Model_Resource_Db_Collection_Abstract
+class Pureclarity_Core_Model_Resource_ProductFeed_Collection extends Mage_Core_Model_Mysql4_Collection_Abstract
 {
 
     protected function _construct()

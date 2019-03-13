@@ -44,7 +44,7 @@
             <pureclarity_core_setup>
                 <setup>
                     <module>Pureclarity_Core</module>
-                    <class>Mage_Catalog_Model_Resource_Setup</class>
+                    <class>Mage_Catalog_Model_Resource_Eav_Mysql4_Setup</class>
                 </setup>
             </pureclarity_core_setup>
         </resources>
@@ -175,7 +175,7 @@
             <pureclarity_core_full_feed>
                 <schedule>
                     <!-- Third hour of every day -->
-                    <cron_expr>0 3 * * *</cron_expr>
+                    <cron_expr>31 11 * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>pureclarity_core/cron::runAllFeeds</model>

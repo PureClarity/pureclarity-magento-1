@@ -30,76 +30,20 @@ $installer->startSetup();
 // Create Product Feed Table
 $table = $installer->getTable('pureclarity_core/pureclarity_productfeed');
 
-if ($installer->tableExists($table)) {
-    $installer->getConnection()->dropTable($table);
-}
 
-$ddlTable = $installer->getConnection()->newTable($table);
-$ddlTable->addColumn(
-    'id', 
-    Varien_Db_Ddl_Table::TYPE_INTEGER, 
-    null, 
-    array(
-        'primary'  => true,
-        'identity' => true,
-        'unsigned' => true,
-        'nullable' => false,
-    ), 
-    'Auto Increment ID'
-)
-->addColumn(
-    'product_id', 
-    Varien_Db_Ddl_Table::TYPE_VARCHAR, 
-    255, 
-    array(
-        'nullable' => false
-    ), 
-    'Changed Product'
-)
-->addColumn(
-    'oldsku', 
-    Varien_Db_Ddl_Table::TYPE_VARCHAR, 
-    255, 
-    array(
-        'nullable' => true
-    ),
-    'oldsku'
-)
-->addColumn(
-    'token', 
-    Varien_Db_Ddl_Table::TYPE_VARCHAR, 
-    255, 
-    array(
-        'nullable' => true
-    ), 
-    'Token'
-)
-->addColumn(
-    'status_id', 
-    Varien_Db_Ddl_Table::TYPE_SMALLINT, 
-    null, 
-    array(
-        'nullable' => true
-    ), 
-    'Status'
-)
-->addColumn(
-    'store_id', 
-    Varien_Db_Ddl_Table::TYPE_SMALLINT, 
-    null, 
-    array(
-        'nullable' => true
-    ), 
-    'Store Id'
-)
-->addIndex(
-    $installer->getIdxName($table, array('id')),
-    array('id'),
-    array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE)
-)
-->setComment('PureClarity Delta Table');
-
-$installer->getConnection()->createTable($ddlTable);
+$installer->run("
+    DROP TABLE IF EXISTS {$table};
+    CREATE TABLE `{$table}` (
+        `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Auto Increment ID',
+        `product_id` varchar(255) NOT NULL COMMENT 'Changed Product',
+        `oldsku` varchar(255) DEFAULT NULL COMMENT 'oldsku',
+        `token` varchar(255) DEFAULT NULL COMMENT 'Token',
+        `status_id` smallint(6) DEFAULT NULL COMMENT 'Status',
+        `store_id` smallint(6) DEFAULT NULL COMMENT 'Store Id',
+        PRIMARY KEY (`id`),
+        UNIQUE KEY `IDX_PURECLARITY_PRODUCTFEED_ID` (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='PureClarity Delta Table';
+");
 
 
 

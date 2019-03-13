@@ -26,7 +26,7 @@
 * Product Collection override to ensure PureClarity module doesn't
 * use flattened tables. 
 */
-class PureClarity_Core_Model_Resource_Product_Collection extends Mage_Catalog_Model_Resource_Product_Collection
+class PureClarity_Core_Model_Resource_Product_Collection extends Mage_Catalog_Model_Resource_Eav_Mysql4_Product_Collection
 {
     public function getModelName() 
     {
