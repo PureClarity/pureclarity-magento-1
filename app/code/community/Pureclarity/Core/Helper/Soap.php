@@ -108,7 +108,13 @@ class Pureclarity_Core_Helper_Soap
         /** @var Mage_Sales_Model_Order_Item $item */
         foreach ($orderItems as $item) {
             foreach($item as $key => $value){
-                if ($key != 'orderid'){
+                if ($key == 'children') { 
+                    foreach ($value as $x => $child) {
+                        foreach ($child as $childKey => $childValue) {
+                            $additional .= '&' . $key . $i . '_' . $x . '_' . $childKey . '=' . $childValue;
+                        }
+                    }
+                } else if ($key != 'orderid'){
                     $additional .= '&' . $key . $i . '=' . $value;
                 }
             }
