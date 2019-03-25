@@ -349,12 +349,13 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         return array(
-            'orderId'           => $order->getIncrementId(),
-            'firstName'         => $order->getCustomerFirstname(),
-            'lastName'          => $order->getCustomerLastname(),
-            'postCode'          => $address->getPostcode(),
-            'email'             => $order->getCustomerEmail(),
-            'orderTotal'        => $order->getGrandTotal()
+            'orderid'    => $order->getIncrementId(),
+            'firstname'  => $order->getCustomerFirstname(),
+            'lastname'   => $order->getCustomerLastname(),
+            'postcode'   => $address->getPostcode(),
+            'email'      => $order->getCustomerEmail(),
+            'userid'     => $order->getCustomerId(),
+            'ordertotal' => $order->getGrandTotal()
         );
     }
 
@@ -375,9 +376,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         // process parents
         foreach ($orderItems as $item) {
             if (!$item->getParentItemId()) {
-                $product = Mage::getModel('catalog/product')->load($item->getProductId());
                 $items[$item->getId()] = array(
-                    'sku' => $product->getSku(),
+                    'productId' => $item->getProductId(),
                     'qty' => $item->getQtyOrdered(),
                     'unitPrice' => $item->getPrice()
                 );
@@ -396,20 +396,18 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         // Build output information
-        foreach ($items as $item) {
+        foreach ($items as $itemId => $item) {
             $orderObject = array(
-                'orderid'       => $order->getIncrementId(),
-                'sku'           => $item['sku'],
-                'qty'           => $item['qty'],
-                'unitprice'     => $item['unitPrice']
+                'orderid'   => $order->getIncrementId(),
+                'refid'     => $itemId,
+                'id'        => $item['productId'],
+                'qty'       => $item['qty'],
+                'unitprice' => $item['unitPrice'],
+                'children'  => array()
             );
+            
             if ($item['associatedproducts']) {
-                $associatedIndex = 1;
-                foreach ($item['associatedproducts'] as $associated) {
-                    $orderObject['associatedproduct' . $associatedIndex . '_sku'] = $associated['sku'];
-                    $orderObject['associatedproduct' . $associatedIndex . '_qty'] = $associated['qty'];
-                    $associatedIndex++;
-                }
+                $orderObject['children'] = $item['associatedproducts'];
             }
 
             $orderInformation[] = $orderObject;

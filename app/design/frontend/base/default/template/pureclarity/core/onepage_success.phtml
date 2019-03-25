@@ -7,14 +7,7 @@
         Mage::log("PureClarity: Exception in onepage_success.phtml: " . $e->getMessage());
     }
 ?><script type="text/javascript">
-    _pc('order:addTrans', {
-        orderid:    "<?php echo $order['orderId'] ?>",
-        firstname:  "<?php echo $order['firstName'] ?>",
-        lastname:   "<?php echo $order['lastName'] ?>",
-        postcode:   "<?php echo $order['postCode'] ?>",
-        email:      "<?php echo $order['email'] ?>",
-        ordertotal: "<?php echo $order['orderTotal'] ?>"
-    });
+    _pc('order:addTrans', <?php echo json_encode($order) ?>);
     <?php
         foreach ($orderItems as $orderItem):
     ?>_pc('order:addItem', <?php echo json_encode($orderItem) ?> );

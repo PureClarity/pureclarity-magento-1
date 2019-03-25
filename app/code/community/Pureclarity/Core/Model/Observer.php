@@ -76,7 +76,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getModel('core/session')->setPCProductToShoppingCart(
             new Varien_Object(
                 array(
-                'sku' => $product->getSku(),
+                'id' => $product->getId(),
                 'qty' => Mage::app()->getRequest()->getParam('qty', 1)
                 )
             )
@@ -111,7 +111,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         Mage::getModel('core/session')->setPCProductRemovedShoppingCart(
             new Varien_Object(
                 array(
-                'sku' => $product->getSku()
+                'id' => $product->getId()
                 )
             )
         );
@@ -140,14 +140,14 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
             if(is_array($info)) {
                 $info[] = new Varien_Object(
                     array(
-                    'sku' => $product->getSku(),
+                    'id' => $product->getProductId(),
                     'quantity' => $product->getData('qty')
                     )
                 );
             } else {
                 $info = array(new Varien_Object(
                     array(
-                    'sku' => $product->getSku(),
+                    'id' => $product->getProductId(),
                     'quantity' => $product->getData('qty')
                     )
                 ));
@@ -278,6 +278,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
                 'lastname'      => $order->getCustomerLastname(),
                 'postcode'      => $order->getBillingAddress()->getPostcode(),
                 'email'         => $order->getCustomerEmail(),
+                'userid'        => $order->getCustomerId(),
                 'ordertotal'    => $order->getGrandTotal(),
                 'productcount'  => count($order->getAllVisibleItems())
             );

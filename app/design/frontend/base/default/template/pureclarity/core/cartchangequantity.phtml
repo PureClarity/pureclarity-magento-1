@@ -8,7 +8,7 @@
     <?php
         foreach($_productInformation as $product):
     ?>_pc('product_set_basket', {
-        sku: "<?php echo $product->getSku();?>",
+        id: "<?php echo $product->getId();?>",
         quantity: "<?php echo $product->getQuantity();?>"
     });<?php
         endforeach;

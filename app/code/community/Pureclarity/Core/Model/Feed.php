@@ -528,7 +528,7 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                             $price = $item->getPriceInclTax();
                             $linePrice = $item->getRowTotalInclTax();
                             if ($price > 0 && $linePrice > 0) {
-                                $data .= "{$id},{$customerId},{$email},{$date},{$sku}" 
+                                $data .= "{$id},{$customerId},{$email},{$date},{$productId}" 
                                       .  ",{$quantity},{$price},{$linePrice}" . PHP_EOL;
                             }
                         }
