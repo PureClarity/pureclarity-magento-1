@@ -349,12 +349,13 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         return array(
-            'orderId'           => $order->getIncrementId(),
-            'firstName'         => $order->getCustomerFirstname(),
-            'lastName'          => $order->getCustomerLastname(),
-            'postCode'          => $address->getPostcode(),
-            'email'             => $order->getCustomerEmail(),
-            'orderTotal'        => $order->getGrandTotal()
+            'orderid'    => $order->getIncrementId(),
+            'firstname'  => $order->getCustomerFirstname(),
+            'lastname'   => $order->getCustomerLastname(),
+            'postcode'   => $address->getPostcode(),
+            'email'      => $order->getCustomerEmail(),
+            'userid'     => $order->getCustomerId(),
+            'ordertotal' => $order->getGrandTotal()
         );
     }
 

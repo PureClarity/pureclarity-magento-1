@@ -278,6 +278,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
                 'lastname'      => $order->getCustomerLastname(),
                 'postcode'      => $order->getBillingAddress()->getPostcode(),
                 'email'         => $order->getCustomerEmail(),
+                'userid'        => $order->getCustomerId(),
                 'ordertotal'    => $order->getGrandTotal(),
                 'productcount'  => count($order->getAllVisibleItems())
             );
