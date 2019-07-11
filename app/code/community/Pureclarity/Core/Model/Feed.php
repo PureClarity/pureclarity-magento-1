@@ -352,7 +352,15 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         Mage::log("PureClarity: In Feed->sendUsers()");
         $currentStore = Mage::getModel('core/store')->load($this->storeId);
 
+        // pre-load customer groups so that we don't load individually for each customer
+        $customerGroups = array();
+        $customerGroupCollection = Mage::getModel('customer/group')->getCollection();
+        foreach ($customerGroupCollection as $customerGroup) {
+            $customerGroups[$customerGroup->getCustomerGroupId()] = $customerGroup->getCustomerGroupCode();
+        }
+        
         try {
+            // Get customer information with default shipping address
             $customerCollection = Mage::getModel('customer/customer')
                 ->getCollection()
                 ->addAttributeToFilter(
@@ -360,7 +368,11 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                         "eq" => $currentStore->getWebsiteId()
                     )
                 )
-                ->addAttributeToSelect("*");
+                ->addAttributeToSelect("*")
+                ->joinAttribute('country_id', 'customer_address/country_id', 'default_shipping', null, 'left')
+                ->joinAttribute('city', 'customer_address/city', 'default_shipping', null, 'left')
+                ->joinAttribute('region', 'customer_address/region', 'default_shipping', null, 'left')
+                ->groupByAttribute('entity_id');
         } 
         catch (\Exception $e) {
             Mage::log($e->getMessage());
@@ -373,9 +385,11 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         if ($maxProgress > 0) {
             $this->start(self::FEED_TYPE_USER);
             
+            $parameters = $this->getParameters(',"Users":[', self::FEED_TYPE_USER);
+            $this->send("feed-append", $parameters);
+            $users = '';
+            
             foreach ($customerCollection as $customer) {
-                $users = (!$writtenCustomers ? ',"Users":[' : "");
-
                 $data = array(
                     'UserId' => $customer->getId(),
                     'Email' => $customer->getEmail(),
@@ -391,13 +405,9 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                     $data['DOB'] = $customer->getDob();
                 }
 
-                if ($customer->getGroupId()) {
-                    $customerGroup = Mage::getModel('customer/group')
-                        ->load($customer->getGroupId());
-                    if ($customerGroup) {
-                        $data['Group'] = $customerGroup->getCustomerGroupCode();
-                        $data['GroupId'] = $customer->getGroupId();
-                    }
+                if ($customer->getGroupId() && $customerGroups[$customer->getGroupId()]) {
+                    $data['Group'] = $customerGroups[$customer->getGroupId()];
+                    $data['GroupId'] = $customer->getGroupId();
                 }
 
                 if ($customer->getGender()) {
@@ -413,25 +423,36 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
                 $address = null;
                 if ($customer->getDefaultShipping()) {
-                    $address = $customer->getAddresses()[$customer->getDefaultShipping()];
-                } elseif ($customer->getAddresses() && count(array_keys($customer->getAddresses())) > 0) {
-                    $address = $customer->getAddresses()[array_keys($customer->getAddresses())[0]];
+                    if ($customer->getData('city')) {
+                        $data['City'] = $customer->getData('city');
+                    }
+                    
+                    if ($customer->getData('region')) {
+                        $data['State'] = $customer->getData('region');
+                    }
+                    
+                    if ($customer->getData('country_id')) {
+                        $data['Country'] = $customer->getData('country_id');
+                    }
+                } else {
+                    $addresses = $customer->getAddresses();
+                    if (!empty($addresses)) {
+                        $address = array_shift($addresses);
+                        if ($address->getCity()) {
+                            $data['City'] = $address->getCity();
+                        }
+
+                        if ($address->getRegion()) {
+                            $data['State'] = $address->getRegion();
+                        }
+
+                        if ($address->getCountry()) {
+                            $data['Country'] = $address->getCountry();
+                        }
+                    }
                 }
 
-                if ($address) {
-                    if ($address->getCity()) {
-                        $data['City'] = $address->getCity();
-                    }
-
-                    if ($address->getRegion()) {
-                        $data['State'] = $address->getRegion();
-                    }
-
-                    if ($address->getCountry()) {
-                        $data['Country'] = $address->getCountry();
-                    }
-                }
-
+                
                 if ($writtenCustomers) {
                     $users .= ',';
                 }
@@ -441,17 +462,18 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $users .= $this->coreHelper->formatFeed($data, 'json');
 
                 $currentProgress++;
-
-                $parameters = $this->getParameters($users, self::FEED_TYPE_USER);
-                $this->send("feed-append", $parameters);
-
+                
+                if ($currentProgress %100 === 0 || $currentProgress === $maxProgress) {
+                    $parameters = $this->getParameters($users, self::FEED_TYPE_USER);
+                    $this->send("feed-append", $parameters);
+                    $users = '';
+                }
+               
                 $this->coreHelper->setProgressFile($this->progressFileName, self::FEED_TYPE_USER, $currentProgress, $maxProgress);
             }
 
             $this->endFeedAppend(self::FEED_TYPE_USER, $writtenCustomers);
-            if ($writtenCustomers) {
-                $this->end(self::FEED_TYPE_USER);
-            }
+            $this->end(self::FEED_TYPE_USER);
         } 
     }
 
@@ -651,7 +673,6 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
         }
 
         curl_setopt($ch, CURLOPT_FAILONERROR, true);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
 
         $response = curl_exec($ch);
 
