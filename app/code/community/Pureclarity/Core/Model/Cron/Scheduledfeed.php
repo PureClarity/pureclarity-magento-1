@@ -40,7 +40,6 @@ class Pureclarity_Core_Model_Cron_Scheduledfeed
         $fileHandler->open(array('path' => $pcDir));
         if ($fileHandler->fileExists($scheduleFilePath)) {
             $scheduleData = $fileHandler->read($scheduleFilePath);
-            $scheduleData = $fileHandler->read($scheduleFilePath);
             $schedule = (array)json_decode($scheduleData);
             $fileHandler->rm($scheduleFilePath);
             if (!empty($schedule) && isset($schedule['store']) && isset($schedule['feeds'])) {
