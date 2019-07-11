@@ -163,6 +163,15 @@
 
     <crontab>
         <jobs>
+            <pureclarity_core_scheduled_feed>
+                <schedule>
+                    <!-- Every minute -->
+                    <cron_expr>*/1 * * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>pureclarity_core/cron_scheduledfeed::execute</model>
+                </run>
+            </pureclarity_core_scheduled_feed>
             <pureclarity_core_delta_feed>
                 <schedule>
                     <!-- Every minute -->

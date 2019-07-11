@@ -26,29 +26,49 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
 {
 
     /**
-     * Install the default BMZs
+     * Run selected feeds
      *
      * @return void
      */
     public function runselectedAction()
     {
-        session_write_close();
         try {
             Mage::log("PureClarity: In Pureclarity_Core_Adminhtml_RunFeedNowController->runselectedAction()");
             $storeId =  (int)$this->getRequest()->getParam('storeid');
+            /** @var Pureclarity_Core_Model_Cron $model */
             $model = Mage::getModel('pureclarity_core/cron');
             $feeds = array();
-            if ($this->getRequest()->getParam('product') == 'true')
+            if ($this->getRequest()->getParam('product') == 'true') {
                 $feeds[] = 'product';
-            if ($this->getRequest()->getParam('category') == 'true')
+            }
+            
+            if ($this->getRequest()->getParam('category') == 'true') {
                 $feeds[] = 'category';
-            if ($this->getRequest()->getParam('brand') == 'true')
+            }
+            
+            if ($this->getRequest()->getParam('brand') == 'true') {
                 $feeds[] = 'brand';
-            if ($this->getRequest()->getParam('user') == 'true')
+            }
+            
+            if ($this->getRequest()->getParam('user') == 'true') {
                 $feeds[] = 'user';
-            if ($this->getRequest()->getParam('orders') == 'true')
+            }
+            
+            if ($this->getRequest()->getParam('orders') == 'true') {
                 $feeds[] = 'orders';
-            $model->selectedFeeds($storeId, $feeds);
+            }
+            
+            $pcDir = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS;
+            $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
+            
+            $fileHandler = new Varien_Io_File();
+            $fileHandler->open(array('path' => $pcDir));
+            
+            if ($progressFileName != null && $fileHandler->fileExists($progressFileName)) {
+                $fileHandler->rm($progressFileName);
+            }
+            
+            $model->scheduleSelectedFeeds($storeId, $feeds);
         }
         catch (\Exception $e){
             $this->getResponse()
@@ -64,15 +84,17 @@ class Pureclarity_Core_Adminhtml_RunFeedNowController extends Mage_Adminhtml_Con
         $contents = "";
         
         $progressFileName = Pureclarity_Core_Helper_Data::getProgressFileName();
-
-        if ($progressFileName != null && file_exists($progressFileName)) {
-            $contents = file_get_contents($progressFileName);
+        $pcDir = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS;
+        
+        $fileHandler = new Varien_Io_File();
+        $fileHandler->open(array('path' => $pcDir));
+        
+        if ($progressFileName != null && $fileHandler->fileExists($progressFileName)) {
+            $contents = $fileHandler->read($progressFileName);
             Mage::log("In getprogressAction(): " . $contents);
-             $progressFile = fopen($progressFileName, "r");
-             fclose($progressFile);
         }
 
-        if(empty($contents)){
+        if (empty($contents)) {
             $contents = "{}";
         }
 
