@@ -209,6 +209,35 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
     {
         $this->doFeed($feeds, $storeId);
     }
+    
+    /**
+     * Sets selected feeds to be run by cron asap
+     *
+     * @param integer $storeId
+     * @param string[] $feeds
+     */
+    public function scheduleSelectedFeeds($storeId, $feeds)
+    {
+        $pcDir = Pureclarity_Core_Helper_Data::getPureClarityBaseDir() . DS ;
+        $scheduleFilePath = $pcDir . 'scheduled_feed';
+        
+        $schedule = array(
+            'store' => $storeId,
+            'feeds' => $feeds
+        );
+        
+        $fileHandler = new Varien_Io_File();
+        
+        $fileHandler->open(array('path' => $pcDir)); 
+        if (!$fileHandler->write($scheduleFilePath, json_encode($schedule))) {
+            Mage::throwException(
+                'Error: Cannot open feed file for writing under var/pureclarity directory. ' 
+                . 'It could be locked or there maybe insufficient permissions to write to the directory. ' 
+                . 'You must delete locked files and ensure PureClarity has permission to write to the var directory. ' 
+                . 'File: ' . $scheduleFilePath
+            );
+        }
+    }
 
     /**
      * Produce a feed and POST to PureClarity.

@@ -59,7 +59,6 @@ class Pureclarity_Core_Helper_Soap
         }
 
         curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
-        curl_setopt($soap_do, CURLOPT_VERBOSE, true);
 
         if (! $result = curl_exec($soap_do)) {
             Mage::log('ERROR: ' . curl_error($soap_do), null, self::LOG_FILE);
@@ -136,7 +135,6 @@ class Pureclarity_Core_Helper_Soap
         curl_setopt($soap_do, CURLOPT_POST, false);
 
         curl_setopt($soap_do, CURLOPT_FAILONERROR, true);
-        curl_setopt($soap_do, CURLOPT_VERBOSE, true);
 
         if (! $result = curl_exec($soap_do)) {
             Mage::log('ERROR: ' . curl_error($soap_do), null, self::LOG_FILE);
