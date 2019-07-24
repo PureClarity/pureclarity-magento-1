@@ -174,12 +174,8 @@
             
             <block type="core/template" name="pureclarity.core.allpages" template="pureclarity/core/all_pages.phtml"/>
 
-            <block type="core/template" name="pureclarity.core.cart_added" template="pureclarity/core/cartadded.phtml"/>
-
-            <block type="core/template" name="pureclarity.core.cart_removed" template="pureclarity/core/cartremoved.phtml"/>
-
-            <block type="core/template" name="pureclarity.core.cart_changequantity" template="pureclarity/core/cartchangequantity.phtml"/>
-
+            <block type="core/template" name="pureclarity.core.set_basket" template="pureclarity/core/set_basket.phtml"/>
+            
             <block type="core/template" name="pureclarity.core.userlogin" template="pureclarity/core/userlogin.phtml"/>
 
             <block type="core/template" name="pureclarity.core.userlogout" template="pureclarity/core/userlogout.phtml"/>
