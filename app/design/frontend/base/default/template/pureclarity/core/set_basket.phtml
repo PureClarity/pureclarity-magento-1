@@ -1,0 +1,9 @@
+<?php
+    $basket = Mage::helper('pureclarity_core/basket')->getBasketChanges();
+?>
+<?php if ($basket !== false): ?>
+    <script type="text/javascript">
+        _pc('set_basket', <?php echo json_encode($basket) ?>);
+    </script>
+<?php
+endif;
