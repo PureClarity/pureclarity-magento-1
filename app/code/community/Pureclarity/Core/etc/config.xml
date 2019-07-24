@@ -59,32 +59,14 @@
         </layout>
         <events>
         
-            <controller_action_predispatch_checkout_cart_add>
+            <checkout_cart_save_after>
                 <observers>
                     <pureclarity_core_cart_add>
                         <class>Pureclarity_Core_Model_Observer</class>
-                        <method>logCartAdd</method>
+                        <method>logCartChange</method>
                     </pureclarity_core_cart_add>
                 </observers>
-            </controller_action_predispatch_checkout_cart_add>
-
-            <sales_quote_remove_item>
-                <observers>
-                    <pureclarity_core_cart_remove>
-                        <class>Pureclarity_Core_Model_Observer</class>
-                        <method>logCartRemove</method>
-                    </pureclarity_core_cart_remove>
-                </observers>
-            </sales_quote_remove_item>
-
-            <sales_quote_item_qty_set_after>
-                <observers>
-                    <pureclarity_core_cart_update>
-                        <class>Pureclarity_Core_Model_Observer</class>
-                        <method>logCheckoutUpdateItems</method>
-                    </pureclarity_core_cart_update>
-                </observers>
-            </sales_quote_item_qty_set_after>
+            </checkout_cart_save_after>
 
             <customer_login>
                 <observers>

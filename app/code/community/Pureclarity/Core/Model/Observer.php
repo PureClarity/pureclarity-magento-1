@@ -45,10 +45,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
                 ->append($block);
         }
     }
-
-
     
-
     /**
      * Set data for frontend JS call when an item is added to the basket
      *
@@ -56,108 +53,13 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
      *
      * @param Varien_Event_Observer $observer
      */
-    public function logCartAdd(Varien_Event_Observer $observer)
+    public function logCartChange(Varien_Event_Observer $observer)
     {
-
-        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
+        if (!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
             return;
         }
 
-        $product = Mage::getModel('catalog/product')
-            ->getCollection()
-            ->addAttributeToSelect("sku")
-            ->addAttributeToFilter("entity_id", array("eq" => Mage::app()->getRequest()->getParam('product', 0)))
-            ->getFirstItem();
-
-        if (!$product->getId()) {
-            return;
-        }
-
-        Mage::getModel('core/session')->setPCProductToShoppingCart(
-            new Varien_Object(
-                array(
-                'id' => $product->getId(),
-                'qty' => Mage::app()->getRequest()->getParam('qty', 1)
-                )
-            )
-        );
-
-    }
-
-    /**
-     * Set data for frontend JS call when an item is removed to the basket
-     *
-     * Observes: sales_quote_remove_item
-     *
-     * @param Varien_Event_Observer $observer
-     */
-    public function logCartRemove(Varien_Event_Observer $observer)
-    {
-
-        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
-            return;
-        }
-
-        $product = Mage::getModel('catalog/product')
-            ->getCollection()
-            ->addAttributeToSelect("sku")
-            ->addAttributeToFilter("entity_id", array("eq" => $observer->getQuoteItem()->getProduct()->getId()))
-            ->getFirstItem();
-
-        if (!$product->getSku()) {
-            return;
-        }
-
-        Mage::getModel('core/session')->setPCProductRemovedShoppingCart(
-            new Varien_Object(
-                array(
-                'id' => $product->getId()
-                )
-            )
-        );
-
-    }
-
-    /**
-     * Set data for frontend JS call when an items are updated within the basket
-     *
-     * Observes: sales_quote_item_qty_set_after
-     *
-     * @param Varien_Event_Observer $observer
-     */
-    public function logCheckoutUpdateItems(Varien_Event_Observer $observer)
-    {
-        if(!Mage::helper('pureclarity_core')->isActive(Mage::app()->getStore()->getId())) {
-            return;
-        }
-
-        $event = $observer->getEvent();
-
-        $product = $event->getItem();
-
-        if($product->getOrigData('qty') != $product->getData('qty')) {
-            $info = Mage::getModel('core/session')->getPCCheckoutUpdateItems();
-            if(is_array($info)) {
-                $info[] = new Varien_Object(
-                    array(
-                    'id' => $product->getProductId(),
-                    'quantity' => $product->getData('qty')
-                    )
-                );
-            } else {
-                $info = array(new Varien_Object(
-                    array(
-                    'id' => $product->getProductId(),
-                    'quantity' => $product->getData('qty')
-                    )
-                ));
-            }
-
-            Mage::getModel('core/session')->setPCCheckoutUpdateItems(
-                $info
-            );
-        }
-
+        Mage::getModel('core/session')->setPCBasketChanged(true);
     }
 
     /**
@@ -192,6 +94,8 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
                 )
             )
         );
+        
+        Mage::getModel('core/session')->setPCBasketChanged(true);
 
     }
 
@@ -222,6 +126,7 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
                 )
             )
         );
+        Mage::getModel('core/session')->setPCBasketChanged(true);
     }
 
     public function beforeDeltaSave(Varien_Event_Observer $observer)

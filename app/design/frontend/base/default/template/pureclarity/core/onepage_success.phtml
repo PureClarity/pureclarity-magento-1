@@ -1,17 +1,10 @@
 <?php
     try {
         $order = Mage::helper('pureclarity_core')->getOrder();
-        $orderItems = Mage::helper('pureclarity_core')->getOrderItems();
     }
     catch (Exception $e){
         Mage::log("PureClarity: Exception in onepage_success.phtml: " . $e->getMessage());
     }
 ?><script type="text/javascript">
-    _pc('order:addTrans', <?php echo json_encode($order) ?>);
-    <?php
-        foreach ($orderItems as $orderItem):
-    ?>_pc('order:addItem', <?php echo json_encode($orderItem) ?> );
-    <?php
-        endforeach;
-    ?>_pc('order:track');
+    _pc('order', <?php echo json_encode($order) ?>);
 </script>
