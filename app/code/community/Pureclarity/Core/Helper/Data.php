@@ -355,7 +355,8 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
             'postcode'   => $address->getPostcode(),
             'email'      => $order->getCustomerEmail(),
             'userid'     => $order->getCustomerId(),
-            'ordertotal' => $order->getGrandTotal()
+            'ordertotal' => $order->getGrandTotal(),
+            'items'      => $this->getOrderItems($order)
         );
     }
 
