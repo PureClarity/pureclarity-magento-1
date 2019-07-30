@@ -158,6 +158,11 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             ->addFieldToFilter('visibility', $validVisibility)
             ->setPageSize($pageSize)
             ->setCurPage($currentPage);
+            
+        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($products);
+        }
+            
         Mage::log("PureClarity: In ProductExport->getFullProductFeed(): got product collection");
 
         // Get pages
@@ -338,15 +343,22 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                         'in' => $childIds[0]
                                     )
                                 );
-                        }
-                        else{
+                            if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                                Mage::getSingleton('cataloginventory/stock')
+                                    ->addInStockFilterToCollection($childProducts);
+                            }
+                        } else {
                             //configurable with no children - exclude from feed
                             return null;
                         }
                         break;
                     case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
                         $childProducts = $product->getTypeInstance(true)
-                            ->getAssociatedProducts($product);
+                            ->getAssociatedProductCollection($product);
+                        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                            Mage::getSingleton('cataloginventory/stock')
+                                ->addInStockFilterToCollection($childProducts);
+                        }
                         break;
                     case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
                         $childProducts = $product->getTypeInstance(true)
@@ -354,6 +366,10 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                 $product->getTypeInstance(true)->getOptionsIds($product), 
                                 $product
                             );
+                        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                            Mage::getSingleton('cataloginventory/stock')
+                                ->addInStockFilterToCollection($childProducts);
+                        }
                         break;
                 }
 
