@@ -182,7 +182,7 @@
                     <show_in_website>1</show_in_website>
                     <show_in_store>1</show_in_store>
                     <fields>
-                        <go_admin_button translate="label">
+                        <!-- <go_admin_button translate="label">
                             <label>Go to pureclarity admin site</label>
                             <frontend_type>button</frontend_type>
                             <frontend_model>pureclarity_core/adminhtml_system_config_pcadminbutton</frontend_model>
@@ -190,7 +190,7 @@
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </go_admin_button>
+                        </go_admin_button>-->
                         <run_feed_button translate="label">
                             <label>Run a feed now</label>
                             <frontend_type>button</frontend_type>

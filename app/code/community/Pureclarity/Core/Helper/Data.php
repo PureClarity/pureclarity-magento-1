@@ -80,7 +80,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
 
     public function getAdminUrl()
     {
-        return "https://admin.pureclarity.net";
+        return "https://admin.pureclarity.com";
     }
 
     // Credentials
