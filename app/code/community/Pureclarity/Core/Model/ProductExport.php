@@ -158,6 +158,11 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             ->addFieldToFilter('visibility', $validVisibility)
             ->setPageSize($pageSize)
             ->setCurPage($currentPage);
+            
+        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+            Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($products);
+        }
+            
         Mage::log("PureClarity: In ProductExport->getFullProductFeed(): got product collection");
 
         // Get pages
@@ -192,11 +197,17 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 || $this->seenProductIds[$product->getId()]===null) {
                 // Set Category Ids for product
                 $categoryIds = $product->getCategoryIds();
-
+                $excludedCats = explode(',', $this->coreHelper->getExcludedProductCategories($this->storeId));
                 // Get a list of the category names
                 $categoryList = array();
                 $brandId = null;
+                $excluded = false;
                 foreach ($categoryIds as $id) {
+                    if (in_array($id, $excludedCats)) {
+                        $excluded = true;
+                        break;
+                    }
+                    
                     if (array_key_exists($id, $this->categoryCollection)) {
                         $categoryList[] = $this->categoryCollection[$id];
                     }
@@ -204,6 +215,11 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                     if (! $brandId && array_key_exists($id, $this->brandLookup)) {
                         $brandId = $id;
                     }
+                }
+                
+                if ($excluded) {
+                    Mage::log('Excluding product ' . $product->getSku() . ' since it\'s in an excluded category');
+                    return null;
                 }
 
                 // Get Product Link URL
@@ -338,15 +354,22 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                         'in' => $childIds[0]
                                     )
                                 );
-                        }
-                        else{
+                            if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                                Mage::getSingleton('cataloginventory/stock')
+                                    ->addInStockFilterToCollection($childProducts);
+                            }
+                        } else {
                             //configurable with no children - exclude from feed
                             return null;
                         }
                         break;
                     case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
                         $childProducts = $product->getTypeInstance(true)
-                            ->getAssociatedProducts($product);
+                            ->getAssociatedProductCollection($product);
+                        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                            Mage::getSingleton('cataloginventory/stock')
+                                ->addInStockFilterToCollection($childProducts);
+                        }
                         break;
                     case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
                         $childProducts = $product->getTypeInstance(true)
@@ -354,6 +377,10 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                 $product->getTypeInstance(true)->getOptionsIds($product), 
                                 $product
                             );
+                        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                            Mage::getSingleton('cataloginventory/stock')
+                                ->addInStockFilterToCollection($childProducts);
+                        }
                         break;
                 }
 
@@ -607,6 +634,5 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
         return $price;
     }
-
 
 }

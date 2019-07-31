@@ -164,6 +164,65 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
         $deltaProduct->save();
     }
 
+    /**
+     * Add deltas for affected products if the category being updated is excluded from the feed
+     *
+     * @param Varien_Event_Observer $observer
+     * @return void
+     */
+    public function categoryChangeProducts(Varien_Event_Observer $observer)
+    {
+        $category = $observer->getEvent()->getCategory();
+        
+        if (!Mage::helper('pureclarity_core')->isDeltaNotificationActive($category->getStoreId())) {
+            return;
+        }
+        
+        $excludedCats = explode(
+            ',',
+            Mage::helper('pureclarity_core')->getExcludedProductCategories($category->getStoreId())
+        );
+        
+        if (!in_array($category->getId(), $excludedCats)) {
+            return;
+        }
+        
+        $products = $observer->getEvent()->getProductIds();
+
+        foreach ($products as $productId) {
+            $deltaProduct = Mage::getModel('pureclarity_core/productFeed');
+            $deltaProduct->setData(
+                array(
+                    'product_id'    => $productId,
+                    'oldsku'        => $this->getSkuById($productId),
+                    'token'         => '',
+                    'status_id'     => 0,
+                    'store_id'      => $category->getStoreId()
+                )
+            );
+            $deltaProduct->save();
+        }
+        
+    }
+    
+    /**
+     * Gets the product SKU from ID
+     *
+     * @param integer $productId
+     * @return void
+     */
+    protected function getSkuById($productId)
+    {
+        $productResourceModel = Mage::getResourceModel('catalog/product');
+        $adapter = Mage::getSingleton('core/resource')->getConnection('core_read');
+        $select = $adapter->select()
+            ->from($productResourceModel->getEntityTable(), 'sku')
+            ->where('entity_id = :entity_id');
+        $bind = array(':entity_id' => (string)$productId);
+        $productSku = $adapter->fetchOne($select, $bind);
+        return $productSku;
+    }
+
     public function motoOrder(Varien_Event_Observer $observer)
     {
         //observer gets called multiple times - only count 1st one

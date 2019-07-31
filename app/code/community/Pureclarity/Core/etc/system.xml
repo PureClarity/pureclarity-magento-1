@@ -152,6 +152,26 @@
                             <show_in_store>1</show_in_store>
                             <comment><![CDATA[<strong>Set the parent category of the Brand Categories. First level children of the selected category will be used to build your brand feed. Products in those categories will be assigned as a specific brand.</strong>]]></comment>
                         </brand_parent_category>
+                        <product_feed_exclude_out_of_stock translate="label">
+                            <label>Exclude out of stock products</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                            <sort_order>8</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>If this is enabled, products that are out of stock will not be sent to PureClarity via the product feed or product deltas</strong>]]></comment>
+                        </product_feed_exclude_out_of_stock>
+                        <exclude_category_products>
+                            <label>Exclude products from specified categories</label>
+                            <frontend_type>multiselect</frontend_type>
+                            <source_model>pureclarity_core/system_config_source_categories</source_model>
+                            <sort_order>9</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment><![CDATA[<strong>Products in the selected categories will not be sent in the product feed</strong>]]></comment>
+                        </exclude_category_products>
                     </fields>
                 </general_config>
                 <actions>
