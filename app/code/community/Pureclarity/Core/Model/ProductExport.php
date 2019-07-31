@@ -197,11 +197,17 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 || $this->seenProductIds[$product->getId()]===null) {
                 // Set Category Ids for product
                 $categoryIds = $product->getCategoryIds();
-
+                $excludedCats = explode(',', $this->coreHelper->getExcludedProductCategories($this->storeId));
                 // Get a list of the category names
                 $categoryList = array();
                 $brandId = null;
+                $excluded = false;
                 foreach ($categoryIds as $id) {
+                    if (in_array($id, $excludedCats)) {
+                        $excluded = true;
+                        break;
+                    }
+                    
                     if (array_key_exists($id, $this->categoryCollection)) {
                         $categoryList[] = $this->categoryCollection[$id];
                     }
@@ -209,6 +215,11 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                     if (! $brandId && array_key_exists($id, $this->brandLookup)) {
                         $brandId = $id;
                     }
+                }
+                
+                if ($excluded) {
+                    Mage::log('Excluding product ' . $product->getSku() . ' since it\'s in an excluded category');
+                    return null;
                 }
 
                 // Get Product Link URL
@@ -623,6 +634,5 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
         return $price;
     }
-
 
 }

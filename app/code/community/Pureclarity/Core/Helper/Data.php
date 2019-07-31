@@ -168,6 +168,11 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
         return Mage::getStoreConfigFlag('pureclarity_core/general_config/product_feed_exclude_out_of_stock', $storeId);
     }
 
+    public function getExcludedProductCategories($storeId)
+    {
+        return Mage::getStoreConfig("pureclarity_core/general_config/exclude_category_products", $storeId);
+    }
+
     // Placeholders
     public function getProductPlaceholderUrl($storeId)
     {

@@ -65,7 +65,7 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
         // create a unique token until we get a response from PureClarity
         $uniqueId = 'PureClarity' . uniqid();
         $requests = array();
-
+        
         // Loop round each store and process Deltas
         foreach (Mage::app()->getWebsites() as $website) {
             foreach ($website->getGroups() as $group) {
@@ -139,12 +139,15 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                                     // Check if deleted or if product is no longer visible
                                     if ($isDeleted) {
                                         $deleteProducts[] = $product->getSku();
-                                    } 
-                                    else {
+                                    } else {
                                         // Get data from product exporter
                                         $data = $productExportModel->getProductData($product, count($feedProducts) + 1);
                                         if ($data != null) {
                                             $feedProducts[] = $data;
+                                        } else {
+                                            // product is either excluded via category / or not a valid product
+                                            // so we should send a delete to ensure it is not in PC data
+                                            $deleteProducts[] = $product->getSku();
                                         }
                                     }
 
