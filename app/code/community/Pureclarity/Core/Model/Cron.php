@@ -126,6 +126,13 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                                         $product->getData('status') == Mage_Catalog_Model_Product_Status::STATUS_DISABLED 
                                         || $product->getVisibility() == Mage_Catalog_Model_Product_Visibility::VISIBILITY_NOT_VISIBLE
                                     );
+                                    
+                                if ($this->coreHelper->excludeOutOfStockFromProductFeed($store->getId())) {
+                                    $stockItem = $product->getStockItem();
+                                    if ($stockItem && !$stockItem->getIsInStock()) {
+                                        $isDeleted = true;
+                                    }
+                                }
 
                                 // Check product is loaded
                                 if ($product != null) {
