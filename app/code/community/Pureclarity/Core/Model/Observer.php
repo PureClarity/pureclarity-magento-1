@@ -174,6 +174,10 @@ class Pureclarity_Core_Model_Observer extends Mage_Core_Model_Abstract
     {
         $category = $observer->getEvent()->getCategory();
         
+        if (!Mage::helper('pureclarity_core')->isDeltaNotificationActive($category->getStoreId())) {
+            return;
+        }
+        
         $excludedCats = explode(
             ',',
             Mage::helper('pureclarity_core')->getExcludedProductCategories($category->getStoreId())
