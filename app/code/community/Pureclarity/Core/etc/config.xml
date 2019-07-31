@@ -133,6 +133,14 @@
                     </pureclarity_core_moto>
                 </observers>
             </sales_order_save_after>
+            <catalog_category_change_products>
+                <observers>
+                    <pureclarity_core_update_categories>
+                        <class>Pureclarity_Core_Model_Observer</class>
+                        <method>categoryChangeProducts</method>
+                    </pureclarity_core_update_categories>
+                </observers>
+            </catalog_category_change_products>
         </events>
         <layout>
             <updates>
