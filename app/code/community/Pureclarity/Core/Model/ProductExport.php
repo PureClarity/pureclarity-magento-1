@@ -180,10 +180,13 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
         
         // Loop through products
         $feedProducts = array();
+        $index = 0;
         foreach ($products as $product) {
-            $data = $this->getProductData($product, count($feedProducts) + ($pageSize * $currentPage) + 1);
-            if ($data != null)
+            $data = $this->getProductData($product, $index + ($pageSize * $currentPage) + 1);
+            if ($data !== null) {
                 $feedProducts[] = $data;
+                $index++;
+            }
         }
         
         return  array(
