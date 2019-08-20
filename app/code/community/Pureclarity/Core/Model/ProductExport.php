@@ -66,23 +66,28 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             $this->currenciesToProcess[] = $this->baseCurrencyCode;
             foreach ($currencies as $currency) {
                 Mage::log("PureClarity: In ProductExport->init(): processing currency: " . $currency);
-                if ($currency != $this->baseCurrencyCode && isset($currencyRates[$currency]) && ! empty($currencyRates[$currency])) {
+                if ($currency != $this->baseCurrencyCode 
+                    && isset($currencyRates[$currency]) 
+                    && ! empty($currencyRates[$currency])
+                ) {
                     $this->currenciesToProcess[] = $currency;
                 }
             }
 
-            Mage::log("PureClarity: In ProductExport->init(): currenciesToProcess: " . print_r($this->currenciesToProcess, true));
+            Mage::log(
+                "PureClarity: In ProductExport->init(): currenciesToProcess: "
+                . print_r($this->currenciesToProcess, true)
+            );
 
             // Manage Brand
             $this->brandLookup = array();
             // If brand feed is enabled, get the brands
-            if($this->coreHelper->isBrandFeedEnabled($this->storeId)) {
+            if ($this->coreHelper->isBrandFeedEnabled($this->storeId)) {
                 Mage::log("PureClarity: In ProductExport->init(): brand feed is enabled");
                 $feedModel = Mage::getModel('pureclarity_core/feed');
                 $this->brandLookup = $feedModel->getBrandFeedArray($this->storeId);
                 Mage::log("PureClarity: In ProductExport->init(): got the brand feed array");
-            }
-            else{
+            } else {
                 Mage::log("PureClarity: In ProductExport->init(): brand feed not enabled");
             }
 
@@ -97,7 +102,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             // Get list of attributes to include
             foreach ($attributes as $attribute) {
                 $code = $attribute->getAttributecode();
-                $label = $attribute->getFrontendLabel(); // required for empty() use below @php5.4
+                $label = $attribute->getFrontendLabel();
                 if (! in_array(strtolower($code), $attributesToExclude) && ! empty($label)) {
                     $this->attributesToInclude[] = array(
                         $code, 
@@ -136,7 +141,9 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
      */
     public function getFullProductFeed($pageSize = 1000000, $currentPage = 1)
     {
-        Mage::log("PureClarity: In ProductExport->getFullProductFeed(), page size {$pageSize}, current page {$currentPage}");
+        Mage::log(
+            "PureClarity: In ProductExport->getFullProductFeed(), page size {$pageSize}, current page {$currentPage}"
+        );
         // Get product collection
         $validVisibility = array(
             'in' => array(
@@ -193,7 +200,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
     {
         try{
             // Check hash that we've not already seen this product
-            if(! array_key_exists($product->getId(), $this->seenProductIds) 
+            if (!array_key_exists($product->getId(), $this->seenProductIds) 
                 || $this->seenProductIds[$product->getId()]===null) {
                 // Set Category Ids for product
                 $categoryIds = $product->getCategoryIds();
@@ -224,8 +231,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
                 // Get Product Link URL
                 $urlParams = array(
-                    '_nosid' => true,
-                    // '_scope' => $this->storeId // not relevant for Magento 1 (M2 plugin only, keeping here but commenting out to avoid future query)
+                    '_nosid' => true
                 );
                 $productUrl = $product->setStoreId($this->storeId)
                     ->getUrlModel()
@@ -253,7 +259,8 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                     if (! $productImageUrl) {
                         $productImageUrl = $this->getSkinUrl(self::PLACEHOLDER_IMAGE_URL);
                         if (! $productImageUrl) {
-                            $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
+                            $productImageUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN)
+                                             . "frontend/base/default/" . self::PLACEHOLDER_IMAGE_URL;
                         }
                     }
                 }
@@ -301,15 +308,15 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 $searchTagString = $product->getData('pureclarity_search_tags');
                 if (! empty($searchTagString)) {
                     $searchTags = explode(",", $searchTagString);
-                    if(count($searchTags)) {
+                    if (count($searchTags)) {
                         foreach ($searchTags as $key => &$searchTag) {
                             $searchTag = trim($searchTag);
-                            if(empty($searchTag)) {
+                            if (empty($searchTag)) {
                                 unset($searchTags[$key]);
                             }
                         }
 
-                        if(count($searchTags)) {
+                        if (count($searchTags)) {
                             $data["SearchTags"] = array_values($searchTags);
                         }
                     }
@@ -433,8 +440,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
     {
         if (! array_key_exists($key, $data)) {
             $data[$key][] = $value;
-        }
-        elseif ($value !== null 
+        } elseif ($value !== null 
                 && (! is_array($data[$key]) || ! in_array($value, $data[$key]))
             ) {
             $data[$key][] = $value;
@@ -451,7 +457,11 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             $this->addValueToDataArray($data, 'Prices', number_format($minPrice, 2, '.', '') . ' ' . $currency);
             $minFinalPrice = $this->convertCurrency($baseFinalPrices['min'], $currency);
             if ($minFinalPrice !== null && $minFinalPrice < $minPrice) {
-                $this->addValueToDataArray($data, 'SalePrices', number_format($minFinalPrice, 2, '.', '') . ' ' . $currency);
+                $this->addValueToDataArray(
+                    $data,
+                    'SalePrices',
+                    number_format($minFinalPrice, 2, '.', '') . ' ' . $currency
+                );
             }
 
             // Process currency for max price if it's different to min price
@@ -460,7 +470,11 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 $this->addValueToDataArray($data, 'Prices', number_format($maxPrice, 2, '.', '') . ' ' . $currency);
                 $maxFinalPrice = $this->convertCurrency($baseFinalPrices['max'], $currency);
                 if ($maxFinalPrice !== null && $maxFinalPrice < $maxPrice) {
-                    $this->addValueToDataArray($data, 'SalePrices', number_format($maxFinalPrice, 2, '.', '') . ' ' . $currency);
+                    $this->addValueToDataArray(
+                        $data,
+                        'SalePrices',
+                        number_format($maxFinalPrice, 2, '.', '') . ' ' . $currency
+                    );
                 }
             }
         }
@@ -475,8 +489,12 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
         return Mage::helper('directory')->currencyConvert($price, $this->baseCurrencyCode, $to);
      }
 
-     protected function getProductPrice(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true, &$childProducts = null) 
-     {
+    protected function getProductPrice(
+        Mage_Catalog_Model_Product $product,
+        $getFinalPrice = false, 
+        $includeTax = true, 
+        &$childProducts = null
+    ) {
         $minPrice = 0;
         $maxPrice = 0;
         switch ($product->getTypeId()) {
@@ -527,8 +545,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
                     $minPrice = $lowestPrice;
                     $maxPrice = $highestPrice;
-                }
-                else {
+                } else {
                     $minPrice = $price;
                     $maxPrice = $price;
                     $attributes = $product->getTypeInstance(true)
@@ -541,8 +558,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                 if (isset($attributePrice['pricing_value']) && isset($attributePrice['is_percent'])) {
                                     if ($attributePrice['is_percent']) {
                                         $pricingValue = ($price * $attributePrice['pricing_value'] / 100);
-                                    }
-                                    else {
+                                    } else {
                                         $pricingValue = $attributePrice['pricing_value'];
                                     }
 
@@ -571,10 +587,13 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 'min' => $minPrice,
                 'max' => $maxPrice
             );
-     }
+    }
 
-    protected function getDefaultFromProduct(Mage_Catalog_Model_Product $product, $getFinalPrice = false, $includeTax = true) 
-    {
+    protected function getDefaultFromProduct(
+        Mage_Catalog_Model_Product $product,
+        $getFinalPrice = false,
+        $includeTax = true
+    ) {
         $price = ($getFinalPrice ? $product->getFinalPrice() : $product->getPrice());
         if ($includeTax) {
             $price = Mage::helper('tax')->getPrice($product, $price, true);
@@ -591,20 +610,20 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             $name = $attribute[1];
             if ($product->getData($code) != null) {
                 try{
-                    if(is_array($product->getData($code))) {
-                        if($code == 'media_gallery') {
+                    if (is_array($product->getData($code))) {
+                        if ($code == 'media_gallery') {
                             $galleryImages = $product->getData($code)['images'];
                             $attrValue = array();
                             $media_base_url = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
                             foreach ($galleryImages as $galleryImage) {
-                                $attrValue[] = $this->removeUrlProtocol($media_base_url . 'catalog/product' . $galleryImage['file']);
+                                $attrValue[] = $this->removeUrlProtocol(
+                                    $media_base_url . 'catalog/product' . $galleryImage['file']
+                                );
                             }
-                        }
-                        else{
+                        } else {
                             Mage::log("Unrecognized array attribute: {$code}");
                         }
-                    }
-                    else{
+                    } else {
                         $attrValue = $product->getAttributeText($code);
                     }
                 }
@@ -618,8 +637,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                         foreach ($attrValue as $value) {
                             $this->addValueToDataArray($data, $name, $value);
                         }
-                    }
-                    else {
+                    } else {
                         $this->addValueToDataArray($data, $name, $attrValue);
                     }
                 }
