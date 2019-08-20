@@ -35,7 +35,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
     public $seenProductIds = array();
     public $currentStore = null;
     public $brandLookup = array();
-    protected $categoryCollection = array();
+    protected $_categoryCollection = array();
 
     /**
      * Initialise the model ready to set the data for the given store.
@@ -45,7 +45,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
         try{
             $this->storeId = $storeId;
             // Use this store, if not passed in.
-            if (is_null($this->storeId)) {
+            if ($this->storeId === null) {
                 Mage::log("PureClarity: In ProductExport->init(): store id is null, so getting from existing store");
                 $this->storeId = Mage::app()->getStore()->getId();
                 Mage::log("PureClarity: In ProductExport->init(): store id is now " . $this->storeId);
@@ -59,9 +59,9 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             $this->baseCurrencyCode = Mage::app()->getBaseCurrencyCode();
             Mage::log("PureClarity: In ProductExport->init(): baseCurrencyCode is " . $this->baseCurrencyCode);
             $currencies = $currencyModel->getConfigAllowCurrencies();
-            Mage::log("PureClarity: In ProductExport->init(): got currencies: " . print_r($currencies, true));
+            Mage::log("PureClarity: In ProductExport->init(): got currencies: " . var_export($currencies, true));
             $currencyRates = $currencyModel->getCurrencyRates($this->baseCurrencyCode, array_values($currencies));
-            Mage::log("PureClarity: In ProductExport->init(): got currencyRates: " . print_r($currencyRates, true));
+            Mage::log("PureClarity: In ProductExport->init(): got currencyRates: " . var_export($currencyRates, true));
 
             $this->currenciesToProcess[] = $this->baseCurrencyCode;
             foreach ($currencies as $currency) {
@@ -76,7 +76,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
 
             Mage::log(
                 "PureClarity: In ProductExport->init(): currenciesToProcess: "
-                . print_r($this->currenciesToProcess, true)
+                . var_export($this->currenciesToProcess, true)
             );
 
             // Manage Brand
@@ -114,7 +114,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
             Mage::log("PureClarity: In ProductExport->init(): got list of attributes to include");
 
             // Get Category List 
-            $this->categoryCollection = array();
+            $this->_categoryCollection = array();
             $categoryCollection = Mage::getModel('catalog/category')->getCollection()
                 ->addAttributeToSelect('name')
                 ->addFieldToFilter(
@@ -126,7 +126,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 );
             Mage::log("PureClarity: In ProductExport->init(): got magento category collection");
             foreach ($categoryCollection as $category) {
-                $this->categoryCollection[$category->getId()] = $category->getName();
+                $this->_categoryCollection[$category->getId()] = $category->getName();
             }
 
             Mage::log("PureClarity: In ProductExport->init(): set category array");
@@ -215,8 +215,8 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                         break;
                     }
                     
-                    if (array_key_exists($id, $this->categoryCollection)) {
-                        $categoryList[] = $this->categoryCollection[$id];
+                    if (array_key_exists($id, $this->_categoryCollection)) {
+                        $categoryList[] = $this->_categoryCollection[$id];
                     }
 
                     if (! $brandId && array_key_exists($id, $this->brandLookup)) {
@@ -308,7 +308,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                 $searchTagString = $product->getData('pureclarity_search_tags');
                 if (! empty($searchTagString)) {
                     $searchTags = explode(",", $searchTagString);
-                    if (count($searchTags)) {
+                    if (!empty($searchTags)) {
                         foreach ($searchTags as $key => &$searchTag) {
                             $searchTag = trim($searchTag);
                             if (empty($searchTag)) {
@@ -316,7 +316,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                             }
                         }
 
-                        if (count($searchTags)) {
+                        if (!empty($searchTags)) {
                             $data["SearchTags"] = array_values($searchTags);
                         }
                     }
@@ -614,10 +614,10 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                         if ($code == 'media_gallery') {
                             $galleryImages = $product->getData($code)['images'];
                             $attrValue = array();
-                            $media_base_url = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+                            $mediaBaseUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
                             foreach ($galleryImages as $galleryImage) {
                                 $attrValue[] = $this->removeUrlProtocol(
-                                    $media_base_url . 'catalog/product' . $galleryImage['file']
+                                    $mediaBaseUrl . 'catalog/product' . $galleryImage['file']
                                 );
                             }
                         } else {
