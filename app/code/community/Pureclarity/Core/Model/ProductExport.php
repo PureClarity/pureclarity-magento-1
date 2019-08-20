@@ -345,7 +345,7 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                     case Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE:
                         $childIds = Mage::getModel('catalog/product_type_configurable')
                             ->getChildrenIds($product->getId());
-                        if (count($childIds[0]) > 0) {
+                        if (!empty($childIds[0])) {
                             $childProducts = Mage::getModel('pureclarity_core/product')
                                 ->getCollection()
                                 ->addAttributeToSelect('*')
@@ -354,10 +354,6 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                         'in' => $childIds[0]
                                     )
                                 );
-                            if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
-                                Mage::getSingleton('cataloginventory/stock')
-                                    ->addInStockFilterToCollection($childProducts);
-                            }
                         } else {
                             //configurable with no children - exclude from feed
                             return null;
@@ -366,10 +362,6 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                     case Mage_Catalog_Model_Product_Type::TYPE_GROUPED:
                         $childProducts = $product->getTypeInstance(true)
                             ->getAssociatedProductCollection($product);
-                        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
-                            Mage::getSingleton('cataloginventory/stock')
-                                ->addInStockFilterToCollection($childProducts);
-                        }
                         break;
                     case Mage_Catalog_Model_Product_Type::TYPE_BUNDLE:
                         $childProducts = $product->getTypeInstance(true)
@@ -377,13 +369,27 @@ class Pureclarity_Core_Model_ProductExport extends Pureclarity_Core_Model_Model
                                 $product->getTypeInstance(true)->getOptionsIds($product), 
                                 $product
                             );
-                        if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
-                            Mage::getSingleton('cataloginventory/stock')
-                                ->addInStockFilterToCollection($childProducts);
-                        }
                         break;
                 }
 
+                if (in_array(
+                    $product->getTypeId(), 
+                    array(
+                        Mage_Catalog_Model_Product_Type::TYPE_CONFIGURABLE,
+                        Mage_Catalog_Model_Product_Type::TYPE_GROUPED,
+                        Mage_Catalog_Model_Product_Type::TYPE_BUNDLE
+                    )
+                )) {
+                    if ($this->coreHelper->excludeOutOfStockFromProductFeed($this->storeId)) {
+                        Mage::getSingleton('cataloginventory/stock')->addInStockFilterToCollection($childProducts);
+                    }
+                    
+                    if ($childProducts->getSize() === 0 ) {
+                        // configurable/bundle/grouped with no valid children - exclude from feed
+                        return null;
+                    }
+                }
+                
                 $this->processChildProducts($childProducts, $data);
 
                 // Set prices
