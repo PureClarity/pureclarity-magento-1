@@ -47,7 +47,14 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
 
             // loop through products, POSTing string for each page as it loops through
             $writtenProduct = false;
-            
+
+            /** @var $appEmulation Mage_Core_Model_App_Emulation */
+            $appEmulation = Mage::getSingleton('core/app_emulation');
+
+            if ($appEmulation) {
+                $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($this->storeId);
+            }
+
             do {
                 $result = $productExportModel->getFullProductFeed($pageSize, $currentPage);
                 
@@ -91,6 +98,10 @@ class Pureclarity_Core_Model_Feed extends Pureclarity_Core_Model_Model
                 $this->end(self::FEED_TYPE_PRODUCT);
             } else {
                 Mage::log("PureClarity: Could not find any product to upload");
+            }
+
+            if ($appEmulation) {
+                $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
             }
 
             Mage::log("PureClarity: Finished sending product data");
