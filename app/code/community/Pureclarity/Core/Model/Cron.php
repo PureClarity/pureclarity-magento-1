@@ -74,6 +74,14 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
 
                     // Check we're allowed to do it for this store
                     if ($this->coreHelper->isDeltaNotificationActive($store->getId()) || $peakModeOnly) {
+
+                        /** @var $appEmulation Mage_Core_Model_App_Emulation */
+                        $appEmulation = Mage::getSingleton('core/app_emulation');
+
+                        if ($appEmulation) {
+                            $initialEnvironmentInfo = $appEmulation->startEnvironmentEmulation($store->getId());
+                        }
+
                         $deleteProducts = array();
                         $feedProducts = array();
 
@@ -206,6 +214,10 @@ class Pureclarity_Core_Model_Cron extends Pureclarity_Core_Model_Model
                             }
 
                             $productExportModel = null;
+                        }
+
+                        if ($appEmulation) {
+                            $appEmulation->stopEnvironmentEmulation($initialEnvironmentInfo);
                         }
                     }
                 }
