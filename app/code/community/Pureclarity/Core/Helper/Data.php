@@ -290,7 +290,7 @@ class Pureclarity_Core_Helper_Data extends Mage_Core_Helper_Abstract
     {
         $pureclarityScriptUrl = getenv('PURECLARITY_SCRIPT_URL');
         if ($pureclarityScriptUrl != null && $pureclarityScriptUrl != '')
-            return $pureclarityScriptUrl;
+            return $pureclarityScriptUrl . '/' . $this->getAccessKey($this->getStoreId()) . '/cs.js';
         return $this->getScriptUrl() . '/' . $this->getAccessKey($this->getStoreId()) . '/cs.js';
     }
 
